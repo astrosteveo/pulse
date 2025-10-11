@@ -11,27 +11,54 @@
 
 ## Technical Context
 
-<!--
-  ACTION REQUIRED: Replace the content in this section with the technical details
-  for the project. The structure here is presented in advisory capacity to guide
-  the iteration process.
--->
-
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [single/web/mobile - determines source structure]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Language/Version**: Zsh (compatible with Zsh 5.0+)
+**Primary Dependencies**: Zsh builtins, POSIX utilities
+**Storage**: N/A (configuration-free unless feature requires persistence)
+**Testing**: [Specify testing framework: ztst, shunit2, bats-core, or custom]
+**Target Platform**: Unix-like systems (Linux, macOS, BSD)
+**Project Type**: Single project (Zsh plugin orchestrator)
+**Performance Goals**: Shell startup impact <50ms, plugin load <100ms
+**Constraints**: Zero configuration, no external dependencies, minimal memory footprint
+**Scale/Scope**: Single-user shell environment, [X] plugins managed
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+### Radical Simplicity (Principle I)
+
+- [ ] Feature serves 90% of users (not edge case functionality)
+- [ ] No simpler alternative exists to achieve the same goal
+- [ ] Feature justification documented (why it's essential)
+- [ ] Deletion considered before addition
+
+### Quality Over Features (Principle II)
+
+- [ ] Code style follows Zsh conventions
+- [ ] Error handling strategy defined
+- [ ] Documentation approach specified
+- [ ] Performance impact assessed
+
+### Test-Driven Reliability (Principle III) - NON-NEGOTIABLE
+
+- [ ] Test strategy defined (unit, integration, real-world scenarios)
+- [ ] Test environment requirements documented
+- [ ] Coverage targets specified
+- [ ] Tests will be written BEFORE implementation
+
+### Consistent User Experience (Principle IV)
+
+- [ ] Default behavior documented and sensible
+- [ ] No breaking changes OR major version bump justified
+- [ ] User feedback approach specified
+- [ ] Backward compatibility addressed
+
+### Zero Configuration (Principle V)
+
+- [ ] Works without configuration OR configuration unavoidable (justify)
+- [ ] Smart defaults defined
+- [ ] Auto-detection strategy specified
+- [ ] Configuration options minimized
 
 ## Project Structure
 
@@ -48,51 +75,27 @@ specs/[###-feature]/
 ```
 
 ### Source Code (repository root)
-<!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
--->
 
-```
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
-src/
-├── models/
-├── services/
-├── cli/
-└── lib/
-
-tests/
-├── contract/
-├── integration/
-└── unit/
-
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+```text
+pulse/
+├── pulse.zsh           # Main entry point
+├── lib/                # Core modules (modular, lazy-loadable)
+│   ├── compinit.zsh
+│   ├── completions.zsh
+│   ├── keybinds.zsh
+│   ├── plugin-engine.zsh
+│   └── [feature].zsh   # New feature modules here
+├── tests/              # Test suite
+│   ├── integration/    # End-to-end workflow tests
+│   ├── unit/           # Individual function tests
+│   └── fixtures/       # Test data and mock environments
+└── docs/               # User and developer documentation
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+**Structure Decision**: Pulse uses a single-project structure with modular
+lib/*.zsh files. Each module is independently loadable and testable. New
+features extend existing modules or add new modules following the pulse_*
+naming convention.
 
 ## Complexity Tracking
 
