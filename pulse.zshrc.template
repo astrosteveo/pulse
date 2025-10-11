@@ -1,0 +1,154 @@
+# Pulse Configuration Template
+# Copy this file to ~/.zshrc to get started with Pulse
+#
+# Quick Start:
+# 1. Copy this file: cp pulse.zshrc.template ~/.zshrc
+# 2. Uncomment plugins you want to use (remove the # at the start of the line)
+# 3. Restart your shell: exec zsh
+#
+# Pulse will automatically install and load your plugins!
+
+# ============================================================================
+# PLUGIN CONFIGURATION
+# ============================================================================
+
+# IMPORTANT: Declare your plugins BEFORE sourcing Pulse!
+#
+# Pulse supports:
+#   - GitHub shorthand: zsh-users/zsh-autosuggestions
+#   - Full URLs: https://github.com/user/repo.git
+#   - Local paths: /path/to/plugin
+#
+# Pulse automatically determines the correct load order, so you don't need to
+# worry about which plugins go first or last!
+
+plugins=(
+  # ----------------------------------------------------------------------------
+  # POPULAR PLUGINS (uncomment to enable)
+  # ----------------------------------------------------------------------------
+
+  # Fish-like autosuggestions as you type
+  # zsh-users/zsh-autosuggestions
+
+  # Syntax highlighting (automatically loaded last by Pulse)
+  # zsh-users/zsh-syntax-highlighting
+
+  # Additional completion definitions
+  # zsh-users/zsh-completions
+
+  # Fast directory navigation
+  # agkozak/zsh-z
+
+  # Fuzzy file finder (requires fzf binary)
+  # junegunn/fzf
+
+  # ----------------------------------------------------------------------------
+  # CUSTOM PLUGINS
+  # ----------------------------------------------------------------------------
+
+  # Add your own plugins here
+  # Example: myusername/my-custom-plugin
+)
+
+# ============================================================================
+# ADVANCED CONFIGURATION (optional)
+# ============================================================================
+# NOTE: These must also be defined BEFORE sourcing Pulse!
+
+# Disable specific plugins without removing them from the list
+# This is useful for temporarily disabling problematic plugins
+# pulse_disabled_plugins=(
+#   plugin-to-disable
+# )
+
+# Override automatic stage detection for specific plugins
+# Stages: early, normal, late, deferred
+# Only use this if a plugin isn't loading at the right time
+# typeset -gA pulse_plugin_stage
+# pulse_plugin_stage[my-plugin]="late"
+
+# Enable debug logging (shows what Pulse is doing during startup)
+# Useful for troubleshooting plugin loading issues
+# export PULSE_DEBUG=1
+
+# Custom Pulse directories (defaults shown)
+# export PULSE_DIR="${HOME}/.local/share/pulse"
+# export PULSE_CACHE_DIR="${HOME}/.cache/pulse"
+
+# Skip automatic compinit (if you want to call it yourself)
+# export PULSE_NO_COMPINIT=1
+
+# ============================================================================
+# LOAD PULSE FRAMEWORK
+# ============================================================================
+
+# Source Pulse (adjust path if you installed elsewhere)
+# This MUST come AFTER plugin configuration above!
+source "${HOME}/.local/share/pulse/pulse.zsh"
+
+# ============================================================================
+# YOUR CUSTOM ZSH CONFIGURATION
+# ============================================================================
+
+# Add your own Zsh configuration below this line
+# Examples: aliases, functions, shell options, prompt customization, etc.
+
+# Example aliases
+# alias ll='ls -lah'
+# alias gs='git status'
+# alias v='nvim'
+
+# Example shell options
+# setopt AUTO_CD              # cd by typing directory name
+# setopt CORRECT              # command correction
+# setopt HIST_IGNORE_ALL_DUPS # don't record duplicates in history
+
+# Example prompt (if not using a theme plugin)
+# PROMPT='%F{blue}%~%f %# '
+
+# ============================================================================
+# EXAMPLE CONFIGURATIONS
+# ============================================================================
+
+# Minimal Setup (just the essentials)
+# ------------------------------------
+# plugins=(
+#   zsh-users/zsh-autosuggestions
+#   zsh-users/zsh-syntax-highlighting
+# )
+
+# Developer Setup (comprehensive set)
+# ------------------------------------
+# plugins=(
+#   zsh-users/zsh-autosuggestions
+#   zsh-users/zsh-syntax-highlighting
+#   zsh-users/zsh-completions
+#   agkozak/zsh-z
+#   junegunn/fzf
+# )
+
+# Power User Setup (everything + themes)
+# ------------------------------------
+# plugins=(
+#   zsh-users/zsh-autosuggestions
+#   zsh-users/zsh-syntax-highlighting
+#   zsh-users/zsh-completions
+#   zsh-users/zsh-history-substring-search
+#   agkozak/zsh-z
+#   junegunn/fzf
+#   romkatv/powerlevel10k  # Popular theme
+# )
+
+# ============================================================================
+# TROUBLESHOOTING
+# ============================================================================
+#
+# If you encounter issues:
+# 1. Enable debug mode: export PULSE_DEBUG=1
+# 2. Check plugin status: pulse list
+# 3. Verify configuration: pulse validate
+# 4. Run diagnostics: pulse doctor
+# 5. Check startup performance: pulse benchmark
+#
+# For more help, see the documentation at:
+# https://github.com/astrosteveo/pulse
