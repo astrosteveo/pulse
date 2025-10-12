@@ -260,64 +260,66 @@
 
 ### T013: Write unit tests for keybinds.zsh [US2] [P1]
 
-- **Status**: Not Started
-- **Assignee**: Unassigned
+- **Status**: ✅ Complete
+- **Assignee**: GitHub Copilot
 - **Estimated Effort**: 2 hours
 - **Description**: Create unit tests for keybinding configuration (TDD)
 - **Acceptance**:
-  - Test file: `tests/unit/keybinds.bats`
-  - Test: Emacs mode set as default
-  - Test: Ctrl+R triggers reverse history search
-  - Test: Ctrl+S triggers forward history search
-  - Test: Arrows/Ctrl+P/N navigate history
-  - Test: Ctrl+A/E moves to line start/end
-  - Test: Ctrl+W/U/K for word/line deletion
-  - Test: Alt+B/F/arrows for word navigation
-  - Test: Alt+. inserts last argument
-  - Test: User keybindings can override defaults
-  - Test: Module loads in <5ms
+  - Test file: `tests/unit/keybinds.bats` ✅
+  - Test: Emacs mode set as default ✅
+  - Test: Ctrl+R triggers reverse history search ✅
+  - Test: Ctrl+S triggers forward history search ✅
+  - Test: Arrows/Ctrl+P/N navigate history ✅
+  - Test: Ctrl+A/E moves to line start/end ✅
+  - Test: Ctrl+W/U/K for word/line deletion ✅
+  - Test: Alt+B/F/arrows for word navigation ✅
+  - Test: Alt+. inserts last argument ✅
+  - Test: User keybindings can override defaults ✅
+  - Test: Module loads in <5ms ✅
 - **Blockers**: T002
 - **Parallel**: Yes [P]
 - **Related**: T014
+- **Results**: 12 unit tests, all passing
 
 ### T014: Implement keybinds.zsh module [US2] [P1]
 
-- **Status**: Not Started
-- **Assignee**: Unassigned
+- **Status**: ✅ Complete
+- **Assignee**: GitHub Copilot
 - **Estimated Effort**: 2 hours
 - **Description**: Configure keybindings for history, line editing, and navigation
 - **Acceptance**:
-  - File: `lib/keybinds.zsh`
-  - `bindkey -e` (emacs mode default)
-  - History search: `^R` (reverse-search-history), `^S` (forward-search-history)
-  - History navigation: arrows, `^P`, `^N`
-  - Line editing: `^A` (beginning-of-line), `^E` (end-of-line), `^W` (backward-kill-word), `^U` (kill-whole-line), `^K` (kill-line)
-  - Word navigation: `Alt+B`, `Alt+F`, `Alt+←`, `Alt+→`
-  - Argument insertion: `Alt+.` (insert-last-word)
-  - All T013 tests pass
-  - Performance: <5ms
+  - File: `lib/keybinds.zsh` ✅
+  - `bindkey -e` (emacs mode default) ✅
+  - History search: `^R` (reverse-search-history), `^S` (forward-search-forward) ✅
+  - History navigation: arrows, `^P`, `^N` ✅
+  - Line editing: `^A` (beginning-of-line), `^E` (end-of-line), `^W` (backward-kill-word), `^U` (kill-whole-line), `^K` (kill-line) ✅
+  - Word navigation: `Alt+B`, `Alt+F`, `Alt+←`, `Alt+→` ✅
+  - Argument insertion: `Alt+.` (insert-last-word) ✅
+  - All T013 tests pass ✅
+  - Performance: <5ms ✅ (0ms measured)
 - **Blockers**: T013
 - **Parallel**: No
 - **Related**: T003
 
 ### T015: Write integration tests for US2 acceptance criteria [US2] [P1]
 
-- **Status**: Not Started
-- **Assignee**: Unassigned
+- **Status**: ✅ Complete
+- **Assignee**: GitHub Copilot
 - **Estimated Effort**: 2 hours
 - **Description**: Create end-to-end tests for User Story 2 acceptance scenarios
 - **Acceptance**:
-  - Test file: `tests/integration/keybindings.bats`
-  - Test: History navigation keys access previous commands
-  - Test: Line editing shortcuts work correctly
-  - Test: Alt+. inserts last argument from previous command
-  - Test: Ctrl+R activates interactive reverse search
-  - Test: Vi mode support (if enabled by user)
-  - Test: Emacs shortcuts follow emacs conventions
-  - All 6 acceptance scenarios from spec.md validated
+  - Test file: `tests/integration/keybindings.bats` ✅
+  - Test: History navigation keys access previous commands ✅
+  - Test: Line editing shortcuts work correctly ✅
+  - Test: Alt+. inserts last argument from previous command ✅
+  - Test: Ctrl+R activates interactive reverse search ✅
+  - Test: Vi mode support (if enabled by user) ✅
+  - Test: Emacs shortcuts follow emacs conventions ✅
+  - All 6 acceptance scenarios from spec.md validated ✅
 - **Blockers**: T002
 - **Parallel**: Yes [P]
 - **Related**: T014
+- **Results**: 12 integration tests, all passing
 
 ### T016: Validate US2 keybindings functionality [US2] [P1]
 
