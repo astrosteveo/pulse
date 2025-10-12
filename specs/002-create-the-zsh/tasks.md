@@ -15,8 +15,8 @@
 
 ### T001: Verify test infrastructure [Foundation]
 
-- **Status**: Not Started
-- **Assignee**: Unassigned
+- **Status**: ✅ Complete
+- **Assignee**: GitHub Copilot
 - **Estimated Effort**: 15 minutes
 - **Description**: Verify bats-core is available from feature 001 and test fixtures directory exists
 - **Acceptance**:
@@ -28,8 +28,8 @@
 
 ### T002: Create framework module test fixtures [Foundation]
 
-- **Status**: Not Started
-- **Assignee**: Unassigned
+- **Status**: ✅ Complete
+- **Assignee**: GitHub Copilot
 - **Estimated Effort**: 30 minutes
 - **Description**: Set up test fixtures for framework modules (mock cache directories, history files, environment variables)
 - **Acceptance**:
