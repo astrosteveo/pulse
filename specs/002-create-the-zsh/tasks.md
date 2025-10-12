@@ -90,8 +90,8 @@
 
 ### T005: Write unit tests for environment.zsh [US1] [P1]
 
-- **Status**: Not Started
-- **Assignee**: Unassigned
+- **Status**: ✅ Complete
+- **Assignee**: GitHub Copilot
 - **Estimated Effort**: 1 hour
 - **Description**: Create unit tests for environment module (TDD - write before implementation)
 - **Acceptance**:
@@ -110,8 +110,8 @@
 
 ### T006: Implement environment.zsh module [US1] [P1]
 
-- **Status**: Not Started
-- **Assignee**: Unassigned
+- **Status**: ✅ Complete
+- **Assignee**: GitHub Copilot
 - **Estimated Effort**: 2 hours
 - **Description**: Implement environment variable setup and shell options (EDITOR, PAGER, history, globbing)
 - **Acceptance**:
