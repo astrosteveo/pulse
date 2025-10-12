@@ -77,3 +77,47 @@ teardown() {
   # Just check that it completes - performance optimization can come later
   [[ -n "$output" ]]
 }
+
+# === US3-specific tests ===
+
+@test "US3: history options include deduplication" {
+  # Verify HIST_IGNORE_ALL_DUPS is set
+  run zsh -c "source lib/environment.zsh && [[ -o hist_ignore_all_dups ]] && echo 'set'"
+  [ "$status" -eq 0 ]
+  [[ "$output" == "set" ]]
+}
+
+@test "US3: history saved across sessions with SHARE_HISTORY" {
+  # Verify SHARE_HISTORY and INC_APPEND_HISTORY are set
+  run zsh -c "source lib/environment.zsh && [[ -o share_history ]] && [[ -o inc_append_history ]] && echo 'both set'"
+  [ "$status" -eq 0 ]
+  [[ "$output" == "both set" ]]
+}
+
+@test "US3: extended glob patterns enabled" {
+  # Verify EXTENDED_GLOB is set for patterns like **/*.txt
+  run zsh -c "source lib/environment.zsh && [[ -o extended_glob ]] && echo 'set'"
+  [ "$status" -eq 0 ]
+  [[ "$output" == "set" ]]
+}
+
+@test "US3: GLOB_DOTS enabled for dotfile matching" {
+  # Verify GLOB_DOTS is set
+  run zsh -c "source lib/environment.zsh && [[ -o glob_dots ]] && echo 'set'"
+  [ "$status" -eq 0 ]
+  [[ "$output" == "set" ]]
+}
+
+@test "US3: GREP_COLOR configured for colored output" {
+  # Verify GREP_COLOR is set
+  run zsh -c "source lib/environment.zsh && echo \$GREP_COLOR"
+  [ "$status" -eq 0 ]
+  [[ "$output" == "1;32" ]]
+}
+
+@test "US3: NO_BEEP option set" {
+  # Verify shell doesn't beep on errors
+  run zsh -c "source lib/environment.zsh && [[ -o no_beep ]] && echo 'set'"
+  [ "$status" -eq 0 ]
+  [[ "$output" == "set" ]]
+}
