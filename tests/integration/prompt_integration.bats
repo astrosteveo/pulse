@@ -10,15 +10,15 @@ setup() {
     export PULSE_DIR="${PULSE_TEST_HOME}/pulse"
     export PULSE_CACHE_DIR="${PULSE_TEST_HOME}/.cache/pulse"
     export HOME="${PULSE_TEST_HOME}/home"
-    
+
     mkdir -p "$PULSE_DIR"
     mkdir -p "$PULSE_CACHE_DIR"
     mkdir -p "$HOME"
-    
+
     # Copy pulse framework to test directory
     cp -r "${BATS_TEST_DIRNAME}/../../lib" "$PULSE_DIR/"
     cp "${BATS_TEST_DIRNAME}/../../pulse.zsh" "$PULSE_DIR/"
-    
+
     # Create minimal plugin engine mock
     cat > "$PULSE_DIR/lib/plugin-engine.zsh" << 'MOCK_EOF'
 pulse_plugins=()
@@ -26,7 +26,7 @@ _pulse_init_engine() { typeset -ga pulse_plugins; typeset -gA pulse_plugin_meta;
 _pulse_discover_plugins() { : }
 _pulse_load_stages() { : }
 MOCK_EOF
-    
+
     # Change to test home for relative paths
     cd "$PULSE_TEST_HOME"
 }
@@ -48,9 +48,9 @@ export PROMPT='custom> '
 source pulse/pulse.zsh
 echo "PROMPT=$PROMPT"
 TEST_EOF
-    
+
     output=$(zsh "$PULSE_TEST_HOME/test.zsh" 2>&1)
-    
+
     [[ "$output" =~ "PROMPT=custom> " ]]
 }
 
@@ -60,9 +60,9 @@ TEST_EOF
 source pulse/pulse.zsh
 echo "PROMPT=$PROMPT"
 TEST_EOF
-    
+
     output=$(zsh "$PULSE_TEST_HOME/test.zsh" 2>&1)
-    
+
     # Should contain %~ (Zsh directory expansion)
     [[ "$output" =~ %~ ]]
 }
@@ -73,9 +73,9 @@ TEST_EOF
 source pulse/pulse.zsh
 echo "PROMPT=$PROMPT"
 TEST_EOF
-    
+
     output=$(zsh "$PULSE_TEST_HOME/test.zsh" 2>&1)
-    
+
     # Should contain %# (% for user, # for root)
     [[ "$output" =~ "%#" ]]
 }
@@ -89,9 +89,9 @@ export PROMPT='plugin-prompt> '
 source pulse/pulse.zsh
 echo "PROMPT=$PROMPT"
 TEST_EOF
-    
+
     output=$(zsh "$PULSE_TEST_HOME/test.zsh" 2>&1)
-    
+
     # Plugin prompt should be preserved (not overwritten)
     [[ "$output" =~ "PROMPT=plugin-prompt> " ]]
 }
@@ -119,7 +119,7 @@ source pulse/pulse.zsh
 
 echo "All prompt tests passed"
 TEST_EOF
-    
+
     run zsh "$PULSE_TEST_HOME/test.zsh"
     [[ "$status" -eq 0 ]]
     [[ "$output" =~ "All prompt tests passed" ]]
@@ -133,9 +133,9 @@ source pulse/pulse.zsh
 echo "PS1=$PS1"
 echo "PROMPT=$PROMPT"
 TEST_EOF
-    
+
     output=$(zsh "$PULSE_TEST_HOME/test.zsh" 2>&1)
-    
+
     # PS1 should be unchanged
     [[ "$output" =~ "PS1=bash-style> " ]]
     # PROMPT should not be set (PS1 takes precedence)
@@ -148,9 +148,9 @@ TEST_EOF
 source pulse/pulse.zsh
 echo "LENGTH=${#PROMPT}"
 TEST_EOF
-    
+
     output=$(zsh "$PULSE_TEST_HOME/test.zsh" 2>&1)
-    
+
     # Extract length
     length=$(echo "$output" | grep -o 'LENGTH=[0-9]*' | cut -d= -f2)
     [[ $length -lt 50 ]]
@@ -163,9 +163,9 @@ export TERM=dumb
 source pulse/pulse.zsh
 echo "PROMPT=$PROMPT"
 TEST_EOF
-    
+
     output=$(zsh "$PULSE_TEST_HOME/test.zsh" 2>&1)
-    
+
     # Should still set prompt (plain text version)
     [[ "$output" =~ "PROMPT=%~ %#" ]]
 }
@@ -179,12 +179,12 @@ end=$(date +%s%N)
 elapsed=$(( (end - start) / 1000000 ))
 echo "prompt load time: ${elapsed}ms"
 TEST_EOF
-    
+
     output=$(zsh "$PULSE_TEST_HOME/test.zsh" 2>&1)
-    
+
     # Extract elapsed time
     elapsed=$(echo "$output" | grep -o 'prompt load time: [0-9]*ms' | grep -o '[0-9]*')
     echo "prompt load time: ${elapsed}ms"
-    
+
     [[ $elapsed -lt 100 ]]
 }
