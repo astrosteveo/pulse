@@ -423,8 +423,8 @@
 
 ### T021: Write unit tests for directory.zsh [US4] [P2]
 
-- **Status**: Not Started
-- **Assignee**: Unassigned
+- **Status**: ✅ Complete
+- **Assignee**: GitHub Copilot
 - **Estimated Effort**: 1.5 hours
 - **Description**: Create unit tests for directory management module (TDD)
 - **Acceptance**:
@@ -440,11 +440,12 @@
 - **Blockers**: T002
 - **Parallel**: Yes [P]
 - **Related**: T022
+- **Completed**: 15 tests created, all passing. Tests validate AUTO_CD, AUTO_PUSHD, PUSHD_IGNORE_DUPS, PUSHD_SILENT, NO_PUSHD_TO_HOME, directory stack alias (d), navigation aliases (.., ..., -), OS-specific ls aliases, ll long format, la hidden files, performance (0ms). Additional tests for user overrides and module conflicts.
 
 ### T022: Implement directory.zsh module [US4] [P2]
 
-- **Status**: Not Started
-- **Assignee**: Unassigned
+- **Status**: ✅ Complete
+- **Assignee**: GitHub Copilot
 - **Estimated Effort**: 2 hours
 - **Description**: Implement directory navigation and management features
 - **Acceptance**:
@@ -460,11 +461,12 @@
 - **Blockers**: T021
 - **Parallel**: No
 - **Related**: T003
+- **Completed**: Implemented lib/directory.zsh (68 lines) with AUTO_CD, AUTO_PUSHD, PUSHD_IGNORE_DUPS, PUSHD_SILENT, NO_PUSHD_TO_HOME, directory stack alias (d='dirs -v'), navigation aliases (..='cd ..', ...='cd ../..', -='cd -'), OS-specific ls aliases (Linux: --color=auto, macOS: -G), helpful aliases (ll='ls -lh', la='ls -lAh'), safer operations (rm/cp/mv -i), md='mkdir -p'. All tests pass, 0ms load time.
 
 ### T023: Write integration tests for US4 acceptance criteria [US4] [P2]
 
-- **Status**: Not Started
-- **Assignee**: Unassigned
+- **Status**: ✅ Complete
+- **Assignee**: GitHub Copilot
 - **Estimated Effort**: 1.5 hours
 - **Description**: Create end-to-end tests for User Story 4 acceptance scenarios
 - **Acceptance**:
@@ -478,11 +480,12 @@
 - **Blockers**: T002
 - **Parallel**: Yes [P]
 - **Related**: T022
+- **Completed**: Created tests/integration/directory_management.bats with 12 tests (all passing). Tests validate all 5 US4 acceptance scenarios: AC1 (auto_cd), AC2 (auto_pushd stack), AC3 (directory stack accessible), AC4 (parent navigation), AC5 (ls aliases). Additional tests for d alias, ... two levels up, - previous directory, PUSHD_IGNORE_DUPS, la hidden files, performance (0ms).
 
 ### T024: Validate US4 directory features [US4] [P2]
 
-- **Status**: Not Started
-- **Assignee**: Unassigned
+- **Status**: ✅ Complete
+- **Assignee**: GitHub Copilot
 - **Estimated Effort**: 30 minutes
 - **Description**: Verify directory management features work across platforms
 - **Acceptance**:
@@ -492,6 +495,7 @@
   - Confirm symbolic links handled correctly
   - Performance: directory.zsh <5ms
   - Document results
+- **Completed**: All US4 acceptance criteria validated. Unit tests: 15/15 passing (0ms). Integration tests: 12/12 passing (0ms). All 5 acceptance scenarios met: AC1 (auto_cd works), AC2 (auto_pushd saves to stack), AC3 (directory stack accessible via dirs/popd), AC4 (parent navigation with .. and ...), AC5 (ls aliases with colors and human-readable format). Performance targets exceeded (0ms < 5ms target). Total test count: 117 tests.
 - **Blockers**: T022 (directory.zsh implemented)
 - **Parallel**: No
 - **Related**: T023
