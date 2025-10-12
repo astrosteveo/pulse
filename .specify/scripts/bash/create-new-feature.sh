@@ -87,6 +87,15 @@ if [ -f "$TEMPLATE" ]; then cp "$TEMPLATE" "$SPEC_FILE"; else touch "$SPEC_FILE"
 # Set the SPECIFY_FEATURE environment variable for the current session
 export SPECIFY_FEATURE="$BRANCH_NAME"
 
+# Best-practice Git checkpoint (if in repo)
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    # shellcheck source=/dev/null
+    source "$SCRIPT_DIR/common.sh" || true
+    if type git_auto_commit >/dev/null 2>&1; then
+        git_auto_commit "feat(spec): bootstrap ${BRANCH_NAME} specification and checklist" "$SPEC_FILE"
+    fi
+fi
+
 if $JSON_MODE; then
     printf '{"BRANCH_NAME":"%s","SPEC_FILE":"%s","FEATURE_NUM":"%s"}\n' "$BRANCH_NAME" "$SPEC_FILE" "$FEATURE_NUM"
 else

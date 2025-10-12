@@ -19,21 +19,21 @@ get_current_branch() {
         echo "$SPECIFY_FEATURE"
         return
     fi
-    
+
     # Then check git if available
     if git rev-parse --abbrev-ref HEAD >/dev/null 2>&1; then
         git rev-parse --abbrev-ref HEAD
         return
     fi
-    
+
     # For non-git repos, try to find the latest feature directory
     local repo_root=$(get_repo_root)
     local specs_dir="$repo_root/specs"
-    
+
     if [[ -d "$specs_dir" ]]; then
         local latest_feature=""
         local highest=0
-        
+
         for dir in "$specs_dir"/*; do
             if [[ -d "$dir" ]]; then
                 local dirname=$(basename "$dir")
@@ -47,13 +47,13 @@ get_current_branch() {
                 fi
             fi
         done
-        
+
         if [[ -n "$latest_feature" ]]; then
             echo "$latest_feature"
             return
         fi
     fi
-    
+
     echo "main"  # Final fallback
 }
 
@@ -65,19 +65,19 @@ has_git() {
 check_feature_branch() {
     local branch="$1"
     local has_git_repo="$2"
-    
+
     # For non-git repos, we can't enforce branch naming but still provide output
     if [[ "$has_git_repo" != "true" ]]; then
         echo "[specify] Warning: Git repository not detected; skipped branch validation" >&2
         return 0
     fi
-    
+
     if [[ ! "$branch" =~ ^[0-9]{3}- ]]; then
         echo "ERROR: Not on a feature branch. Current branch: $branch" >&2
         echo "Feature branches should be named like: 001-feature-name" >&2
         return 1
     fi
-    
+
     return 0
 }
 
@@ -87,13 +87,13 @@ get_feature_paths() {
     local repo_root=$(get_repo_root)
     local current_branch=$(get_current_branch)
     local has_git_repo="false"
-    
+
     if has_git; then
         has_git_repo="true"
     fi
-    
+
     local feature_dir=$(get_feature_dir "$repo_root" "$current_branch")
-    
+
     cat <<EOF
 REPO_ROOT='$repo_root'
 CURRENT_BRANCH='$current_branch'
@@ -111,3 +111,28 @@ EOF
 
 check_file() { [[ -f "$1" ]] && echo "  ✓ $2" || echo "  ✗ $2"; }
 check_dir() { [[ -d "$1" && -n $(ls -A "$1" 2>/dev/null) ]] && echo "  ✓ $2" || echo "  ✗ $2"; }
+
+# Return 0 if inside a git repo
+in_git_repo() {
+    git rev-parse --git-dir >/dev/null 2>&1
+}
+
+# Auto-commit helper: stages provided paths (or all) and commits if changes exist
+git_auto_commit() {
+    local message="$1"; shift || true
+    in_git_repo || return 0
+
+    if [[ "$#" -gt 0 ]]; then
+        git add -- "$@" >/dev/null 2>&1 || true
+    else
+        git add -A >/dev/null 2>&1 || true
+    fi
+
+    # Commit only if there are staged changes
+    if ! git diff --cached --quiet --ignore-submodules --; then
+        git commit -m "$message" >/dev/null 2>&1 || true
+        echo "[specify] git commit: $message"
+    else
+        echo "[specify] No changes to commit"
+    fi
+}

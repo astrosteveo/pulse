@@ -1,35 +1,15 @@
 <!--
-SYNC IMPACT REPORT - Constitution v1.0.0
-═════════════════════════════════════════════════════════════════════════════
-
-VERSION CHANGE: NEW → 1.0.0
-BUMP RATIONALE: Initial constitution establishing core principles for Pulse
-
-ADDED PRINCIPLES:
-  • I. Radical Simplicity - Every line of code is a liability
-  • II. Quality Over Features - High standards before new functionality
-  • III. Test-Driven Reliability - All code must be tested (NON-NEGOTIABLE)
-  • IV. Consistent User Experience - Predictable, intuitive behavior
-  • V. Zero Configuration - Works out of the box
-
-ADDED SECTIONS:
-  • Code Standards - Establishes shell scripting quality requirements
-  • Development Workflow - Defines contribution and review process
-
-TEMPLATES REQUIRING UPDATES:
-  ✅ plan-template.md - Updated with Pulse-specific constitution checks
-  ✅ spec-template.md - No changes needed (technology-agnostic)
-  ✅ tasks-template.md - Updated with Pulse testing requirements
-  ⚠️  checklist-template.md - Review recommended for Pulse workflow
-  ⚠️  agent-file-template.md - Review recommended for Pulse context
-
-FOLLOW-UP TODOS:
-  • Validate all lib/*.zsh files against Code Standards section
-  • Create testing framework for Zsh shell code
-  • Document contribution guidelines in CONTRIBUTING.md
-  • Establish performance benchmarks for shell startup time
-
-═════════════════════════════════════════════════════════════════════════════
+SYNC IMPACT REPORT
+==================
+Version Change: TEMPLATE → 1.0.0
+Modified Principles: All principles defined from template
+Added Sections: Performance Standards, Development Workflow
+Removed Sections: None (template placeholders replaced)
+Templates Requiring Updates:
+  ✅ .specify/templates/plan-template.md (verified - already references these principles)
+  ✅ .specify/templates/spec-template.md (verified - compatible)
+  ✅ .specify/templates/tasks-template.md (verified - compatible)
+Follow-up TODOs: None
 -->
 
 # Pulse Constitution
@@ -38,136 +18,115 @@ FOLLOW-UP TODOS:
 
 ### I. Radical Simplicity
 
-Every line of code is a liability. Pulse fights complexity at every level:
+Every feature must serve 90% of users—edge cases are explicitly excluded. No simpler alternative can exist to achieve the same goal. Features require documented justification proving they are essential, not convenient. Deletion is considered before addition: complexity is a liability, and every line of code must justify its existence.
 
-- **Minimal by default**: Include only essential functionality
-- **No bloat**: Remove features that don't serve 90% of users
-- **Question every addition**: New features must justify their existence
-- **Prefer deletion**: Removing code is better than adding code
-- **YAGNI strictly enforced**: You Aren't Gonna Need It—build only what users need now
+**Validation Checklist**:
 
-**Rationale**: Complexity is the enemy of reliability, maintainability, and
-performance. A smaller codebase is easier to understand, test, and debug.
+- [ ] Feature serves 90% of users (not edge case functionality)
+- [ ] No simpler alternative exists to achieve the same goal
+- [ ] Feature justification documented (why it's essential)
+- [ ] Deletion considered before addition
 
 ### II. Quality Over Features
 
-High code quality is non-negotiable. Standards come before capabilities:
+Code style MUST follow Zsh conventions and idioms. Error handling strategy is defined before implementation begins. Documentation is mandatory: inline comments for complex logic, user-facing documentation for all features. Performance impact is assessed and measured—no feature ships without understanding its cost.
 
-- **Readable code**: Clear variable names, logical structure, helpful comments
-- **Consistent style**: Follow established Zsh conventions and formatting
-- **Proper error handling**: Fail gracefully with informative messages
-- **Documentation required**: Every function must explain its purpose and usage
-- **Performance matters**: Profile before merging; no performance regressions
+**Validation Checklist**:
 
-**Rationale**: Users depend on Pulse as foundational infrastructure. Quality
-issues cascade across their entire shell environment.
+- [ ] Code style follows Zsh conventions
+- [ ] Error handling strategy defined
+- [ ] Documentation approach specified
+- [ ] Performance impact assessed
 
 ### III. Test-Driven Reliability (NON-NEGOTIABLE)
 
-All code changes require tests. No exceptions:
+Test-Driven Development is MANDATORY. Tests are written first, user scenarios are validated before implementation, and the Red-Green-Refactor cycle is strictly enforced. Integration tests cover plugin loading workflows, cross-platform compatibility (Linux, macOS, BSD), and interaction with the Zsh ecosystem. Coverage targets are 100% for core functionality, 90% for utilities.
 
-- **Tests first**: Write tests that fail, then make them pass
-- **Coverage mandatory**: Every function must have test coverage
-- **Integration tests**: Critical workflows must be tested end-to-end
-- **Real-world scenarios**: Test with actual Zsh environments
-- **Continuous validation**: Tests run on every commit
+**Validation Checklist**:
 
-**Rationale**: Shell code is notoriously fragile across different environments,
-Zsh versions, and terminal configurations. Comprehensive testing is the only
-way to ensure reliability.
+- [ ] Test strategy defined (unit, integration, real-world scenarios)
+- [ ] Test environment requirements documented
+- [ ] Coverage targets specified
+- [ ] Tests will be written BEFORE implementation (TDD cycle enforced)
+
+**Enforcement**: No implementation task begins until tests are written. Pull requests without tests are rejected without review.
 
 ### IV. Consistent User Experience
 
-Pulse must be predictable and intuitive:
+Default behavior is documented and sensible—users encounter no surprises. Breaking changes require a major version bump with documented migration path. User feedback mechanisms are defined: clear error messages, optional debug mode, and graceful degradation when errors occur. Backward compatibility is maintained unless explicitly justified.
 
-- **Intelligent defaults**: Work correctly without configuration
-- **Consistent behavior**: Similar operations use similar patterns
-- **Clear feedback**: Users understand what's happening and why
-- **No surprises**: Behavior changes require major version bumps
-- **Backward compatibility**: Breaking changes only when absolutely necessary
+**Validation Checklist**:
 
-**Rationale**: Users integrate Pulse into their daily workflow. Unpredictable
-behavior or breaking changes disrupt productivity and erode trust.
+- [ ] Default behavior documented and sensible
+- [ ] No breaking changes OR major version bump justified
+- [ ] User feedback approach specified (error messages, logging, debug mode)
+- [ ] Backward compatibility addressed
 
 ### V. Zero Configuration
 
-Pulse works out of the box:
+Features work immediately without configuration—smart defaults handle common cases. Configuration is only introduced when unavoidable, and such cases require explicit justification. Auto-detection strategies discover user environment and preferences. Configuration options are minimized: each option adds complexity that must be justified.
 
-- **Functional immediately**: No setup steps required
-- **Smart detection**: Automatically discover and configure environment
-- **Sensible defaults**: Pre-configured for common use cases
-- **Optional customization**: Advanced users can tune, but don't have to
-- **Self-healing**: Recover gracefully from configuration issues
+**Validation Checklist**:
 
-**Rationale**: Configuration is complexity. Every configuration option is a
-decision users must make and a potential point of failure.
+- [ ] Works without configuration OR configuration unavoidable (justify)
+- [ ] Smart defaults defined
+- [ ] Auto-detection strategy specified
+- [ ] Configuration options minimized
 
-## Code Standards
+## Performance Standards
 
-### Shell Scripting Requirements
-
-- **POSIX compatibility**: Use Zsh features only when necessary
-- **Shellcheck compliance**: All scripts pass shellcheck with no warnings
-- **Quoting discipline**: Always quote variables unless splitting intended
-- **Error propagation**: Use `set -e` equivalent or explicit error checks
-- **Subshell awareness**: Understand and document variable scope
-
-### File Organization
-
-- **Module structure**: Each lib/*.zsh file has single, clear purpose
-- **Load order matters**: Document dependencies and load sequence
-- **Namespacing**: Prefix functions to avoid conflicts (pulse_*)
-- **Lazy loading**: Defer expensive operations until needed
+- **Framework overhead**: MUST be less than 50ms total (all modules combined)
+- **Per-module overhead**: MUST be less than 30ms for any single framework module
+- **Completion menu response**: MUST appear within 100ms after Tab press
+- **Shell startup**: Target total startup time is less than 500ms with 15 typical plugins
+- **Measurement**: All performance claims MUST be verified with benchmarks on reference hardware (documented in test artifacts)
 
 ## Development Workflow
 
-### Contribution Process
+### Constitution Gate
 
-1. **Discuss first**: Open issue before significant changes
-2. **Branch per feature**: Use descriptive branch names
-3. **Tests included**: Every PR includes relevant tests
-4. **Documentation updated**: Code and README stay in sync
-5. **Review required**: All changes reviewed before merge
+Every feature MUST pass the constitution check before Phase 0 (research) begins. The check is re-validated after Phase 1 (design). Features failing the check are rejected or redesigned until compliant.
 
-### Quality Gates
+### Test-First Workflow
 
-- All tests pass
-- Shellcheck shows no warnings
-- No performance regression measured
-- Documentation complete
-- Constitution compliance verified
+1. **Test Writing**: Unit and integration tests written based on specification
+2. **Validation**: Tests reviewed and approved (confirm they test the right behavior)
+3. **Red Phase**: Tests run and fail (expected—no implementation yet)
+4. **Implementation**: Code written to make tests pass
+5. **Green Phase**: Tests run and pass
+6. **Refactor Phase**: Code improved while maintaining passing tests
 
-### Review Checklist
+### Error Handling
 
-- Does this add unnecessary complexity?
-- Could this be simpler?
-- Are tests comprehensive?
-- Is error handling robust?
-- Does this maintain backward compatibility?
+- Graceful degradation is required: one module or plugin failure MUST NOT break the entire shell
+- Clear error messages MUST include actionable guidance for users
+- Debug mode (PULSE_DEBUG environment variable) MUST be supported for troubleshooting
+- All error paths MUST be tested
+
+### Code Review
+
+- Every change MUST be reviewed for constitution compliance
+- Complexity MUST be justified against the Radical Simplicity principle
+- Performance impact MUST be measured if code touches the loading pipeline
+- Test coverage MUST meet targets (100% core, 90% utilities)
 
 ## Governance
 
-This constitution supersedes all other development practices and guidelines.
+This constitution supersedes all other development practices. When in doubt, principles take precedence over convenience.
 
-**Amendment Process**:
+### Amendments
 
-1. Propose change via issue with detailed rationale
-2. Community discussion period (minimum 7 days)
-3. Approval requires consensus from maintainers
-4. Version bump follows semantic versioning
-5. Update all dependent templates and documentation
+Amendments require:
 
-**Compliance**:
+1. **Documentation**: Proposed change with rationale
+2. **Impact Assessment**: Review of affected code, tests, and documentation
+3. **Version Bump**: Semantic versioning applied (MAJOR for principle changes, MINOR for additions, PATCH for clarifications)
+4. **Migration Plan**: If changes affect existing code, migration strategy documented
 
-- All pull requests must be reviewed for constitutional compliance
-- Any complexity must be explicitly justified in code or PR description
-- Violations block merge until resolved or exception granted
-- Regular audits ensure ongoing alignment with principles
+### Enforcement
 
-**Versioning Policy**:
+- All pull requests MUST pass constitution validation
+- Features adding complexity MUST justify necessity
+- Agent guidance file (`.github/copilot-instructions.md`) reflects current constitution state
 
-- **MAJOR**: Breaking changes to principles or governance
-- **MINOR**: New principle added or significant expansion
-- **PATCH**: Clarifications, typos, non-semantic refinements
-
-**Version**: 1.0.0 | **Ratified**: 2025-10-10 | **Last Amended**: 2025-10-10
+**Version**: 1.0.0 | **Ratified**: 2025-10-11 | **Last Amended**: 2025-10-11

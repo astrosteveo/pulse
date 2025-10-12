@@ -85,16 +85,16 @@ The tasks.md should be immediately executable - each task must be specific enoug
      - Endpoints/UI needed for that story
      - If tests requested: Tests specific to that story
    - Mark story dependencies (most stories should be independent)
-   
+
 2. **From Contracts**:
    - Map each contract/endpoint → to the user story it serves
    - If tests requested: Each contract → contract test task [P] before implementation in that story's phase
-   
+
 3. **From Data Model**:
    - Map each entity → to the user story(ies) that need it
    - If entity serves multiple stories: Put in earliest story or Setup phase
    - Relationships → service layer tasks in appropriate story phase
-   
+
 4. **From Setup/Infrastructure**:
    - Shared infrastructure → Setup phase (Phase 1)
    - Foundational/blocking tasks → Foundational phase (Phase 2)
@@ -109,3 +109,14 @@ The tasks.md should be immediately executable - each task must be specific enoug
      - Within each story: Tests (if requested) → Models → Services → Endpoints → Integration
    - Final Phase: Polish & Cross-Cutting Concerns
    - Each user story phase should be a complete, independently testable increment
+
+### Git Checkpoint
+
+- After writing `tasks.md`: `chore(tasks): add executable task list`
+
+## Next Step (Guided Mode)
+
+```text
+/speckit.analyze
+/speckit.checkpoint "Tasks generated"
+```

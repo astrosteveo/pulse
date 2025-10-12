@@ -9,7 +9,7 @@ setup() {
   export PULSE_TEST_DIR="${BATS_TEST_DIRNAME}/../fixtures"
   export PULSE_DIR="${PULSE_TEST_DIR}/pulse_home"
   export PULSE_CACHE_DIR="${PULSE_TEST_DIR}/pulse_cache"
-  
+
   # Create temporary test directory
   TEST_TMPDIR="$(mktemp -d)"
   export PULSE_DIR="${TEST_TMPDIR}/pulse_home"
@@ -38,7 +38,7 @@ EOF
 
   # Run the script
   run zsh -c "cd ${BATS_TEST_DIRNAME}/../.. && source ${TEST_TMPDIR}/test_load_order.zsh"
-  
+
   # Check that modules loaded (implementation will add this tracking)
   # For now, just verify pulse.zsh doesn't error
   [ "$status" -eq 0 ]
@@ -100,10 +100,10 @@ EOF
 @test "PULSE_DEBUG shows timing information" {
   # Enable debug mode
   export PULSE_DEBUG=1
-  
+
   # Source pulse and capture output
   run zsh -c "cd ${BATS_TEST_DIRNAME}/../.. && source pulse.zsh 2>&1"
-  
+
   [ "$status" -eq 0 ]
   # Check for debug output (implementation will add timing info)
   # For now, just verify it doesn't error with debug enabled
@@ -132,7 +132,7 @@ fi
 EOF
 
   run zsh -c "cd ${BATS_TEST_DIRNAME}/../.. && source ${TEST_TMPDIR}/test_timing.zsh"
-  
+
   # Skip timing check for now - will enforce once implementation is optimized
   [ "$status" -eq 0 ] || skip "Timing optimization pending"
 }
@@ -140,7 +140,7 @@ EOF
 @test "module loading works with existing plugin engine" {
   # Test that framework modules load after plugin engine
   run zsh -c "cd ${BATS_TEST_DIRNAME}/../.. && source pulse.zsh && echo 'loaded'"
-  
+
   [ "$status" -eq 0 ]
   [[ "${output}" =~ "loaded" ]]
 }
