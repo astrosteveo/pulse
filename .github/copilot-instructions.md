@@ -1,6 +1,6 @@
 # pulse Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2025-10-11
+Auto-generated from all feature plans. Last updated: 2025-10-12
 
 ## Constitution
 
@@ -38,8 +38,10 @@ tests/
 Zsh (compatible with Zsh 5.0+): Follow standard conventions
 
 ## Recent Changes
-- 002-create-the-zsh: Added Zsh (compatible with Zsh 5.0+) + Zsh builtins (compinit, bindkey, setopt, zstyle), POSIX utilities (ls, less)
-- 001-build-a-zsh: Added Zsh (compatible with Zsh 5.0+) + Zsh builtins, POSIX utilities, Git (for plugin management)
+- 002-create-the-zsh: ✅ US1 Complete (Intelligent Completion System) - 12/40 tasks (30%)
+- 002-create-the-zsh: Added environment, compinit, completions modules with 42 tests
+- 002-create-the-zsh: Performance validated - all targets exceeded (sub-millisecond)
+- 001-build-a-zsh: ✅ Complete - Plugin engine with 5-stage loading pipeline
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->
