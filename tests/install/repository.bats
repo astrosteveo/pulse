@@ -17,15 +17,17 @@ teardown() {
   # Mock git clone
   git() {
     if [ "$1" = "clone" ]; then
+      # Find target directory (last argument)
+      local target_dir="${@: -1}"
       # Simulate successful clone
-      mkdir -p "$4/.git"
-      echo "Cloning into '$4'..."
+      mkdir -p "$target_dir/.git"
+      echo "Cloning into '$target_dir'..."
       return 0
     fi
     command git "$@"
   }
   export -f git
-  
+
   run clone_or_update_repo "https://github.com/test/repo.git" "$PULSE_INSTALL_DIR"
   assert_success
   assert_dir_exists "$PULSE_INSTALL_DIR/.git"
@@ -34,7 +36,7 @@ teardown() {
 @test "clone_or_update_repo updates existing repository" {
   # Create mock existing installation
   mkdir -p "$PULSE_INSTALL_DIR/.git"
-  
+
   # Mock git pull
   git() {
     if [ "$1" = "-C" ] && [ "$3" = "pull" ]; then
@@ -44,7 +46,7 @@ teardown() {
     command git "$@"
   }
   export -f git
-  
+
   run clone_or_update_repo "https://github.com/test/repo.git" "$PULSE_INSTALL_DIR"
   assert_success
   assert_output --partial "up to date"
@@ -60,7 +62,7 @@ teardown() {
     command git "$@"
   }
   export -f git
-  
+
   run clone_or_update_repo "https://github.com/invalid/repo.git" "$PULSE_INSTALL_DIR"
   assert_failure
   [ "$status" -eq "$EXIT_DOWNLOAD_FAILED" ]
@@ -69,7 +71,7 @@ teardown() {
 @test "clone_or_update_repo fails on git pull error" {
   # Create mock existing installation
   mkdir -p "$PULSE_INSTALL_DIR/.git"
-  
+
   # Mock git pull failure
   git() {
     if [ "$1" = "-C" ] && [ "$3" = "pull" ]; then
@@ -79,7 +81,7 @@ teardown() {
     command git "$@"
   }
   export -f git
-  
+
   run clone_or_update_repo "https://github.com/test/repo.git" "$PULSE_INSTALL_DIR"
   assert_failure
   [ "$status" -eq "$EXIT_DOWNLOAD_FAILED" ]
@@ -89,17 +91,19 @@ teardown() {
   # Create directory without .git (corrupted state)
   mkdir -p "$PULSE_INSTALL_DIR"
   echo "some file" > "$PULSE_INSTALL_DIR/file.txt"
-  
+
   # Should detect and re-clone
   git() {
     if [ "$1" = "clone" ]; then
-      mkdir -p "$4/.git"
+      # Find target directory (last argument)
+      local target_dir="${@: -1}"
+      mkdir -p "$target_dir/.git"
       return 0
     fi
     command git "$@"
   }
   export -f git
-  
+
   run clone_or_update_repo "https://github.com/test/repo.git" "$PULSE_INSTALL_DIR"
   assert_success
 }

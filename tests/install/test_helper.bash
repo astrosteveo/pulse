@@ -145,7 +145,7 @@ assert_failure() {
 assert_output() {
   local flag="$1"
   local expected="$2"
-  
+
   if [ "$flag" = "--partial" ]; then
     if ! echo "$output" | grep -qF "$expected"; then
       echo "Expected output to contain: $expected"

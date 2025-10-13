@@ -104,7 +104,7 @@ print_success() {
 error_exit() {
   local message="$1"
   local exit_code="${2:-$EXIT_INSTALL_FAILED}"
-  
+
   print_error "$message"
   exit "$exit_code"
 }
@@ -120,33 +120,33 @@ check_zsh_version() {
     print_error "Zsh is not installed"
     return "$EXIT_PREREQ_FAILED"
   fi
-  
+
   # Get Zsh version (zsh command should work if it exists)
   local zsh_version
   if ! zsh_version=$(zsh --version 2>/dev/null | head -n1); then
     print_error "Zsh is not installed"
     return "$EXIT_PREREQ_FAILED"
   fi
-  
+
   # Extract major.minor version (e.g., "5.9" from "zsh 5.9 (x86_64-pc-linux-gnu)")
   local version_number
   version_number=$(echo "$zsh_version" | grep -oE '[0-9]+\.[0-9]+' | head -n1)
-  
+
   if [ -z "$version_number" ]; then
     print_error "Could not detect Zsh version"
     return "$EXIT_PREREQ_FAILED"
   fi
-  
+
   # Compare version (require 5.0+)
   local major minor
   major=$(echo "$version_number" | cut -d. -f1)
   minor=$(echo "$version_number" | cut -d. -f2)
-  
+
   if [ "$major" -lt 5 ]; then
     print_error "Zsh 5.0 or higher required (found $version_number)"
     return "$EXIT_PREREQ_FAILED"
   fi
-  
+
   return "$EXIT_SUCCESS"
 }
 
@@ -156,14 +156,14 @@ check_git() {
     print_error "Git is not installed"
     return "$EXIT_PREREQ_FAILED"
   fi
-  
+
   return "$EXIT_SUCCESS"
 }
 
 # Check write permissions for installation directory
 check_write_permissions() {
   local target_dir="$1"
-  
+
   # If directory exists, check if writable
   if [ -d "$target_dir" ]; then
     if [ ! -w "$target_dir" ]; then
@@ -174,12 +174,50 @@ check_write_permissions() {
     # Check if parent directory exists and is writable
     local parent_dir
     parent_dir=$(dirname "$target_dir")
-    
+
     if [ ! -d "$parent_dir" ] || [ ! -w "$parent_dir" ]; then
       print_error "No write permission for installation directory"
       return "$EXIT_PREREQ_FAILED"
     fi
   fi
+
+  return "$EXIT_SUCCESS"
+}
+
+#
+# Repository Management (T012)
+#
+
+# Clone or update the Pulse repository
+# Usage: clone_or_update_repo REPO_URL TARGET_DIR
+clone_or_update_repo() {
+  local repo_url="$1"
+  local target_dir="$2"
+  
+  # Check if directory exists and has .git
+  if [ -d "$target_dir/.git" ]; then
+    # Update existing installation
+    print_step "Updating existing Pulse installation..."
+    if ! git -C "$target_dir" pull --quiet 2>/dev/null; then
+      print_error "Failed to update repository"
+      return "$EXIT_DOWNLOAD_FAILED"
+    fi
+  else
+    # Fresh clone (or repair corrupted installation)
+    if [ -d "$target_dir" ]; then
+      print_step "Repairing corrupted installation..."
+      rm -rf "$target_dir"
+    else
+      print_step "Cloning Pulse repository..."
+    fi
+    
+    # Clone with depth 1 for faster download
+    if ! git clone --depth 1 --quiet "$repo_url" "$target_dir" 2>/dev/null; then
+      print_error "Failed to clone repository"
+      return "$EXIT_DOWNLOAD_FAILED"
+    fi
+  fi
   
   return "$EXIT_SUCCESS"
 }
+

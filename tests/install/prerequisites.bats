@@ -12,7 +12,7 @@ setup() {
   # Mock Zsh version check
   zsh() { echo "zsh 5.9 (x86_64-pc-linux-gnu)"; }
   export -f zsh
-  
+
   run check_zsh_version
   assert_success
 }
@@ -21,7 +21,7 @@ setup() {
   # Mock old Zsh version
   zsh() { echo "zsh 4.3.17 (x86_64-pc-linux-gnu)"; }
   export -f zsh
-  
+
   run check_zsh_version
   assert_failure
   assert_output --partial "Zsh 5.0"
@@ -48,14 +48,14 @@ setup() {
 @test "check_write_permissions succeeds for writable directory" {
   local test_dir="$BATS_TEST_TMPDIR/writable"
   mkdir -p "$test_dir"
-  
+
   run check_write_permissions "$test_dir"
   assert_success
 }
 
 @test "check_write_permissions fails for non-existent parent" {
   local test_dir="/nonexistent/path/pulse"
-  
+
   run check_write_permissions "$test_dir"
   assert_failure
   assert_output --partial "permission"
@@ -65,10 +65,10 @@ setup() {
   local test_dir="$BATS_TEST_TMPDIR/readonly"
   mkdir -p "$test_dir"
   chmod 444 "$test_dir"
-  
+
   run check_write_permissions "$test_dir/pulse"
   assert_failure
-  
+
   # Cleanup
   chmod 755 "$test_dir"
 }
