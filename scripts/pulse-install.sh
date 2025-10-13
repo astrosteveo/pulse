@@ -61,38 +61,38 @@ readonly SKIP_VERIFY="${PULSE_SKIP_VERIFY:-0}"
 
 # Print formatted header banner
 print_header() {
-  echo ""
-  echo "${COLOR_BOLD}${COLOR_BLUE}╔═══════════════════════════════════════╗${COLOR_RESET}"
-  echo "${COLOR_BOLD}${COLOR_BLUE}║                                       ║${COLOR_RESET}"
-  echo "${COLOR_BOLD}${COLOR_BLUE}║       Pulse Framework Installer       ║${COLOR_RESET}"
-  echo "${COLOR_BOLD}${COLOR_BLUE}║                                       ║${COLOR_RESET}"
-  echo "${COLOR_BOLD}${COLOR_BLUE}╚═══════════════════════════════════════╝${COLOR_RESET}"
-  echo ""
+  printf "\n"
+  printf "%b\n" "${COLOR_BOLD}${COLOR_BLUE}╔═══════════════════════════════════════╗${COLOR_RESET}"
+  printf "%b\n" "${COLOR_BOLD}${COLOR_BLUE}║                                       ║${COLOR_RESET}"
+  printf "%b\n" "${COLOR_BOLD}${COLOR_BLUE}║       Pulse Framework Installer       ║${COLOR_RESET}"
+  printf "%b\n" "${COLOR_BOLD}${COLOR_BLUE}║                                       ║${COLOR_RESET}"
+  printf "%b\n" "${COLOR_BOLD}${COLOR_BLUE}╚═══════════════════════════════════════╝${COLOR_RESET}"
+  printf "\n"
 }
 
 # Print a step with checkmark
 # Usage: print_step "Step description"
 print_step() {
   local message="$1"
-  echo "${COLOR_GREEN}✓${COLOR_RESET} ${message}"
+  printf "%b\n" "${COLOR_GREEN}✓${COLOR_RESET} ${message}"
 }
 
 # Print an error message with error marker
 # Usage: print_error "Error description"
 print_error() {
   local message="$1"
-  echo "${COLOR_RED}✗${COLOR_RESET} ${message}" >&2
+  printf "%b\n" "${COLOR_RED}✗${COLOR_RESET} ${message}" >&2
 }
 
 # Print success completion banner
 print_success() {
-  echo ""
-  echo "${COLOR_BOLD}${COLOR_GREEN}╔═══════════════════════════════════════╗${COLOR_RESET}"
-  echo "${COLOR_BOLD}${COLOR_GREEN}║                                       ║${COLOR_RESET}"
-  echo "${COLOR_BOLD}${COLOR_GREEN}║   Installation completed successfully! ║${COLOR_RESET}"
-  echo "${COLOR_BOLD}${COLOR_GREEN}║                                       ║${COLOR_RESET}"
-  echo "${COLOR_BOLD}${COLOR_GREEN}╚═══════════════════════════════════════╝${COLOR_RESET}"
-  echo ""
+  printf "\n"
+  printf "%b\n" "${COLOR_BOLD}${COLOR_GREEN}╔═══════════════════════════════════════╗${COLOR_RESET}"
+  printf "%b\n" "${COLOR_BOLD}${COLOR_GREEN}║                                       ║${COLOR_RESET}"
+  printf "%b\n" "${COLOR_BOLD}${COLOR_GREEN}║   Installation completed successfully! ║${COLOR_RESET}"
+  printf "%b\n" "${COLOR_BOLD}${COLOR_GREEN}║                                       ║${COLOR_RESET}"
+  printf "%b\n" "${COLOR_BOLD}${COLOR_GREEN}╚═══════════════════════════════════════╝${COLOR_RESET}"
+  printf "\n"
 }
 
 #
