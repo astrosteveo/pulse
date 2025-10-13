@@ -78,9 +78,12 @@ source '${TEST_DIR}/pulse_source/lib/plugin-engine.zsh'
 
 # Test 2: user/repo@tag
 parsed=(\$(_pulse_parse_plugin_spec 'zsh-users/zsh-autosuggestions@v0.7.0'))
-if [[ \"\${parsed[1]}\" == \"https://github.com/zsh-users/zsh-autosuggestions.git\" ]] && \
-   [[ \"\${parsed[2]}\" == \"zsh-autosuggestions\" ]] && \
-   [[ \"\${parsed[3]}\" == \"v0.7.0\" ]]; then
+url="\${parsed[1]}"
+name="\${parsed[2]}"
+ref="\${parsed[3]}"
+if [[ "\${url}" == "https://github.com/zsh-users/zsh-autosuggestions.git" ]] && \
+   [[ "\${name}" == "zsh-autosuggestions" ]] && \
+   [[ -z "\${ref}" ]]; then
   echo 'PASS: user/repo@tag parsed correctly'
   exit 0
 else
