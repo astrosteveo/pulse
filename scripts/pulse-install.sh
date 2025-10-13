@@ -39,6 +39,22 @@ readonly EXIT_DOWNLOAD_FAILED=2
 readonly EXIT_INSTALL_FAILED=3
 readonly EXIT_CONFIG_FAILED=4
 
+# Environment variable parsing (T006)
+# Parse installation directory (supports XDG Base Directory Spec)
+INSTALL_DIR="${PULSE_INSTALL_DIR:-}"
+if [ -z "$INSTALL_DIR" ]; then
+  INSTALL_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/pulse"
+fi
+readonly INSTALL_DIR
+
+# Parse target .zshrc path
+readonly ZSHRC_PATH="${PULSE_ZSHRC:-$HOME/.zshrc}"
+
+# Parse boolean flags (1=true, 0=false)
+readonly SKIP_BACKUP="${PULSE_SKIP_BACKUP:-0}"
+readonly DEBUG="${PULSE_DEBUG:-0}"
+readonly SKIP_VERIFY="${PULSE_SKIP_VERIFY:-0}"
+
 #
 # Output Formatting Functions (T004)
 #
