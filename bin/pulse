@@ -173,18 +173,18 @@ pulse_cmd_list() {
     [[ ! -d "$plugin_dir" ]] && continue
 
     local name="${plugin_dir:t}"
-    local status="local"
+    local plugin_status="local"
     local version=""
 
     if [[ -d "$plugin_dir/.git" ]]; then
       cd "$plugin_dir"
-      status="git"
+      plugin_status="git"
       # Get current branch or tag
       version=$(git describe --tags --exact-match 2>/dev/null || git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
       cd - >/dev/null
     fi
 
-    printf "  • %-30s (%s: %s)\n" "$name" "$status" "$version"
+    printf "  • %-30s (%s: %s)\n" "$name" "$plugin_status" "$version"
   done
 }
 
