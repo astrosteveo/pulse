@@ -120,3 +120,45 @@ count_in_file() {
   local file="$2"
   grep -c "$string" "$file" 2>/dev/null || echo "0"
 }
+
+# Bats assertion helpers (minimal implementations for T007.5)
+
+# Assert command succeeded (exit code 0)
+assert_success() {
+  if [ "$status" -ne 0 ]; then
+    echo "Expected success (exit 0) but got exit code $status"
+    echo "Output: $output"
+    return 1
+  fi
+}
+
+# Assert command failed (exit code != 0)
+assert_failure() {
+  if [ "$status" -eq 0 ]; then
+    echo "Expected failure (exit != 0) but got success"
+    echo "Output: $output"
+    return 1
+  fi
+}
+
+# Assert output contains string
+assert_output() {
+  local flag="$1"
+  local expected="$2"
+  
+  if [ "$flag" = "--partial" ]; then
+    if ! echo "$output" | grep -qF "$expected"; then
+      echo "Expected output to contain: $expected"
+      echo "Got: $output"
+      return 1
+    fi
+  else
+    # Exact match
+    expected="$flag"
+    if [ "$output" != "$expected" ]; then
+      echo "Expected exact output: $expected"
+      echo "Got: $output"
+      return 1
+    fi
+  fi
+}
