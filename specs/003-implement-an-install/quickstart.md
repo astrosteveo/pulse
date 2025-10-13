@@ -1,7 +1,7 @@
 # Quickstart: Pulse Zero-Config Installer
 
-**Feature**: 003-implement-an-install  
-**Date**: 2025-10-12  
+**Feature**: 003-implement-an-install
+**Date**: 2025-10-12
 **Audience**: Developers implementing the installer script
 
 ## Purpose

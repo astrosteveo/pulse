@@ -1,7 +1,7 @@
 # Installer Behavior Contract
 
-**Feature**: 003-implement-an-install  
-**Date**: 2025-10-12  
+**Feature**: 003-implement-an-install
+**Date**: 2025-10-12
 **Purpose**: Define the formal behavioral contract for the Pulse installer script
 
 ## Overview

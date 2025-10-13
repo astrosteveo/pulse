@@ -1,23 +1,25 @@
 # Task List: Pulse Zero-Config Install Script
 
-**Feature**: 003-implement-an-install  
-**Branch**: `003-implement-an-install`  
+**Feature**: 003-implement-an-install
+**Branch**: `003-implement-an-install`
 **Generated**: 2025-10-12
 
 ## Overview
 
 This task list breaks down the installer implementation into executable units organized by user story priority. Following Test-Driven Development (TDD), tests are written before implementation for each story.
 
-**Total Tasks**: 27  
-**User Stories**: 3 (P1, P2, P3)  
-**Parallel Opportunities**: 8 tasks marked [P]  
+**Total Tasks**: 29 (27 original + 2 foundation TDD tasks added during remediation)
+**User Stories**: 3 (P1, P2, P3)
+**Parallel Opportunities**: 8 tasks marked [P]
 **Estimated Delivery**: 3 phases (MVP = Phase 3 only)
+
+**Remediation Note**: Tasks T003.5 and T007.5 added to enforce NON-NEGOTIABLE TDD requirement from constitution for foundation utilities.
 
 ---
 
 ## Implementation Strategy
 
-**MVP Scope**: Phase 3 only (User Story 1 - One Command Install)  
+**MVP Scope**: Phase 3 only (User Story 1 - One Command Install)
 Delivers core value: working single-command installer for fresh installs.
 
 **Incremental Delivery**:
@@ -37,7 +39,7 @@ Foundation for all development work.
 
 ### T001: Create project structure [P]
 
-**Story**: Setup  
+**Story**: Setup
 **File**: `scripts/pulse-install.sh`, `docs/install/`, `tests/install/`
 
 ```bash
@@ -59,7 +61,7 @@ chmod +x scripts/pulse-install.sh
 
 ### T002: Set up bats-core test framework [P]
 
-**Story**: Setup  
+**Story**: Setup
 **File**: `tests/install/test_helper.bash`
 
 Install bats-core (if not present) and create test helper with common fixtures:
@@ -84,7 +86,7 @@ teardown_test_environment() {
 
 ### T003: Configure CI workflow (optional) [P]
 
-**Story**: Setup  
+**Story**: Setup
 **File**: `.github/workflows/install.yml`
 
 GitHub Actions workflow to run installer tests in container:
@@ -110,9 +112,54 @@ jobs:
 
 Core utilities needed by all user stories.
 
+### T003.5: [Foundation] Write tests for output formatting functions
+
+**Story**: Foundation TDD
+**File**: `tests/install/foundation.bats`
+
+**TDD**: Test First (NON-NEGOTIABLE per Constitution)
+
+```bash
+@test "print_header outputs formatted header" {
+  source scripts/pulse-install.sh
+  run print_header
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "Pulse" ]]
+}
+
+@test "print_step outputs checkmark and step text" {
+  source scripts/pulse-install.sh
+  run print_step "Test step"
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "✓" ]]
+  [[ "$output" =~ "Test step" ]]
+}
+
+@test "print_error outputs error marker and text" {
+  source scripts/pulse-install.sh
+  run print_error "Test error"
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "✗" ]]
+  [[ "$output" =~ "Test error" ]]
+}
+
+@test "print_success outputs success banner" {
+  source scripts/pulse-install.sh
+  run print_success
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "Success" ]]
+}
+```
+
+**Acceptance**: Tests fail (Red phase - no implementation yet).
+
+**Dependencies**: T002
+
+---
+
 ### T004: Implement output formatting functions
 
-**Story**: Foundational  
+**Story**: Foundational
 **File**: `scripts/pulse-install.sh`
 
 Create functions for consistent output (per installer-behavior.md contract):
@@ -124,15 +171,15 @@ print_error() { ... }   # [✗] error text
 print_success() { ... } # Success banner
 ```
 
-**Acceptance**: Functions produce formatted output matching contract examples.
+**Acceptance**: Functions produce formatted output matching contract examples; T003.5 tests pass (Green phase).
 
-**Dependencies**: T001
+**Dependencies**: T003.5
 
 ---
 
 ### T005: Implement exit code handling
 
-**Story**: Foundational  
+**Story**: Foundational
 **File**: `scripts/pulse-install.sh`
 
 Define exit codes and error function (per installer-behavior.md):
@@ -161,7 +208,7 @@ error_exit() {
 
 ### T006: Implement environment variable parsing
 
-**Story**: Foundational  
+**Story**: Foundational
 **File**: `scripts/pulse-install.sh`
 
 Parse optional environment variables (per installer-behavior.md):
@@ -188,9 +235,49 @@ PULSE_SKIP_VERIFY="${PULSE_SKIP_VERIFY:-false}"
 
 ---
 
+### T007.5: [Foundation] Write tests for prerequisite check functions
+
+**Story**: Foundation TDD
+**File**: `tests/install/foundation.bats`
+
+**TDD**: Test First (NON-NEGOTIABLE per Constitution)
+
+```bash
+@test "check_zsh_version succeeds with Zsh 5.0+" {
+  source scripts/pulse-install.sh
+  run check_zsh_version
+  [ "$status" -eq 0 ]
+}
+
+@test "check_git succeeds when git available" {
+  source scripts/pulse-install.sh
+  run check_git
+  [ "$status" -eq 0 ]
+}
+
+@test "check_write_permissions succeeds for writable directory" {
+  source scripts/pulse-install.sh
+  mkdir -p "$TEST_HOME/writable"
+  run check_write_permissions "$TEST_HOME/writable"
+  [ "$status" -eq 0 ]
+}
+
+@test "check_write_permissions fails for unwritable directory" {
+  source scripts/pulse-install.sh
+  run check_write_permissions "/root/unwritable"
+  [ "$status" -ne 0 ]
+}
+```
+
+**Acceptance**: Tests fail (Red phase - no implementation yet).
+
+**Dependencies**: T002
+
+---
+
 ### T007: [US1] Write test - Fresh installation succeeds
 
-**Story**: US1  
+**Story**: US1
 **File**: `tests/install/fresh_install.bats`
 
 **TDD**: Test First
@@ -227,7 +314,7 @@ PULSE_SKIP_VERIFY="${PULSE_SKIP_VERIFY:-false}"
 
 ### T008: [US1] Implement Zsh version check [P]
 
-**Story**: US1  
+**Story**: US1
 **File**: `scripts/pulse-install.sh`
 
 ```bash
@@ -235,23 +322,23 @@ check_zsh_version() {
   if ! command -v zsh >/dev/null 2>&1; then
     return 1
   fi
-  
+
   local version=$(zsh --version | grep -oE '[0-9]+\.[0-9]+' | head -1)
   local major=$(echo "$version" | cut -d. -f1)
-  
+
   [ "$major" -ge 5 ]
 }
 ```
 
-**Acceptance**: Returns 0 for Zsh ≥5.0, non-zero otherwise.
+**Acceptance**: Returns 0 for Zsh ≥5.0, non-zero otherwise; T007.5 Zsh test passes (Green phase).
 
-**Dependencies**: T005
+**Dependencies**: T007.5
 
 ---
 
 ### T009: [US1] Implement Git availability check [P]
 
-**Story**: US1  
+**Story**: US1
 **File**: `scripts/pulse-install.sh`
 
 ```bash
@@ -260,25 +347,25 @@ check_git() {
 }
 ```
 
-**Acceptance**: Returns 0 if `git` found, non-zero otherwise.
+**Acceptance**: Returns 0 if `git` found, non-zero otherwise; T007.5 Git test passes (Green phase).
 
-**Dependencies**: T005
+**Dependencies**: T007.5
 
 ---
 
 ### T010: [US1] Implement write permissions check [P]
 
-**Story**: US1  
+**Story**: US1
 **File**: `scripts/pulse-install.sh`
 
 ```bash
 check_write_permissions() {
   local target_dir="$1"
   local parent_dir=$(dirname "$target_dir")
-  
+
   # Check if parent is writable
   [ -w "$parent_dir" ] || return 1
-  
+
   # If target exists, check if writable
   if [ -e "$target_dir" ]; then
     [ -w "$target_dir" ]
@@ -288,15 +375,15 @@ check_write_permissions() {
 }
 ```
 
-**Acceptance**: Returns 0 for writable locations, non-zero otherwise.
+**Acceptance**: Returns 0 for writable locations, non-zero otherwise; T007.5 write permission tests pass (Green phase).
 
-**Dependencies**: T005
+**Dependencies**: T007.5
 
 ---
 
 ### T011: [US1] Implement prerequisite validation orchestration
 
-**Story**: US1  
+**Story**: US1
 **File**: `scripts/pulse-install.sh`
 
 Orchestrate all prerequisite checks:
@@ -304,19 +391,19 @@ Orchestrate all prerequisite checks:
 ```bash
 validate_prerequisites() {
   print_step "Checking prerequisites..."
-  
+
   if ! check_zsh_version; then
     error_exit $EXIT_PREREQ_FAILED "Zsh 5.0+ required"
   fi
-  
+
   if ! check_git; then
     error_exit $EXIT_PREREQ_FAILED "Git not found. Install: brew/apt-get install git"
   fi
-  
+
   if ! check_write_permissions "$PULSE_INSTALL_DIR"; then
     error_exit $EXIT_PREREQ_FAILED "Cannot write to $PULSE_INSTALL_DIR"
   fi
-  
+
   print_step "Prerequisites validated"
 }
 ```
@@ -329,24 +416,24 @@ validate_prerequisites() {
 
 ### T012: [US1] Implement Pulse repository clone
 
-**Story**: US1  
+**Story**: US1
 **File**: `scripts/pulse-install.sh`
 
 ```bash
 install_pulse() {
   print_step "Installing Pulse..."
-  
+
   if [ -d "$PULSE_INSTALL_DIR/.git" ]; then
     cd "$PULSE_INSTALL_DIR"
     git pull origin main
   else
     git clone https://github.com/astrosteveo/pulse.git "$PULSE_INSTALL_DIR"
   fi
-  
+
   if [ $? -ne 0 ]; then
     error_exit $EXIT_INSTALL_FAILED "Failed to clone Pulse repository"
   fi
-  
+
   print_step "Installation complete: $PULSE_INSTALL_DIR"
 }
 ```
@@ -359,7 +446,7 @@ install_pulse() {
 
 ### T013: [US1] Implement .zshrc backup creation
 
-**Story**: US1  
+**Story**: US1
 **File**: `scripts/pulse-install.sh`
 
 ```bash
@@ -367,7 +454,7 @@ backup_zshrc() {
   if [ "$PULSE_SKIP_BACKUP" = "true" ]; then
     return 0
   fi
-  
+
   if [ -f "$PULSE_ZSHRC" ]; then
     local backup_path="${PULSE_ZSHRC}.pulse-backup-$(date +%Y%m%d-%H%M%S)"
     cp -p "$PULSE_ZSHRC" "$backup_path" || return 1
@@ -384,7 +471,7 @@ backup_zshrc() {
 
 ### T014: [US1] Implement Pulse block generation
 
-**Story**: US1  
+**Story**: US1
 **File**: `scripts/pulse-install.sh`
 
 Generate Pulse configuration block (per configuration-patching.md):
@@ -420,7 +507,7 @@ EOF
 
 ### T015: [US1] Implement .zshrc configuration patching
 
-**Story**: US1  
+**Story**: US1
 **File**: `scripts/pulse-install.sh`
 
 Patch `.zshrc` with Pulse block (per configuration-patching.md contract):
@@ -428,21 +515,21 @@ Patch `.zshrc` with Pulse block (per configuration-patching.md contract):
 ```bash
 patch_zshrc() {
   print_step "Configuring Zsh..."
-  
+
   backup_zshrc || error_exit $EXIT_CONFIG_FAILED "Backup failed"
-  
+
   # Check if block exists
   if grep -q "BEGIN Pulse Configuration" "$PULSE_ZSHRC" 2>/dev/null; then
     print_step "Pulse configuration already present"
     return 0
   fi
-  
+
   # Create if doesn't exist
   touch "$PULSE_ZSHRC"
-  
+
   # Append block
   generate_pulse_block >> "$PULSE_ZSHRC"
-  
+
   print_step "Added Pulse configuration block to $PULSE_ZSHRC"
 }
 ```
@@ -455,7 +542,7 @@ patch_zshrc() {
 
 ### T016: [US1] Implement configuration order validation
 
-**Story**: US1  
+**Story**: US1
 **File**: `scripts/pulse-install.sh`
 
 Validate plugins-before-source order (per patching contract SG4):
@@ -463,10 +550,10 @@ Validate plugins-before-source order (per patching contract SG4):
 ```bash
 validate_config_order() {
   local config_file="$1"
-  
+
   local plugins_line=$(grep -n "plugins=" "$config_file" | head -1 | cut -d: -f1)
   local source_line=$(grep -n "source.*pulse.zsh" "$config_file" | head -1 | cut -d: -f1)
-  
+
   [ -n "$plugins_line" ] || return 1
   [ -n "$source_line" ] || return 1
   [ "$plugins_line" -lt "$source_line" ]
@@ -481,7 +568,7 @@ validate_config_order() {
 
 ### T017: [US1] Implement post-install verification
 
-**Story**: US1  
+**Story**: US1
 **File**: `scripts/pulse-install.sh`
 
 Verify Pulse loads (per installer-behavior.md G5):
@@ -491,9 +578,9 @@ verify_installation() {
   if [ "$PULSE_SKIP_VERIFY" = "true" ]; then
     return 0
   fi
-  
+
   print_step "Verifying installation..."
-  
+
   # Test in subshell
   if zsh -c "source $PULSE_ZSHRC; echo PULSE_OK" 2>/dev/null | grep -q "PULSE_OK"; then
     print_step "Pulse loads successfully in test shell"
@@ -512,7 +599,7 @@ verify_installation() {
 
 ### T018: [US1] Implement main installer orchestration
 
-**Story**: US1  
+**Story**: US1
 **File**: `scripts/pulse-install.sh`
 
 Main entry point orchestrating all steps:
@@ -520,18 +607,18 @@ Main entry point orchestrating all steps:
 ```bash
 main() {
   print_header
-  
+
   validate_prerequisites
   install_pulse
   patch_zshrc
   validate_config_order "$PULSE_ZSHRC" || error_exit $EXIT_CONFIG_FAILED "Config order invalid"
   verify_installation
-  
+
   print_success
   echo "Next steps:"
   echo "  1. Restart your shell: exec zsh"
   echo "  2. Verify Pulse is loaded: echo \$PULSE_VERSION"
-  
+
   exit $EXIT_SUCCESS
 }
 
@@ -546,7 +633,7 @@ main "$@"
 
 ### T019: [US1] Run tests and verify Green phase
 
-**Story**: US1  
+**Story**: US1
 **File**: `tests/install/fresh_install.bats`
 
 **TDD**: Green Phase
@@ -563,7 +650,7 @@ bats tests/install/fresh_install.bats
 
 ### T020: [US1] Write installation quickstart documentation
 
-**Story**: US1  
+**Story**: US1
 **File**: `docs/install/QUICKSTART.md`
 
 User-facing documentation based on quickstart.md user journeys:
@@ -593,7 +680,7 @@ User-facing documentation based on quickstart.md user journeys:
 
 ### T021: [US2] Write test - Idempotent re-run
 
-**Story**: US2  
+**Story**: US2
 **File**: `tests/install/rerun_idempotent.bats`
 
 **TDD**: Test First
@@ -620,9 +707,28 @@ User-facing documentation based on quickstart.md user journeys:
   scripts/pulse-install.sh
   grep -q "zsh-users/zsh-autosuggestions" "$HOME/.zshrc"
 }
+
+@test "wrong configuration order is auto-fixed" {
+  scripts/pulse-install.sh
+  # Manually corrupt order (source before plugins)
+  sed -i '/BEGIN Pulse Configuration/,/END Pulse Configuration/{
+    /plugins=/h
+    /source.*pulse.zsh/H
+    /source.*pulse.zsh/{ g; p; }
+    /plugins=/d
+  }' "$HOME/.zshrc"
+
+  # Re-run installer
+  scripts/pulse-install.sh
+
+  # Verify order is now correct
+  PLUGINS_LINE=$(grep -n "plugins=" "$HOME/.zshrc" | head -1 | cut -d: -f1)
+  SOURCE_LINE=$(grep -n "source.*pulse.zsh" "$HOME/.zshrc" | head -1 | cut -d: -f1)
+  [ "$PLUGINS_LINE" -lt "$SOURCE_LINE" ]
+}
 ```
 
-**Acceptance**: Tests fail (Red phase - detection logic not implemented).
+**Acceptance**: Tests fail (Red phase - auto-fix logic not implemented).
 
 **Dependencies**: T002, T019
 
@@ -630,7 +736,7 @@ User-facing documentation based on quickstart.md user journeys:
 
 ### T022: [US2] Implement existing installation detection
 
-**Story**: US2  
+**Story**: US2
 **File**: `scripts/pulse-install.sh`
 
 Enhance `install_pulse` to detect and update existing installations:
@@ -638,7 +744,7 @@ Enhance `install_pulse` to detect and update existing installations:
 ```bash
 install_pulse() {
   print_step "Installing Pulse..."
-  
+
   if [ -d "$PULSE_INSTALL_DIR/.git" ]; then
     print_step "Existing installation detected: $PULSE_INSTALL_DIR"
     cd "$PULSE_INSTALL_DIR"
@@ -660,35 +766,68 @@ install_pulse() {
 
 ### T023: [US2] Enhance configuration patching for updates
 
-**Story**: US2  
+**Story**: US2
 **File**: `scripts/pulse-install.sh`
 
-Update `patch_zshrc` to preserve user modifications:
+Update `patch_zshrc` to preserve user modifications and **auto-fix wrong order (FR-004)**:
 
 ```bash
 patch_zshrc() {
   print_step "Configuring Zsh..."
-  
+
   backup_zshrc || error_exit $EXIT_CONFIG_FAILED "Backup failed"
-  
+
   if grep -q "BEGIN Pulse Configuration" "$PULSE_ZSHRC" 2>/dev/null; then
     print_step "Existing Pulse configuration detected"
-    validate_config_order "$PULSE_ZSHRC" && {
+
+    # Check if order is correct
+    if validate_config_order "$PULSE_ZSHRC"; then
       print_step "Configuration already correct (no changes needed)"
       return 0
-    }
-    # If order wrong, could fix here (future enhancement)
+    fi
+
+    # Order is wrong - auto-fix per FR-004
+    print_step "Detected incorrect configuration order - auto-fixing..."
+
+    # Extract user plugins from existing block
+    local user_plugins=$(sed -n '/BEGIN Pulse Configuration/,/END Pulse Configuration/p' "$PULSE_ZSHRC" | \
+                         sed -n '/plugins=(/,/)/p' | \
+                         grep -v 'plugins=\|)' | \
+                         sed 's/^[[:space:]]*//')
+
+    # Remove old block
+    sed -i '/BEGIN Pulse Configuration/,/END Pulse Configuration/d' "$PULSE_ZSHRC"
+
+    # Insert corrected block with preserved plugins
+    cat >> "$PULSE_ZSHRC" << EOF
+
+# BEGIN Pulse Configuration
+# Automatically updated by Pulse installer on $(date -I)
+# Learn more: https://github.com/astrosteveo/pulse
+
+# Declare plugins array (add your plugins here)
+plugins=(
+$user_plugins
+)
+
+# Source Pulse framework
+source "$PULSE_INSTALL_DIR/pulse.zsh"
+
+# END Pulse Configuration
+EOF
+
+    print_step "Fixed configuration order (plugins now before source)"
     return 0
   fi
-  
+
+  # No existing block - add new one
   touch "$PULSE_ZSHRC"
   generate_pulse_block >> "$PULSE_ZSHRC"
   print_step "Added Pulse configuration block to $PULSE_ZSHRC"
-  print_step "Verified configuration order (plugins before source)"
 }
 ```
 
-**Acceptance**: Detects existing block; validates order; preserves content.
+**Acceptance**: Detects existing block; auto-fixes wrong order; preserves user plugins; validates final order.
 
 **Dependencies**: T015, T016
 
@@ -696,7 +835,7 @@ patch_zshrc() {
 
 ### T024: [US2] Run tests and verify Green phase
 
-**Story**: US2  
+**Story**: US2
 **File**: `tests/install/rerun_idempotent.bats`
 
 **TDD**: Green Phase
@@ -725,7 +864,7 @@ bats tests/install/rerun_idempotent.bats
 
 ### T025: [US3] Write test - Prerequisite failure handling
 
-**Story**: US3  
+**Story**: US3
 **File**: `tests/install/failure_modes.bats`
 
 **TDD**: Test First
@@ -763,7 +902,7 @@ bats tests/install/rerun_idempotent.bats
 
 ### T026: [US3] Enhance prerequisite checks with remediation
 
-**Story**: US3  
+**Story**: US3
 **File**: `scripts/pulse-install.sh`
 
 Add detailed error messages (per installer-behavior.md):
@@ -771,7 +910,7 @@ Add detailed error messages (per installer-behavior.md):
 ```bash
 validate_prerequisites() {
   print_step "Checking prerequisites..."
-  
+
   if ! check_zsh_version; then
     cat >&2 <<EOF
 
@@ -786,9 +925,9 @@ After installing Zsh, re-run this installer.
 EOF
     exit $EXIT_PREREQ_FAILED
   fi
-  
+
   print_step "Zsh version: $(zsh --version | grep -oE '[0-9]+\.[0-9]+' | head -1) (required: ≥5.0)"
-  
+
   if ! check_git; then
     cat >&2 <<EOF
 
@@ -805,9 +944,9 @@ For more help, visit: https://github.com/astrosteveo/pulse/docs/install/TROUBLES
 EOF
     exit $EXIT_PREREQ_FAILED
   fi
-  
+
   print_step "Git: found at $(command -v git)"
-  
+
   if ! check_write_permissions "$PULSE_INSTALL_DIR"; then
     cat >&2 <<EOF
 
@@ -821,7 +960,7 @@ For more help, visit: https://github.com/astrosteveo/pulse/docs/install/TROUBLES
 EOF
     exit $EXIT_PREREQ_FAILED
   fi
-  
+
   print_step "Install directory: $PULSE_INSTALL_DIR (writable)"
   print_step "Prerequisites validated"
 }
@@ -835,7 +974,7 @@ EOF
 
 ### T027: [US3] Run tests and verify Green phase
 
-**Story**: US3  
+**Story**: US3
 **File**: `tests/install/failure_modes.bats`
 
 **TDD**: Green Phase
@@ -889,7 +1028,7 @@ graph TD
     US2[Phase 4: US2 - Re-run]
     US3[Phase 5: US3 - Validation]
     Polish[Phase 6: Polish]
-    
+
     Setup --> Foundation
     Foundation --> US1
     US1 --> US2
@@ -940,13 +1079,14 @@ T020: Documentation   [P] (while T012-T019 execute)
 | Story | Priority | Task Count | Key Deliverable |
 |-------|----------|------------|-----------------|
 | Setup | - | 3 | Project structure + test framework |
+| Foundation TDD | - | 2 | Test-first specs for foundation utilities (T003.5, T007.5) |
 | Foundation | - | 3 | Output formatting, exit codes, env vars |
 | US1 | P1 | 14 | Working one-command installer (MVP) |
-| US2 | P2 | 4 | Idempotent re-run capability |
+| US2 | P2 | 4 | Idempotent re-run with auto-fix capability |
 | US3 | P3 | 3 | Enhanced prerequisite validation |
 | Polish | - | ~6 | Documentation and testing finalization |
 
-**Total**: 27+ tasks
+**Total**: 29+ tasks
 
 ---
 

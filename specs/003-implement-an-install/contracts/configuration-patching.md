@@ -1,7 +1,7 @@
 # Configuration Patching Contract
 
-**Feature**: 003-implement-an-install  
-**Date**: 2025-10-12  
+**Feature**: 003-implement-an-install
+**Date**: 2025-10-12
 **Purpose**: Define the formal contract for modifying user `.zshrc` files during installation
 
 ## Overview
@@ -41,7 +41,7 @@ has_pulse_block() {
 
 ```bash
 plugins=()                    # Empty array
-plugins=(git docker)          # Populated array  
+plugins=(git docker)          # Populated array
 plugins+=(something)          # Append syntax
 ```
 
@@ -132,13 +132,41 @@ sed -n '/# BEGIN Pulse Configuration/,/# END Pulse Configuration/p' "$PULSE_ZSHR
 
 1. **Update if needed**:
    - If source path wrong → Update to current `$PULSE_INSTALL_DIR`
-   - If order wrong → Rebuild block with corrected order
+   - **If order wrong → Auto-fix by rebuilding block with corrected order (FR-004)**
    - If structure valid → No changes (idempotent)
 
 1. **Preserve user content**:
-   - Keep user's plugin list intact
+   - Extract user's plugin entries from existing plugins array
    - Keep user's custom comments/variables within block
    - Only modify structural elements (paths, order)
+
+**Implementation for Order Fix**:
+
+```bash
+# Extract user plugins from existing block
+USER_PLUGINS=$(sed -n '/plugins=(/,/)/p' /tmp/pulse-block.txt | \
+               grep -v 'plugins=\|)' | \
+               sed 's/^[[:space:]]*//')
+
+# Rebuild block with correct order
+generate_corrected_pulse_block() {
+  cat <<EOF
+# BEGIN Pulse Configuration
+# Automatically updated by Pulse installer on $(date -I)
+# Learn more: https://github.com/astrosteveo/pulse
+
+# Declare plugins array (add your plugins here)
+plugins=(
+$USER_PLUGINS
+)
+
+# Source Pulse framework
+source "$PULSE_INSTALL_DIR/pulse.zsh"
+
+# END Pulse Configuration
+EOF
+}
+```
 
 **Example Transformation**:
 
@@ -245,18 +273,18 @@ grep -q "export MY_VAR=123" ~/.zshrc  # Must still exist
 ```bash
 validate_config_order() {
   local config_file="$1"
-  
+
   # Extract line numbers
   local plugins_line=$(grep -n "plugins=" "$config_file" | head -1 | cut -d: -f1)
   local source_line=$(grep -n "source.*pulse.zsh" "$config_file" | head -1 | cut -d: -f1)
-  
+
   # Both must exist
   [ -z "$plugins_line" ] && return 1
   [ -z "$source_line" ] && return 1
-  
+
   # plugins must come before source
   [ "$plugins_line" -lt "$source_line" ] && return 0
-  
+
   return 1
 }
 ```

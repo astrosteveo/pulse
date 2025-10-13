@@ -65,7 +65,7 @@ Power users want the installer to validate prerequisites (Zsh version, Git avail
 - **FR-001**: Provide a single documented command that fetches and runs the installer, completing setup on supported macOS and Linux environments within one user interaction.
 - **FR-002**: Detect required prerequisites (Zsh 5.0+, Git, write permissions) before making changes and surface actionable remediation steps for any missing dependency.
 - **FR-003**: Install Pulse into the default directory (`~/.local/share/pulse` or user-selected alternative) with correct permissions and idempotent behavior on repeated runs.
-- **FR-004**: Update the user's Zsh configuration to declare the `plugins` array before sourcing `pulse.zsh`, maintaining existing customizations and ensuring the configuration order is preserved.
+- **FR-004**: Update the user's Zsh configuration to declare the `plugins` array before sourcing `pulse.zsh`, maintaining existing customizations and ensuring the configuration order is preserved. **If an existing Pulse block has incorrect order (source before plugins), the installer SHALL auto-fix the order by regenerating the block while preserving the user's plugin entries.**
 - **FR-005**: Produce human-readable status output and a final success summary that confirms the next steps (e.g., restarting the shell) without requiring further manual configuration.
 - **FR-006**: Provide automatic verification at the end of the install that Pulse loads successfully (e.g., by launching a subshell or dry-run check) and report any detected issues with remediation guidance.
 - **FR-007**: Publish installation documentation that mirrors the script workflow and reiterates the configuration order guarantee (`plugins` before `pulse.zsh`).

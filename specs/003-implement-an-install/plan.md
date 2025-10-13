@@ -37,9 +37,9 @@ Deliver a one-command installer that bootstraps Pulse on macOS and Linux without
 
 - [x] **Radical Simplicity** – Contracts define single-purpose behaviors (prerequisite check, configuration patch, verification); quickstart validates 90% use case coverage.
 - [x] **Quality Over Features** – Configuration patching contract includes comprehensive error handling, atomic updates, and rollback procedures; installer behavior contract documents all exit codes and error messages.
-- [x] **Test-Driven Reliability** – Quickstart provides test scenarios for fresh install, idempotency, prerequisite failure, and verification; contracts specify validation rules that will drive test implementation.
+- [~] **Test-Driven Reliability** – Quickstart provides test scenarios for fresh install, idempotency, prerequisite failure, and verification; contracts specify validation rules that will drive test implementation. **NOTE**: Analysis identified TDD gap in foundation tasks; remediated by adding T003.5 and T007.5 test-first tasks.
 - [x] **Consistent User Experience** – Output contracts ensure consistent formatting, helpful error messages with remediation steps, and clear next-step guidance; configuration patching preserves user customizations.
-- [x] **Zero Configuration** – Configuration order validation enforced in patching contract (SG4); quickstart test validates plugins-before-source in Test 2; documentation requirements mandate inline guidance.
+- [x] **Zero Configuration** – Configuration order validation enforced in patching contract (SG4); quickstart test validates plugins-before-source in Test 2; documentation requirements mandate inline guidance. **UPDATE**: FR-004 now specifies auto-fix behavior for wrong configuration order.
 
 ## Project Structure
 
