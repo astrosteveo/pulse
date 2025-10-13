@@ -8,17 +8,17 @@ ARGS=()
 
 for arg in "$@"; do
     case "$arg" in
-        --json) 
-            JSON_MODE=true 
+        --json)
+            JSON_MODE=true
             ;;
-        --help|-h) 
+        --help|-h)
             echo "Usage: $0 [--json]"
             echo "  --json    Output results in JSON format"
             echo "  --help    Show this help message"
-            exit 0 
+            exit 0
             ;;
-        *) 
-            ARGS+=("$arg") 
+        *)
+            ARGS+=("$arg")
             ;;
     esac
 done
@@ -47,13 +47,18 @@ else
     touch "$IMPL_PLAN"
 fi
 
+# Best-practice Git checkpoint (if in repo)
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    git_auto_commit "chore(plan): scaffold plan for ${CURRENT_BRANCH}" "$IMPL_PLAN"
+fi
+
 # Output results
 if $JSON_MODE; then
     printf '{"FEATURE_SPEC":"%s","IMPL_PLAN":"%s","SPECS_DIR":"%s","BRANCH":"%s","HAS_GIT":"%s"}\n' \
         "$FEATURE_SPEC" "$IMPL_PLAN" "$FEATURE_DIR" "$CURRENT_BRANCH" "$HAS_GIT"
 else
     echo "FEATURE_SPEC: $FEATURE_SPEC"
-    echo "IMPL_PLAN: $IMPL_PLAN" 
+    echo "IMPL_PLAN: $IMPL_PLAN"
     echo "SPECS_DIR: $FEATURE_DIR"
     echo "BRANCH: $CURRENT_BRANCH"
     echo "HAS_GIT: $HAS_GIT"

@@ -181,4 +181,26 @@ Ask the user: "Would you like me to suggest concrete remediation edits for the t
 
 ## Context
 
+## Context
+
 $ARGUMENTS
+
+### Git Checkpoint
+
+If remediation edits are made:
+
+- refactor(spec): address analysis findings - {SUMMARY}
+
+## Next Step (Guided Mode)
+
+After analyzing artifacts:
+
+- **If CRITICAL issues found**: Address them before proceeding
+- **If ready to implement**:
+
+```text
+/speckit.implement
+/speckit.checkpoint "Analysis complete, ready for implementation"
+```
+
+````

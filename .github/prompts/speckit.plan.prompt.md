@@ -37,6 +37,7 @@ You **MUST** consider the user input before proceeding (if not empty).
    - For each integration → patterns task
 
 2. **Generate and dispatch research agents**:
+
    ```
    For each unknown in Technical Context:
      Task: "Research {unknown} for {feature context}"
@@ -78,3 +79,15 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 - Use absolute paths
 - ERROR on gate failures or unresolved clarifications
+
+### Git Checkpoints
+
+- After scaffolding `plan.md` (template copy): `chore(plan): scaffold plan`
+- After generating Phase 0/1 artifacts (research, data-model, contracts, quickstart): `feat(plan-artifacts): add design artifacts`
+
+## Next Step (Guided Mode)
+
+```text
+/speckit.tasks
+/speckit.checkpoint "Plan scaffolded and initial artifacts created"
+```

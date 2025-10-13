@@ -79,6 +79,31 @@ plugins=(
 # export PULSE_NO_COMPINIT=1
 
 # ============================================================================
+# FRAMEWORK MODULE CONFIGURATION (optional)
+# ============================================================================
+# Pulse includes 7 framework modules that enhance your shell experience.
+# All modules are enabled by default, but you can selectively disable them.
+
+# Modules included:
+#   - environment:  Shell options, history, colors, editor/pager settings
+#   - compinit:     Completion system initialization with caching
+#   - completions:  Intelligent completion styles and behaviors
+#   - keybinds:     Enhanced keybindings (history search, line editing)
+#   - directory:    Directory navigation (aliases, auto-push, dirstack)
+#   - prompt:       Basic prompt (respects existing PROMPT/PS1)
+#   - utilities:    Helper functions (command checks, archive extraction, OS detection)
+
+# Disable specific modules if you want to configure them yourself
+# (Uncomment and add module names to disable)
+# pulse_disabled_modules=(
+#   prompt      # Disable if using custom prompt/theme
+#   utilities   # Disable if you don't need helper functions
+# )
+
+# Example: Disable prompt module if using a theme plugin like Powerlevel10k
+# pulse_disabled_modules=(prompt)
+
+# ============================================================================
 # LOAD PULSE FRAMEWORK
 # ============================================================================
 
@@ -90,21 +115,72 @@ source "${HOME}/.local/share/pulse/pulse.zsh"
 # YOUR CUSTOM ZSH CONFIGURATION
 # ============================================================================
 
-# Add your own Zsh configuration below this line
-# Examples: aliases, functions, shell options, prompt customization, etc.
+# Add your own Zsh configuration below this line.
+# Your settings will override Pulse defaults while keeping framework features!
 
-# Example aliases
+# COMPLETION CUSTOMIZATION
+# -------------------------
+# Pulse configures intelligent completions, but you can add your own styles:
+# zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' # Case-insensitive
+# zstyle ':completion:*' menu select                  # Use menu selection
+# zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}" # Colorful listings
+
+# KEYBINDING CUSTOMIZATION
+# -------------------------
+# Pulse provides enhanced keybindings, add your own or override:
+# bindkey '^P' up-history              # Ctrl+P for up
+# bindkey '^N' down-history            # Ctrl+N for down
+# bindkey '^A' beginning-of-line       # Ctrl+A (already set)
+# bindkey '^E' end-of-line             # Ctrl+E (already set)
+
+# SHELL OPTIONS
+# -------------------------
+# Pulse sets sensible defaults, but you can add more:
+# setopt AUTO_CD              # cd by typing directory name
+# setopt CORRECT              # command correction
+# setopt GLOB_COMPLETE        # complete glob patterns
+
+# DIRECTORY NAVIGATION
+# -------------------------
+# Pulse includes directory aliases (., .., ..., ...., - for back/forward)
+# Add your own directory shortcuts:
+# hash -d projects=~/Projects      # Use ~projects
+# hash -d docs=~/Documents         # Use ~docs
+
+# ENVIRONMENT VARIABLES
+# -------------------------
+# Override Pulse defaults or add your own:
+# export EDITOR="nvim"             # Pulse sets vim by default
+# export PAGER="less -R"           # Pulse configures less
+# export VISUAL="$EDITOR"          # Used by some programs
+
+# ALIASES
+# -------------------------
+# Add your custom aliases (Pulse doesn't set many to avoid conflicts):
 # alias ll='ls -lah'
 # alias gs='git status'
 # alias v='nvim'
+# alias cat='bat'                  # If you have bat installed
 
-# Example shell options
-# setopt AUTO_CD              # cd by typing directory name
-# setopt CORRECT              # command correction
-# setopt HIST_IGNORE_ALL_DUPS # don't record duplicates in history
+# UTILITY FUNCTIONS
+# -------------------------
+# Pulse provides helper functions you can use in your scripts:
+# pulse_has_command <cmd>           # Check if command exists
+# pulse_source_if_exists <file>     # Source file only if it exists
+# pulse_os_type                     # Get OS name (linux/macos/freebsd/etc)
+# pulse_extract <archive>           # Extract any archive format
 
-# Example prompt (if not using a theme plugin)
+# Example usage:
+# if pulse_has_command fzf; then
+#   # Configure fzf if available
+#   export FZF_DEFAULT_OPTS='--height 40% --layout=reverse'
+# fi
+
+# PROMPT CUSTOMIZATION
+# -------------------------
+# If you disabled the prompt module, set your own:
 # PROMPT='%F{blue}%~%f %# '
+# Or use a theme plugin like Powerlevel10k
 
 # ============================================================================
 # EXAMPLE CONFIGURATIONS
