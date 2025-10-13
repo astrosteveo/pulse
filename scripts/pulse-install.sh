@@ -221,3 +221,53 @@ clone_or_update_repo() {
   return "$EXIT_SUCCESS"
 }
 
+#
+# Configuration Management (T014)
+#
+
+# Add or update Pulse configuration in .zshrc
+# Usage: add_pulse_config ZSHRC_PATH INSTALL_DIR
+add_pulse_config() {
+  local zshrc_path="$1"
+  local install_dir="$2"
+  
+  # Ensure parent directory exists
+  local parent_dir
+  parent_dir=$(dirname "$zshrc_path")
+  mkdir -p "$parent_dir"
+  
+  # Configuration block template
+  local config_block="# BEGIN Pulse Configuration
+# Managed by Pulse installer - do not edit this block manually
+plugins=()
+source $install_dir/pulse.zsh
+# END Pulse Configuration"
+  
+  # Check if .zshrc exists
+  if [ ! -f "$zshrc_path" ]; then
+    # Create new .zshrc with Pulse configuration
+    echo "$config_block" > "$zshrc_path"
+    return "$EXIT_SUCCESS"
+  fi
+  
+  # Check if Pulse block already exists
+  if grep -q "BEGIN Pulse Configuration" "$zshrc_path"; then
+    # Update existing block - remove old block and insert new one
+    # Use awk for more reliable block replacement
+    awk -v block="$config_block" '
+      /# BEGIN Pulse Configuration/ { in_block=1; print block; next }
+      /# END Pulse Configuration/ { in_block=0; next }
+      !in_block { print }
+    ' "$zshrc_path" > "$zshrc_path.tmp"
+    
+    mv "$zshrc_path.tmp" "$zshrc_path"
+  else
+    # Add new block at the end
+    echo "" >> "$zshrc_path"
+    echo "$config_block" >> "$zshrc_path"
+  fi
+  
+  return "$EXIT_SUCCESS"
+}
+
+
