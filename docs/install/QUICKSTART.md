@@ -51,10 +51,16 @@ PULSE_INSTALL_DIR=~/my-pulse curl -fsSL https://... | bash
 PULSE_ZSHRC=~/.config/zsh/.zshrc curl -fsSL https://... | bash
 ```
 
+### Skip Backup Creation
+
+```bash
+PULSE_SKIP_BACKUP=1 curl -fsSL https://... | bash
+```
+
 ### Skip Verification Step
 
 ```bash
-PULSE_SKIP_VERIFY=true curl -fsSL https://... | bash
+PULSE_SKIP_VERIFY=1 curl -fsSL https://... | bash
 ```
 
 ## Adding Plugins

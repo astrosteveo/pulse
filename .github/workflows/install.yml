@@ -38,37 +38,9 @@ jobs:
               run: |
                   tests/bats-core/bin/bats tests/install/test_helper_verification.bats
 
-            - name: Run foundation tests (when available)
+            - name: Run all installer tests
               run: |
-                  if [ -f tests/install/foundation.bats ]; then
-                    tests/bats-core/bin/bats tests/install/foundation.bats
-                  else
-                    echo "Foundation tests not yet implemented"
-                  fi
-
-            - name: Run fresh install tests (when available)
-              run: |
-                  if [ -f tests/install/fresh_install.bats ]; then
-                    tests/bats-core/bin/bats tests/install/fresh_install.bats
-                  else
-                    echo "Fresh install tests not yet implemented"
-                  fi
-
-            - name: Run idempotent re-run tests (when available)
-              run: |
-                  if [ -f tests/install/rerun_idempotent.bats ]; then
-                    tests/bats-core/bin/bats tests/install/rerun_idempotent.bats
-                  else
-                    echo "Re-run tests not yet implemented"
-                  fi
-
-            - name: Run failure mode tests (when available)
-              run: |
-                  if [ -f tests/install/failure_modes.bats ]; then
-                    tests/bats-core/bin/bats tests/install/failure_modes.bats
-                  else
-                    echo "Failure mode tests not yet implemented"
-                  fi
+                  tests/bats-core/bin/bats tests/install/*.bats
 
             - name: Test summary
               if: always()
