@@ -185,10 +185,11 @@ _pulse_clone_plugin() {
     else
       # Fallback: clone without branch and checkout ref
       if git clone --quiet --depth 1 "$plugin_url" "$plugin_dir" 2>/dev/null; then
-        cd "$plugin_dir"
-        git fetch --quiet --depth 1 origin "$plugin_ref" 2>/dev/null && \
-        git checkout --quiet "$plugin_ref" 2>/dev/null
-        cd - >/dev/null
+        (
+          cd "$plugin_dir" || return 1
+          git fetch --quiet --depth 1 origin "$plugin_ref" 2>/dev/null && \
+          git checkout --quiet "$plugin_ref" 2>/dev/null
+        )
         [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully cloned $plugin_name and checked out $plugin_ref" >&2
         return 0
       fi
