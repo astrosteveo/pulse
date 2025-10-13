@@ -2,6 +2,10 @@
 # Plugin Engine for Pulse Framework
 # Handles plugin detection, classification, and loading across 5 stages
 
+# NOTE: This code assumes default zsh array indexing (1-based).
+# If KSH_ARRAYS is set, array indexing will be 0-based and break this code.
+# This is intentional - Pulse requires standard zsh behavior.
+
 # Initialize plugin state tracking associative arrays
 typeset -gA pulse_plugins          # name -> path
 typeset -gA pulse_plugin_types     # name -> type
@@ -62,6 +66,89 @@ _pulse_detect_plugin_type() {
 # Plugin Source Detection
 #
 
+# Parse plugin specification into components
+# Usage: _pulse_parse_plugin_spec <source_spec>
+# Returns: plugin_url plugin_name plugin_ref (space-separated)
+# Supports: user/repo, user/repo@tag, URLs, local paths
+_pulse_parse_plugin_spec() {
+  local source_spec="$1"
+  local plugin_url=""
+  local plugin_name=""
+  local plugin_ref=""
+
+  # Trim leading/trailing whitespace
+  source_spec="${source_spec##[[:space:]]}"
+  source_spec="${source_spec%%[[:space:]]}"
+
+  # Skip empty specs
+  if [[ -z "$source_spec" ]]; then
+    echo "" "" ""
+    return 0
+  fi
+
+  # Case 1: Local absolute or relative path
+  if [[ "$source_spec" == /* ]] || [[ "$source_spec" == ./* ]] || [[ "$source_spec" == ../* ]]; then
+    echo "" "" ""  # No URL for local paths
+    return 0
+  fi
+
+  # Case 2: Git SSH URL (git@host:user/repo.git or git@host:user/repo.git@ref)
+  # Must check BEFORE general @ splitting to avoid breaking SSH URLs
+  if [[ "$source_spec" =~ ^git@[^:]+: ]]; then
+    # SSH URL format: git@host:path.git or git@host:path.git@ref
+    # Split ONLY on the LAST @ if there are multiple
+    if [[ "$source_spec" =~ @[^@]+$ ]] && [[ "$source_spec" =~ \.git@[^@]+$ ]]; then
+      # Has version spec after .git
+      plugin_ref="${source_spec##*.git@}"
+      source_spec="${source_spec%.git@*}.git"
+    fi
+    plugin_url="$source_spec"
+    plugin_name="${source_spec##*/}"
+    plugin_name="${plugin_name%.git}"
+    echo "$plugin_url" "$plugin_name" "$plugin_ref"
+    return 0
+  fi
+
+  # Extract version/branch/tag if specified (e.g., user/repo@v1.0.0)
+  # Only for non-SSH URLs
+  if [[ "$source_spec" == *@* ]]; then
+    # Check for multiple @ symbols (excluding SSH URL case already handled)
+    local at_count=$(echo "$source_spec" | grep -o '@' | wc -l)
+    if [[ $at_count -gt 1 ]]; then
+      [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Warning: Multiple @ symbols in spec: $source_spec" >&2
+    fi
+    plugin_ref="${source_spec##*@}"
+    source_spec="${source_spec%@*}"
+    
+    # Validate ref is not empty (handles trailing @)
+    if [[ -z "$plugin_ref" ]]; then
+      [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Warning: Empty version ref in spec (trailing @): $1" >&2
+      plugin_ref=""
+    fi
+  fi
+
+  # Case 3: GitHub shorthand (user/repo)
+  if [[ "$source_spec" =~ ^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$ ]]; then
+    plugin_url="https://github.com/${source_spec}.git"
+    plugin_name="${source_spec##*/}"
+    echo "$plugin_url" "$plugin_name" "$plugin_ref"
+    return 0
+  fi
+
+  # Case 4: Full Git URL (https://... or http://...)
+  if [[ "$source_spec" =~ ^https?:// ]]; then
+    plugin_url="$source_spec"
+    plugin_name="${source_spec##*/}"
+    plugin_name="${plugin_name%.git}"
+    echo "$plugin_url" "$plugin_name" "$plugin_ref"
+    return 0
+  fi
+
+  # Default: treat as plugin name only
+  echo "" "$source_spec" ""
+  return 0
+}
+
 # Resolve plugin source specification to a full path
 # Usage: _pulse_resolve_plugin_source <source_spec>
 # Supports: GitHub user/repo, full URLs, local paths
@@ -69,6 +156,9 @@ _pulse_detect_plugin_type() {
 _pulse_resolve_plugin_source() {
   local source_spec="$1"
   local plugin_dir=""
+
+  # Strip version spec if present
+  source_spec="${source_spec%@*}"
 
   # Case 1: Local absolute path
   if [[ "$source_spec" == /* ]]; then
@@ -103,6 +193,86 @@ _pulse_resolve_plugin_source() {
   # Default: assume it's a plugin name in PULSE_DIR
   echo "${PULSE_DIR}/plugins/${source_spec}"
   return 0
+}
+
+#
+# Plugin Installation
+#
+
+# Clone a plugin from a Git URL
+# Usage: _pulse_clone_plugin <plugin_url> <plugin_name> [plugin_ref]
+# Returns: 0 on success, 1 on failure
+_pulse_clone_plugin() {
+  local plugin_url="$1"
+  local plugin_name="$2"
+  local plugin_ref="${3:-}"
+  local plugin_dir="${PULSE_DIR}/plugins/${plugin_name}"
+
+  # Check if git is available
+  if ! command -v git >/dev/null 2>&1; then
+    [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: git not found, cannot clone plugins" >&2
+    return 1
+  fi
+
+  # Create plugins directory if it doesn't exist
+  mkdir -p "${PULSE_DIR}/plugins"
+
+  # Clone the plugin
+  [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Cloning $plugin_name from $plugin_url..." >&2
+  
+  if [[ -n "$plugin_ref" ]]; then
+    # Clone specific branch/tag
+    local clone_error=""
+    if git clone --quiet --depth 1 --branch "$plugin_ref" "$plugin_url" "$plugin_dir" 2>&1 | read -r clone_error; then
+      [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully cloned $plugin_name@$plugin_ref" >&2
+      return 0
+    else
+      # Fallback: clone without branch and checkout ref
+      local fallback_error=""
+      if git clone --quiet --depth 1 "$plugin_url" "$plugin_dir" 2>&1 | read -r fallback_error; then
+        # Use command grouping instead of subshell to preserve return code
+        local checkout_failed=0
+        if ! cd "$plugin_dir" 2>/dev/null; then
+          [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Failed to cd to $plugin_dir" >&2
+          checkout_failed=1
+        elif ! git fetch --quiet --depth 1 origin "$plugin_ref" 2>/dev/null; then
+          [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Failed to fetch $plugin_ref" >&2
+          checkout_failed=1
+        elif ! git checkout --quiet "$plugin_ref" 2>/dev/null; then
+          [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Failed to checkout $plugin_ref" >&2
+          checkout_failed=1
+        fi
+        cd - >/dev/null
+        
+        if [[ $checkout_failed -eq 0 ]]; then
+          [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully cloned $plugin_name and checked out $plugin_ref" >&2
+          return 0
+        else
+          [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Checkout failed for $plugin_name@$plugin_ref" >&2
+          return 1
+        fi
+      fi
+    fi
+    [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Failed to clone $plugin_name@$plugin_ref" >&2
+    return 1
+  else
+    # Clone default branch
+    local clone_error=""
+    if git clone --quiet --depth 1 "$plugin_url" "$plugin_dir" 2>&1 | read -r clone_error; then
+      # Verify clone succeeded by checking .git directory
+      if [[ -d "$plugin_dir/.git" ]]; then
+        [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully cloned $plugin_name" >&2
+        return 0
+      else
+        [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Clone incomplete for $plugin_name (no .git directory)" >&2
+        rm -rf "$plugin_dir" 2>/dev/null
+        return 1
+      fi
+    else
+      [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Failed to clone $plugin_name" >&2
+      return 1
+    fi
+  fi
 }
 
 #
@@ -272,12 +442,61 @@ _pulse_discover_plugins() {
       continue
     fi
 
-    # Extract plugin name from specification
-    local plugin_name="${plugin_spec##*/}"
-    plugin_name="${plugin_name%.git}"
+    # Parse plugin specification
+    local parsed=($(_pulse_parse_plugin_spec "$plugin_spec"))
+    local plugin_url="${parsed[1]}"
+    local plugin_name="${parsed[2]}"
+    local plugin_ref="${parsed[3]}"
+
+    # Fallback: extract plugin name from spec if parsing failed
+    if [[ -z "$plugin_name" ]]; then
+      plugin_name="${plugin_spec##*/}"
+      plugin_name="${plugin_name%.git}"
+      plugin_name="${plugin_name%@*}"
+    fi
+
+    # Validate plugin name is not empty and doesn't contain path traversal
+    if [[ -z "$plugin_name" ]] || [[ "$plugin_name" == *..* ]] || [[ "$plugin_name" == /* ]]; then
+      [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Invalid plugin name: $plugin_spec" >&2
+      continue
+    fi
 
     # Resolve to full path
     local plugin_path=$(_pulse_resolve_plugin_source "$plugin_spec")
+
+    # Auto-install if missing and we have a URL
+    if [[ ! -d "$plugin_path" ]] && [[ -n "$plugin_url" ]]; then
+      [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Plugin '$plugin_name' not found, attempting to install..." >&2
+      
+      # Create lock file to prevent race conditions
+      local lock_file="${PULSE_DIR}/plugins/.${plugin_name}.lock"
+      local lock_acquired=0
+      
+      # Try to acquire lock with timeout
+      for i in {1..30}; do
+        if mkdir "$lock_file" 2>/dev/null; then
+          lock_acquired=1
+          break
+        fi
+        [[ -n "$PULSE_DEBUG" ]] && [[ $i -eq 1 ]] && echo "[Pulse] Waiting for lock on $plugin_name..." >&2
+        sleep 0.1
+      done
+      
+      if [[ $lock_acquired -eq 1 ]]; then
+        # Check again if directory exists (another shell may have created it)
+        if [[ ! -d "$plugin_path" ]]; then
+          if _pulse_clone_plugin "$plugin_url" "$plugin_name" "$plugin_ref"; then
+            [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully installed $plugin_name" >&2
+          else
+            [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Warning: Failed to install $plugin_name" >&2
+          fi
+        fi
+        # Release lock
+        rmdir "$lock_file" 2>/dev/null
+      else
+        [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Warning: Could not acquire lock for $plugin_name" >&2
+      fi
+    fi
 
     # Detect plugin type
     local plugin_type=$(_pulse_detect_plugin_type "$plugin_path")

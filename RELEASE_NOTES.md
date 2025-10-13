@@ -1,12 +1,45 @@
-# Pulse v1.0.0-mvp Release Notes
-
-**Release Date**: October 11, 2025
-**Status**: Minimum Viable Product (MVP)
-**Branch**: 001-build-a-zsh
+# Pulse Release Notes
 
 ---
 
-## 🎉 First Release - MVP
+## 🚀 v1.1.0 - Plugin Management & Auto-Installation (October 13, 2025)
+
+### ✨ New Features
+
+#### 🔄 Automatic Plugin Installation
+- **Auto-clone missing plugins**: When you add a plugin to your `plugins` array, Pulse now automatically clones it from GitHub on next shell startup
+- **No manual cloning needed**: Just declare your plugins and restart your shell
+- **Version locking support**: Specify exact versions, tags, or branches (e.g., `user/repo@v1.0.0`)
+
+#### 🛠️ Plugin Management CLI
+New `pulse` command for managing plugins:
+- `pulse install [plugin-spec ...]` - Install plugins from command line or .zshrc
+- `pulse update [plugin-name ...]` - Update all or specific plugins
+- `pulse list` - List installed plugins with version info
+- `pulse remove <plugin-name ...>` - Remove plugins
+
+#### 📦 Installation Script
+- New `install.sh` script for one-command framework setup
+- Automatic `.zshrc` configuration
+- PATH setup for `pulse` command
+- Backup of existing configuration
+
+### 🔧 Improvements
+- Enhanced plugin specification parsing with version support
+- Better error messages for installation failures
+- Support for branch/tag/version locking in plugin specs
+
+### 📖 Documentation
+- Updated README with installation instructions
+- Added CLI command documentation
+- Examples for version-locked plugins
+
+---
+
+## 🎉 v1.0.0-mvp - First Release (October 11, 2025)
+
+**Status**: Minimum Viable Product (MVP)
+**Branch**: 001-build-a-zsh
 
 This is the initial MVP release of Pulse, a minimal and intelligent Zsh plugin orchestrator. The core functionality is complete, tested, and ready for real-world use.
 
@@ -158,16 +191,12 @@ The following features are planned for future releases (P3 priority):
 
 ---
 
-## 🐛 Known Limitations
+## 🐛 Known Limitations (v1.0.0)
 
-1. **No Automatic Plugin Installation**: Plugins must be manually cloned or installed. The framework will detect and load them, but won't automatically clone from GitHub yet.
-
+1. ~~**No Automatic Plugin Installation**~~ - **FIXED in v1.1.0**
 2. **No Caching**: Plugin detection happens on every shell startup. Future versions will cache metadata for faster startup.
-
 3. **No Lazy Loading**: The deferred stage framework exists but isn't fully implemented. All plugins load at startup.
-
-4. **No CLI Commands**: Plugin management must be done manually (git clone, git pull, rm -rf).
-
+4. ~~**No CLI Commands**~~ - **FIXED in v1.1.0**
 5. **Limited Plugin Formats**: Only supports Git repositories and local paths. No support for plugin managers' custom formats.
 
 ---
@@ -241,11 +270,13 @@ Pulse follows five core principles:
 
 ## 🔮 Roadmap
 
-### v1.1.0 (Future)
+### v1.1.0 ✅ RELEASED
 
-- Plugin lifecycle CLI commands
-- Automatic plugin installation
-- Plugin update management
+- ✅ Plugin lifecycle CLI commands
+- ✅ Automatic plugin installation
+- ✅ Plugin update management
+- ✅ Version locking support
+- ✅ Installation script
 
 ### v1.2.0 (Future)
 

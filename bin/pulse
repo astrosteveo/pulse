@@ -1,0 +1,263 @@
+#!/usr/bin/env zsh
+# Pulse CLI - Plugin management commands
+# Usage: pulse <command> [args]
+
+# NOTE: This code assumes default zsh array indexing (1-based).
+# If KSH_ARRAYS is set, array indexing will be 0-based and break this code.
+
+# Get the directory where pulse is installed
+PULSE_BIN_DIR="${0:A:h}"
+PULSE_ROOT="${PULSE_BIN_DIR:h}"
+
+# Set default PULSE_DIR if not set
+: ${PULSE_DIR:=${XDG_DATA_HOME:-$HOME/.local/share}/pulse}
+: ${PULSE_CACHE_DIR:=${XDG_CACHE_HOME:-$HOME/.cache}/pulse}
+
+# Load the plugin engine functions
+source "${PULSE_ROOT}/lib/plugin-engine.zsh"
+
+# Initialize the engine
+_pulse_init_engine
+
+# Command: pulse install [plugin-spec ...]
+pulse_cmd_install() {
+  local plugins_to_install=()
+  local installed_count=0
+  local failed_count=0
+
+  # If specific plugins provided, use those; otherwise read from $plugins array
+  if [[ $# -gt 0 ]]; then
+    plugins_to_install=("$@")
+  elif [[ -v plugins ]]; then
+    plugins_to_install=("${plugins[@]}")
+  else
+    echo "Error: No plugins specified and no plugins array found in environment" >&2
+    echo "Usage: pulse install [plugin-spec ...]" >&2
+    echo "   or: define plugins=(...) in your .zshrc and run: pulse install" >&2
+    return 2
+  fi
+
+  echo "Installing plugins..."
+
+  for plugin_spec in "${plugins_to_install[@]}"; do
+    # Parse plugin specification
+    local parsed=($(_pulse_parse_plugin_spec "$plugin_spec"))
+    local plugin_url="${parsed[1]}"
+    local plugin_name="${parsed[2]}"
+    local plugin_ref="${parsed[3]}"
+
+    # Fallback: extract plugin name from spec
+    if [[ -z "$plugin_name" ]]; then
+      plugin_name="${plugin_spec##*/}"
+      plugin_name="${plugin_name%.git}"
+      plugin_name="${plugin_name%@*}"
+    fi
+
+    # Validate plugin name
+    if [[ -z "$plugin_name" ]] || [[ "$plugin_name" == *..* ]] || [[ "$plugin_name" == /* ]]; then
+      echo "✗ Invalid plugin specification: $plugin_spec"
+      ((failed_count++))
+      continue
+    fi
+
+    # Resolve to full path
+    local plugin_path=$(_pulse_resolve_plugin_source "$plugin_spec")
+
+    # Check if already installed
+    if [[ -d "$plugin_path" ]]; then
+      echo "✓ $plugin_name (already installed)"
+      continue
+    fi
+
+    # Check if we have a URL to clone from
+    if [[ -z "$plugin_url" ]]; then
+      echo "✗ $plugin_name (no source URL, cannot install)"
+      ((failed_count++))
+      continue
+    fi
+
+    # Install the plugin
+    echo "↓ $plugin_name (cloning...)"
+    if _pulse_clone_plugin "$plugin_url" "$plugin_name" "$plugin_ref"; then
+      echo "✓ $plugin_name (installed)"
+      ((installed_count++))
+    else
+      echo "✗ $plugin_name (failed to clone)"
+      ((failed_count++))
+    fi
+  done
+
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "Installed: $installed_count  Failed: $failed_count"
+
+  [[ $failed_count -eq 0 ]] && return 0 || return 1
+}
+
+# Command: pulse update [plugin-name ...]
+pulse_cmd_update() {
+  local plugins_to_update=()
+  local updated_count=0
+  local uptodate_count=0
+  local failed_count=0
+
+  # Build list of plugins to update
+  if [[ $# -gt 0 ]]; then
+    # Specific plugins provided
+    for name in "$@"; do
+      local plugin_path="${PULSE_DIR}/plugins/${name}"
+      if [[ -d "$plugin_path" ]]; then
+        plugins_to_update+=("$name:$plugin_path")
+      else
+        echo "✗ $name (not found)"
+        ((failed_count++))
+      fi
+    done
+  else
+    # Update all installed plugins
+    for plugin_dir in "${PULSE_DIR}/plugins"/*(/N); do
+      if [[ -d "$plugin_dir/.git" ]]; then
+        local name="${plugin_dir:t}"
+        plugins_to_update+=("$name:$plugin_dir")
+      fi
+    done
+  fi
+
+  [[ ${#plugins_to_update[@]} -eq 0 ]] && echo "No plugins to update" && return 0
+
+  echo "Updating plugins..."
+
+  for entry in "${plugins_to_update[@]}"; do
+    local name="${entry%%:*}"
+    local plugin_path="${entry#*:}"
+
+    cd "$plugin_path" || continue
+
+    # Get current commit
+    local before=$(git rev-parse HEAD 2>/dev/null)
+
+    # Pull latest changes
+    if git pull --quiet --ff-only origin 2>/dev/null; then
+      local after=$(git rev-parse HEAD 2>/dev/null)
+      if [[ "$before" == "$after" ]]; then
+        echo "✓ $name (up to date)"
+        ((uptodate_count++))
+      else
+        echo "↻ $name (updated)"
+        ((updated_count++))
+      fi
+    else
+      echo "✗ $name (failed to update)"
+      ((failed_count++))
+    fi
+
+    cd - >/dev/null
+  done
+
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "Updated: $updated_count  Up-to-date: $uptodate_count  Failed: $failed_count"
+
+  [[ $failed_count -eq 0 ]] && return 0 || return 1
+}
+
+# Command: pulse list
+pulse_cmd_list() {
+  echo "Installed plugins:"
+  echo ""
+
+  if [[ ! -d "${PULSE_DIR}/plugins" ]]; then
+    echo "No plugins installed"
+    return 0
+  fi
+
+  for plugin_dir in "${PULSE_DIR}/plugins"/*(/N); do
+    [[ ! -d "$plugin_dir" ]] && continue
+
+    local name="${plugin_dir:t}"
+    local status="local"
+    local version=""
+
+    if [[ -d "$plugin_dir/.git" ]]; then
+      cd "$plugin_dir"
+      status="git"
+      # Get current branch or tag
+      version=$(git describe --tags --exact-match 2>/dev/null || git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+      cd - >/dev/null
+    fi
+
+    printf "  • %-30s (%s: %s)\n" "$name" "$status" "$version"
+  done
+}
+
+# Command: pulse remove <plugin-name ...>
+pulse_cmd_remove() {
+  [[ $# -eq 0 ]] && echo "Usage: pulse remove <plugin-name ...>" && return 2
+
+  for name in "$@"; do
+    local plugin_path="${PULSE_DIR}/plugins/${name}"
+    if [[ -d "$plugin_path" ]]; then
+      rm -rf "$plugin_path"
+      echo "✓ Removed $name"
+    else
+      echo "✗ $name (not found)"
+    fi
+  done
+}
+
+# Main command dispatcher
+pulse_main() {
+  local command="${1:-help}"
+  shift
+
+  case "$command" in
+    install)
+      pulse_cmd_install "$@"
+      ;;
+    update)
+      pulse_cmd_update "$@"
+      ;;
+    list|ls)
+      pulse_cmd_list "$@"
+      ;;
+    remove|rm)
+      pulse_cmd_remove "$@"
+      ;;
+    help|--help|-h)
+      cat <<'EOF'
+Pulse - Intelligent Zsh Plugin Manager
+
+Usage: pulse <command> [args]
+
+Commands:
+  install [plugin-spec ...]  Install plugins (from plugins array or args)
+  update [plugin-name ...]   Update installed plugins (all if no args)
+  list                       List installed plugins
+  remove <plugin-name ...>   Remove plugins
+  help                       Show this help message
+
+Plugin Specifications:
+  user/repo                  GitHub shorthand (default branch)
+  user/repo@v1.0.0          GitHub shorthand with version/tag
+  user/repo@branch          GitHub shorthand with branch
+  https://github.com/...    Full Git URL
+  /path/to/plugin           Local path
+
+Examples:
+  pulse install zsh-users/zsh-autosuggestions
+  pulse install zsh-users/zsh-syntax-highlighting@master
+  pulse update
+  pulse list
+  pulse remove zsh-autosuggestions
+
+For more information, visit: https://github.com/astrosteveo/pulse
+EOF
+      ;;
+    *)
+      echo "Error: Unknown command '$command'" >&2
+      echo "Run 'pulse help' for usage information" >&2
+      return 1
+      ;;
+  esac
+}
+
+# Run main function
+pulse_main "$@"
