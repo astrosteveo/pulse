@@ -52,8 +52,10 @@ create_mock_plugin() {
       ;;
     standard|*)
       # Create a standard plugin
+      # Convert hyphens to underscores for valid variable name
+      local var_name="${plugin_name//-/_}"
       echo "# Standard plugin" > "${plugin_dir}/${plugin_name}.plugin.zsh"
-      echo "export ${plugin_name}_loaded=1" >> "${plugin_dir}/${plugin_name}.plugin.zsh"
+      echo "export ${var_name}_loaded=1" >> "${plugin_dir}/${plugin_name}.plugin.zsh"
       ;;
   esac
 
@@ -74,6 +76,48 @@ create_mock_zshrc() {
 source_pulse() {
   # Source the main pulse.zsh file
   source "${PULSE_ROOT}/pulse.zsh"
+}
+
+# Assert that the last command succeeded (status == 0)
+# Usage: assert_success
+assert_success() {
+  if [[ "$status" -ne 0 ]]; then
+    echo "FAIL: Command failed with status $status" >&2
+    echo "Output: $output" >&2
+    return 1
+  fi
+  return 0
+}
+
+# Assert that output contains a substring
+# Usage: assert_output --partial "substring"
+# Usage: assert_output "exact_string"
+assert_output() {
+  local mode="exact"
+  local expected=""
+
+  if [[ "$1" == "--partial" ]]; then
+    mode="partial"
+    expected="$2"
+  else
+    expected="$1"
+  fi
+
+  if [[ "$mode" == "partial" ]]; then
+    if [[ "$output" != *"$expected"* ]]; then
+      echo "FAIL: Output does not contain: $expected" >&2
+      echo "Actual output: $output" >&2
+      return 1
+    fi
+  else
+    if [[ "$output" != "$expected" ]]; then
+      echo "FAIL: Output does not match" >&2
+      echo "Expected: $expected" >&2
+      echo "Actual: $output" >&2
+      return 1
+    fi
+  fi
+  return 0
 }
 
 # Assert that a variable is set

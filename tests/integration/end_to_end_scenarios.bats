@@ -79,6 +79,7 @@ load ../test_helper
   create_mock_plugin "late" "standard"
 
   run zsh -c "
+    export PULSE_ROOT='${PULSE_ROOT}'
     export PULSE_DIR='${PULSE_DIR}'
     export PULSE_CACHE_DIR='${PULSE_CACHE_DIR}'
     plugins=(early comps late)
@@ -91,8 +92,8 @@ load ../test_helper
   "
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"early: normal"* || "$output" == *"early: early"* ]]
-  [[ "$output" == *"comps: completions"* ]]
+  [[ "$output" == *"early: normal"* ]]
+  [[ "$output" == *"comps: early"* ]]  # Completion plugins load in "early" stage
 }
 
 # =============================================================================
@@ -148,6 +149,7 @@ load ../test_helper
   create_mock_plugin "debug-test" "standard"
 
   run zsh -c "
+    export PULSE_ROOT='${PULSE_ROOT}'
     export PULSE_DIR='${PULSE_DIR}'
     export PULSE_CACHE_DIR='${PULSE_CACHE_DIR}'
     export PULSE_DEBUG=1
@@ -156,8 +158,8 @@ load ../test_helper
   "
 
   [ "$status" -eq 0 ]
-  # Debug should show module loads
-  [[ "$output" == *"environment.zsh"* || "$output" == *"Loading"* ]]
+  # Debug should show module loads (format: "Pulse: Loaded environment")
+  [[ "$output" == *"Loaded environment"* || "$output" == *"Loading"* ]]
 }
 
 # =============================================================================

@@ -49,7 +49,7 @@ alias | grep -q "^\.\.=" && echo "directory"
 [[ -n "$PROMPT" ]] && echo "prompt"
 EOF
 
-  run zsh -c "source '$TEST_ZSHRC'"
+  run zsh -c "export PULSE_ROOT='$PULSE_ROOT'; export PULSE_DIR='$PULSE_DIR'; export PULSE_CACHE_DIR='$PULSE_CACHE_DIR'; source '$TEST_ZSHRC'"
   assert_success
   assert_output --partial "environment"
   assert_output --partial "compinit"
@@ -80,7 +80,7 @@ echo "Framework: $PULSE_ENV_LOADED"
 type compinit &>/dev/null && echo "completions-ready"
 EOF
 
-  run zsh -c "source '$TEST_ZSHRC'"
+  run zsh -c "export PULSE_ROOT='$PULSE_ROOT'; export PULSE_DIR='$PULSE_DIR'; export PULSE_CACHE_DIR='$PULSE_CACHE_DIR'; source '$TEST_ZSHRC'"
   assert_success
   assert_output --partial "Framework: 1"
   assert_output --partial "syntax-plugin"
@@ -107,7 +107,7 @@ type compinit &>/dev/null && echo "completions-loaded"
 [[ -n "$late_plugin_loaded" ]] && echo "late-loaded"
 EOF
 
-  run zsh -c "source '$TEST_ZSHRC'"
+  run zsh -c "export PULSE_ROOT='$PULSE_ROOT'; export PULSE_DIR='$PULSE_DIR'; export PULSE_CACHE_DIR='$PULSE_CACHE_DIR'; source '$TEST_ZSHRC'"
   assert_success
   assert_output --partial "early-loaded"
   assert_output --partial "completions-loaded"
@@ -134,7 +134,7 @@ source "$PULSE_ROOT/pulse.zsh"
 alias | grep -q "^\.\.=" || echo "directory-disabled"
 EOF
 
-  run zsh -c "source '$TEST_ZSHRC'"
+  run zsh -c "export PULSE_ROOT='$PULSE_ROOT'; export PULSE_DIR='$PULSE_DIR'; export PULSE_CACHE_DIR='$PULSE_CACHE_DIR'; source '$TEST_ZSHRC'"
   assert_success
   assert_output --partial "environment-loaded"
   assert_output --partial "prompt-disabled"
@@ -171,12 +171,12 @@ plugins=(debug-test)
 source "$PULSE_ROOT/pulse.zsh"
 EOF
 
-  run zsh -c "source '$TEST_ZSHRC' 2>&1"
+  run zsh -c "export PULSE_ROOT='$PULSE_ROOT'; export PULSE_DIR='$PULSE_DIR'; export PULSE_CACHE_DIR='$PULSE_CACHE_DIR'; source '$TEST_ZSHRC' 2>&1"
   assert_success
 
-  # Should show module loads
-  assert_output --partial "environment.zsh"
-  assert_output --partial "compinit.zsh"
+  # Should show module loads (format: "Pulse: Loaded environment")
+  assert_output --partial "Loaded environment"
+  assert_output --partial "completions"
 
   # Should show plugin loads
   assert_output --partial "debug-test"
@@ -206,7 +206,7 @@ source "$PULSE_ROOT/pulse.zsh"
 [[ -n "$PULSE_ENV_LOADED" ]] && echo "framework-ok"
 EOF
 
-  run zsh -c "source '$TEST_ZSHRC' 2>&1"
+  run zsh -c "export PULSE_ROOT='$PULSE_ROOT'; export PULSE_DIR='$PULSE_DIR'; export PULSE_CACHE_DIR='$PULSE_CACHE_DIR'; source '$TEST_ZSHRC' 2>&1"
   # Should succeed despite broken plugin
   assert_output --partial "framework-ok"
 }
@@ -224,7 +224,7 @@ source "$PULSE_ROOT/pulse.zsh"
 echo "loaded"
 EOF
 
-  run zsh -c "source '$TEST_ZSHRC'"
+  run zsh -c "export PULSE_ROOT='$PULSE_ROOT'; export PULSE_DIR='$PULSE_DIR'; export PULSE_CACHE_DIR='$PULSE_CACHE_DIR'; source '$TEST_ZSHRC'"
   assert_success
   assert_output --partial "loaded"
 
@@ -234,17 +234,10 @@ EOF
 }
 
 @test "E2E: Missing plugin directory is created automatically" {
-  # Don't create PULSE_DIR
-  [[ ! -d "$PULSE_DIR" ]]
+  # Use a different test directory that doesn't exist
+  local test_pulse_dir="${TEST_DIR}/missing-pulse-dir"
 
-  cat > "$TEST_ZSHRC" << 'EOF'
-plugins=()
-source "$PULSE_ROOT/pulse.zsh"
-
-[[ -d "$PULSE_DIR" ]] && echo "dir-created"
-EOF
-
-  run zsh -c "source '$TEST_ZSHRC'"
+  run zsh -c "export PULSE_ROOT='$PULSE_ROOT'; export PULSE_DIR='$test_pulse_dir'; export PULSE_CACHE_DIR='$PULSE_CACHE_DIR'; source '$PULSE_ROOT/pulse.zsh' && [[ -d '$test_pulse_dir' ]] && echo 'dir-created'"
   assert_success
   assert_output --partial "dir-created"
 }
@@ -262,7 +255,7 @@ end=$(($(date +%s%N)/1000000))
 echo "Load time: $((end-start))ms"
 EOF
 
-  run zsh -c "source '$TEST_ZSHRC'"
+  run zsh -c "export PULSE_ROOT='$PULSE_ROOT'; export PULSE_DIR='$PULSE_DIR'; export PULSE_CACHE_DIR='$PULSE_CACHE_DIR'; source '$TEST_ZSHRC'"
   assert_success
 
   # Extract load time and verify < 100ms
@@ -279,7 +272,7 @@ source "$PULSE_ROOT/pulse.zsh"
 zstyle -L | grep -q "menu select" && echo "menu-ready"
 EOF
 
-  run zsh -c "source '$TEST_ZSHRC'"
+  run zsh -c "export PULSE_ROOT='$PULSE_ROOT'; export PULSE_DIR='$PULSE_DIR'; export PULSE_CACHE_DIR='$PULSE_CACHE_DIR'; source '$TEST_ZSHRC'"
   assert_success
   assert_output --partial "menu-ready"
 }
@@ -317,7 +310,7 @@ bindkey | grep -q "history-incremental" && echo "keybinds"
 echo "plugins: ${#plugins[@]}"
 EOF
 
-  run zsh -c "source '$TEST_ZSHRC'"
+  run zsh -c "export PULSE_ROOT='$PULSE_ROOT'; export PULSE_DIR='$PULSE_DIR'; export PULSE_CACHE_DIR='$PULSE_CACHE_DIR'; source '$TEST_ZSHRC'"
   assert_success
   assert_output --partial "framework"
   assert_output --partial "completions"
@@ -339,7 +332,7 @@ source "$PULSE_ROOT/pulse.zsh"
 [[ "$PULSE_PROMPT_SET" == "1" ]] && echo "flag-respected"
 EOF
 
-  run zsh -c "source '$TEST_ZSHRC'"
+  run zsh -c "export PULSE_ROOT='$PULSE_ROOT'; export PULSE_DIR='$PULSE_DIR'; export PULSE_CACHE_DIR='$PULSE_CACHE_DIR'; source '$TEST_ZSHRC'"
   assert_success
   assert_output --partial "flag-respected"
 }
@@ -355,7 +348,7 @@ source "$PULSE_ROOT/pulse.zsh"
 echo "works"
 EOF
 
-  run zsh -c "source '$TEST_ZSHRC'"
+  run zsh -c "export PULSE_ROOT='$PULSE_ROOT'; export PULSE_DIR='$PULSE_DIR'; export PULSE_CACHE_DIR='$PULSE_CACHE_DIR'; source '$TEST_ZSHRC'"
   assert_success
   assert_output --partial "works"
 }
@@ -372,7 +365,7 @@ setopt | grep -q "extendedglob" && echo "extendedglob"
 [[ -n "$LS_COLORS" || -n "$LSCOLORS" ]] && echo "colors"
 EOF
 
-  run zsh -c "source '$TEST_ZSHRC'"
+  run zsh -c "export PULSE_ROOT='$PULSE_ROOT'; export PULSE_DIR='$PULSE_DIR'; export PULSE_CACHE_DIR='$PULSE_CACHE_DIR'; source '$TEST_ZSHRC'"
   assert_success
   assert_output --partial "autocd"
   assert_output --partial "autopushd"
@@ -394,7 +387,7 @@ echo "shell-works"
 [[ -n "$PULSE_ENV_LOADED" ]] && echo "framework-loaded"
 EOF
 
-  run zsh -c "source '$TEST_ZSHRC'"
+  run zsh -c "export PULSE_ROOT='$PULSE_ROOT'; source '$TEST_ZSHRC'"
   assert_success
   assert_output --partial "shell-works"
   assert_output --partial "framework-loaded"
