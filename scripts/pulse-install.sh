@@ -17,4 +17,3 @@ set -e  # Exit on error
 
 # Script will be implemented in phases following TDD workflow
 # Implementation starts with T004: Output formatting functions
-
