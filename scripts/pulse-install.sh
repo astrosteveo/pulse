@@ -32,6 +32,13 @@ else
   COLOR_BOLD=""
 fi
 
+# Exit codes (T005)
+readonly EXIT_SUCCESS=0
+readonly EXIT_PREREQ_FAILED=1
+readonly EXIT_DOWNLOAD_FAILED=2
+readonly EXIT_INSTALL_FAILED=3
+readonly EXIT_CONFIG_FAILED=4
+
 #
 # Output Formatting Functions (T004)
 #
@@ -70,4 +77,18 @@ print_success() {
   echo "${COLOR_BOLD}${COLOR_GREEN}║                                       ║${COLOR_RESET}"
   echo "${COLOR_BOLD}${COLOR_GREEN}╚═══════════════════════════════════════╝${COLOR_RESET}"
   echo ""
+}
+
+#
+# Exit Code Handling (T005)
+#
+
+# Exit with error message and code
+# Usage: error_exit "Error message" EXIT_CODE
+error_exit() {
+  local message="$1"
+  local exit_code="${2:-$EXIT_INSTALL_FAILED}"
+  
+  print_error "$message"
+  exit "$exit_code"
 }
