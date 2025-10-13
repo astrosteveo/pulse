@@ -766,20 +766,26 @@
 
 ### T038: Create troubleshooting and debugging documentation [Cross-Cutting]
 
-- **Status**: Not Started
-- **Assignee**: Unassigned
+- **Status**: ✅ Complete
+- **Assignee**: Completed
 - **Estimated Effort**: 1 hour
 - **Description**: Document common issues and debugging techniques
 - **Acceptance**:
-  - Document `PULSE_DEBUG` usage
-  - Common issues: keybinding conflicts, terminal color problems, completion not working
-  - Debugging workflow: how to isolate module issues
-  - How to report bugs with relevant information
-  - Performance profiling instructions
-  - Add to README or create TROUBLESHOOTING.md
+  - ✅ Document `PULSE_DEBUG` usage (comprehensive section in TROUBLESHOOTING.md)
+  - ✅ Common issues: keybinding conflicts, terminal color problems, completion not working (extended coverage)
+  - ✅ Debugging workflow: how to isolate module issues (step-by-step systematic approach)
+  - ✅ How to report bugs with relevant information (bug report template with required info)
+  - ✅ Performance profiling instructions (EPOCHREALTIME method, plugin profiling, cache analysis)
+  - ✅ Created comprehensive TROUBLESHOOTING.md (680 lines) with link from README
 - **Blockers**: T034 (README documentation complete)
 - **Parallel**: Yes [P]
 - **Related**: T034
+- **Completion Notes**:
+  - Created standalone TROUBLESHOOTING.md guide (680 lines)
+  - Covers: debugging workflow, PULSE_DEBUG usage, performance profiling, module isolation
+  - Includes: bug reporting template, advanced diagnostics, extended common issues
+  - Added link from README.md to TROUBLESHOOTING.md
+  - Addresses all acceptance criteria with comprehensive coverage
 
 ### T039: Final quality checks and code review [Cross-Cutting]
 

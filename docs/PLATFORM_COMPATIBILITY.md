@@ -124,6 +124,7 @@ For Zsh 5.0-5.8 testing:
 **Platform-Specific Behavior**:
 
 - **stat command**: Uses `-c %Y` on Linux, `-f %m` on macOS/BSD
+
   ```zsh
   # Handled with fallback:
   stat -c %Y "$file" 2>/dev/null || stat -f %m "$file"
@@ -546,12 +547,12 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         zsh-version: ['5.8', '5.9']
-    
+
     runs-on: ${{ matrix.os }}
-    
+
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Install Zsh
         run: |
           if [ "$RUNNER_OS" == "macOS" ]; then
@@ -560,7 +561,7 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y zsh
           fi
-      
+
       - name: Run Tests
         run: ./tests/bats-core/bin/bats tests/integration/
 ```

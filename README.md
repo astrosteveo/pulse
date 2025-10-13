@@ -346,6 +346,8 @@ source ~/.local/share/pulse/pulse.zsh
 
 ## Troubleshooting
 
+> **🔍 Advanced Debugging**: For comprehensive troubleshooting, performance profiling, and bug reporting, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+
 ### Completions Not Working
 
 **Problem**: Tab completion doesn't show suggestions.
