@@ -28,6 +28,8 @@ All development MUST adhere to the project constitution at `.specify/memory/cons
 - **Test Framework**: bats-core v1.12.0
 - **Caching**: zcompdump in $PULSE_CACHE_DIR (~/.cache/pulse)
 - **History**: HISTFILE for shell history management
+- POSIX shell (sh) with Zsh-specific verification (Zsh ≥ 5.0) + Git (for clone/update), curl (fallback wget), coreutils (cp, mv, chmod), bats-core for automated tests (003-implement-an-install)
+- N/A (installs into file system under `~/.local/share/pulse`) (003-implement-an-install)
 
 ## Framework Modules
 
@@ -105,6 +107,7 @@ specs/                 # Feature specifications
 - **Testing**: TDD mandatory, 100% core functionality coverage target
 
 ## Recent Changes
+- 003-implement-an-install: Added POSIX shell (sh) with Zsh-specific verification (Zsh ≥ 5.0) + Git (for clone/update), curl (fallback wget), coreutils (cp, mv, chmod), bats-core for automated tests
 - 002-create-the-zsh: Added Zsh (compatible with Zsh 5.0+) + Zsh builtins (compinit, bindkey, setopt, zstyle), POSIX utilities (ls, less)
 
 <!-- MANUAL ADDITIONS START -->
