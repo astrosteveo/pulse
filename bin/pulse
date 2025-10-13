@@ -2,6 +2,9 @@
 # Pulse CLI - Plugin management commands
 # Usage: pulse <command> [args]
 
+# NOTE: This code assumes default zsh array indexing (1-based).
+# If KSH_ARRAYS is set, array indexing will be 0-based and break this code.
+
 # Get the directory where pulse is installed
 PULSE_BIN_DIR="${0:A:h}"
 PULSE_ROOT="${PULSE_BIN_DIR:h}"
@@ -48,6 +51,13 @@ pulse_cmd_install() {
       plugin_name="${plugin_spec##*/}"
       plugin_name="${plugin_name%.git}"
       plugin_name="${plugin_name%@*}"
+    fi
+
+    # Validate plugin name
+    if [[ -z "$plugin_name" ]] || [[ "$plugin_name" == *..* ]] || [[ "$plugin_name" == /* ]]; then
+      echo "✗ Invalid plugin specification: $plugin_spec"
+      ((failed_count++))
+      continue
     fi
 
     # Resolve to full path
