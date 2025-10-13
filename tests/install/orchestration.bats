@@ -16,10 +16,10 @@ teardown() {
 @test "backup_zshrc creates timestamped backup" {
   # Create test .zshrc
   echo "# Test config" > "$PULSE_ZSHRC"
-  
+
   run backup_zshrc "$PULSE_ZSHRC"
   assert_success
-  
+
   # Check backup was created
   local backup_count
   backup_count=$(ls "$PULSE_ZSHRC".pulse-backup-* 2>/dev/null | wc -l)
@@ -29,7 +29,7 @@ teardown() {
 @test "backup_zshrc skips non-existent file" {
   run backup_zshrc "$PULSE_ZSHRC"
   assert_success
-  
+
   # No backup should be created
   local backup_count
   backup_count=$(ls "$PULSE_ZSHRC".pulse-backup-* 2>/dev/null | wc -l)
@@ -49,7 +49,7 @@ plugins=()
 source /path/to/pulse.zsh
 # END Pulse Configuration
 EOF
-  
+
   run validate_config_order "$PULSE_ZSHRC"
   assert_success
 }
@@ -62,7 +62,7 @@ source /path/to/pulse.zsh
 plugins=()
 # END Pulse Configuration
 EOF
-  
+
   run validate_config_order "$PULSE_ZSHRC"
   assert_failure
 }
@@ -73,7 +73,7 @@ EOF
 # Test config
 echo "PULSE_OK"
 EOF
-  
+
   run verify_installation "$PULSE_ZSHRC"
   assert_success
 }
