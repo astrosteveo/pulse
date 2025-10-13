@@ -6,12 +6,12 @@
 
 ## Features
 
-✨ **Zero Configuration** - Works immediately with sensible defaults  
-🧠 **Intelligent Loading** - Automatically detects plugin types and loads them in optimal order  
-📦 **Declarative** - Just list your plugins, Pulse handles the rest  
-⚡ **Fast** - <100ms total framework overhead, all modules sub-millisecond  
-🎯 **Complete** - Plugins + completions + keybindings + directory nav + prompt  
-🔧 **Flexible** - Override any behavior when you need to  
+✨ **Zero Configuration** - Works immediately with sensible defaults
+🧠 **Intelligent Loading** - Automatically detects plugin types and loads them in optimal order
+📦 **Declarative** - Just list your plugins, Pulse handles the rest
+⚡ **Fast** - <100ms total framework overhead, all modules sub-millisecond
+🎯 **Complete** - Plugins + completions + keybindings + directory nav + prompt
+🔧 **Flexible** - Override any behavior when you need to
 🛡️ **Reliable** - Graceful error handling, comprehensive test coverage
 
 ## Philosophy: Radical Simplicity
@@ -418,7 +418,7 @@ source ~/.local/share/pulse/pulse.zsh
      # ... other plugins ...
    )
    source /path/to/pulse.zsh  # Load last
-   
+
    # Then set custom keybindings after Pulse
    bindkey '^P' up-history
    ```
@@ -541,7 +541,7 @@ tests/bats-core/bin/bats tests/unit/keybinds.bats
   - Keybindings (12 tests)
   - Directory management (15 tests)
   - Prompt system (12 tests)
-  
+
 - **Integration Tests**: 78 tests
   - Plugin loading (12 tests)
   - Configuration parsing (12 tests)

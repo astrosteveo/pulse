@@ -91,3 +91,6 @@ setopt LIST_PACKED               # Compact completion lists
 # === Error Handling ===
 # Don't exit on errors in scripts (for interactive shells)
 setopt NO_ERR_EXIT
+
+# === Module Loaded Flag ===
+export PULSE_ENV_LOADED=1
