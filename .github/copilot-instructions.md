@@ -6,13 +6,13 @@ Auto-generated from all feature plans. Last updated: 2025-10-12
 
 All development MUST adhere to the project constitution at `.specify/memory/constitution.md`.
 
-**Core Principles** (v1.0.0):
+**Core Principles** (v1.1.0):
 
 1. **Radical Simplicity** - Features serve 90% of users; edge cases excluded; every line justified
 2. **Quality Over Features** - Zsh conventions, error handling, documentation, performance measurement
 3. **Test-Driven Reliability** (NON-NEGOTIABLE) - Tests written FIRST, 100% core coverage, TDD mandatory
 4. **Consistent User Experience** - Sensible defaults, no surprises, graceful degradation
-5. **Zero Configuration** - Works immediately, smart auto-detection, minimal configuration
+5. **Zero Configuration** - Works immediately, smart auto-detection, minimal configuration, documentation always declares `plugins` before sourcing `pulse.zsh`
 
 **Performance Targets**:
 - Framework overhead: <50ms total
@@ -28,6 +28,8 @@ All development MUST adhere to the project constitution at `.specify/memory/cons
 - **Test Framework**: bats-core v1.12.0
 - **Caching**: zcompdump in $PULSE_CACHE_DIR (~/.cache/pulse)
 - **History**: HISTFILE for shell history management
+- Zsh (compatible with Zsh 5.0+) + Zsh builtins (compinit, bindkey, setopt, zstyle), POSIX utilities (ls, less) (002-create-the-zsh)
+- Cache files (zcompdump in $PULSE_CACHE_DIR), HISTFILE for shell history (002-create-the-zsh)
 
 ## Framework Modules
 
@@ -105,13 +107,9 @@ specs/                 # Feature specifications
 - **Testing**: TDD mandatory, 100% core functionality coverage target
 
 ## Recent Changes
-- 002-create-the-zsh: ✅ 36/40 tasks (90% complete) - Polish Phase in progress
-- 002-create-the-zsh: All 6 user stories implemented and tested (US1-US6)
-- 002-create-the-zsh: Integration tests 121/121 passing (100%)
-- 002-create-the-zsh: Performance validated - all targets exceeded (~29ms framework)
-- 002-create-the-zsh: Cross-platform compatibility documented (Linux/macOS/BSD)
-- 002-create-the-zsh: Comprehensive troubleshooting guide created (TROUBLESHOOTING.md)
-- 001-build-a-zsh: ✅ Complete - Plugin engine with 5-stage loading pipeline
+- 002-create-the-zsh: Added Zsh (compatible with Zsh 5.0+) + Zsh builtins (compinit, bindkey, setopt, zstyle), POSIX utilities (ls, less)
+- 002-create-the-zsh: Added Zsh (compatible with Zsh 5.0+) + Zsh builtins (compinit, bindkey, setopt, zstyle), POSIX utilities (ls, less)
+- 002-create-the-zsh: Added Zsh (compatible with Zsh 5.0+) + Zsh builtins (compinit, bindkey, setopt, zstyle), POSIX utilities (ls, less)
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->
