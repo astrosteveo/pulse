@@ -22,7 +22,7 @@ Pulse is built on five core principles:
 2. **Quality Over Features** - Zsh conventions, error handling, documentation, performance measurement
 3. **Test-Driven Reliability** - 100% core coverage, TDD mandatory, red-green-refactor enforced
 4. **Consistent User Experience** - Sensible defaults, no surprises, graceful degradation
-5. **Zero Configuration** - Works immediately, smart auto-detection, minimal configuration
+5. **Zero Configuration** - Works immediately, smart auto-detection, minimal configuration, documentation always declares `plugins` before sourcing `pulse.zsh`
 
 Every feature must justify its existence. Deletion is considered before addition.
 

@@ -1,14 +1,15 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version Change: TEMPLATE → 1.0.0
-Modified Principles: All principles defined from template
-Added Sections: Performance Standards, Development Workflow
-Removed Sections: None (template placeholders replaced)
+Version Change: 1.0.0 → 1.1.0
+Modified Principles: Zero Configuration (expanded validation checklist)
+Added Sections: Configuration Order Compliance
+Removed Sections: None
 Templates Requiring Updates:
-  ✅ .specify/templates/plan-template.md (verified - already references these principles)
-  ✅ .specify/templates/spec-template.md (verified - compatible)
-  ✅ .specify/templates/tasks-template.md (verified - compatible)
+  ✅ .specify/templates/plan-template.md (constitution gates include configuration order)
+  ✅ .specify/templates/spec-template.md (requirements guidance references configuration order)
+  ✅ .specify/templates/tasks-template.md (documentation tasks enforce configuration order)
+  ✅ .github/copilot-instructions.md (core principles version + guidance updated)
 Follow-up TODOs: None
 -->
 
@@ -72,6 +73,7 @@ Features work immediately without configuration—smart defaults handle common c
 - [ ] Smart defaults defined
 - [ ] Auto-detection strategy specified
 - [ ] Configuration options minimized
+- [ ] Configuration examples declare `plugins` before sourcing `pulse.zsh`
 
 ## Performance Standards
 
@@ -110,6 +112,13 @@ Every feature MUST pass the constitution check before Phase 0 (research) begins.
 - Performance impact MUST be measured if code touches the loading pipeline
 - Test coverage MUST meet targets (100% core, 90% utilities)
 
+### Configuration Order Compliance
+
+- Documentation MUST show `plugins` (or empty array) defined before `source pulse.zsh`
+- Templates and quickstarts MUST include automated or manual checks to prevent regressions
+- Tests covering documentation-driven workflows MUST fail if initialization order is incorrect
+- Critical fixes that touch configuration MUST backfill regression tests before merge
+
 ## Governance
 
 This constitution supersedes all other development practices. When in doubt, principles take precedence over convenience.
@@ -129,4 +138,4 @@ Amendments require:
 - Features adding complexity MUST justify necessity
 - Agent guidance file (`.github/copilot-instructions.md`) reflects current constitution state
 
-**Version**: 1.0.0 | **Ratified**: 2025-10-11 | **Last Amended**: 2025-10-11
+**Version**: 1.1.0 | **Ratified**: 2025-10-11 | **Last Amended**: 2025-10-12
