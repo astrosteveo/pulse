@@ -20,7 +20,7 @@ _pulse_load_stages
 
 # Framework module loading
 # Modules provide core shell features: completions, keybindings, shell options, etc.
-# Load order is critical: environment → compinit → completions → keybinds → directory → prompt
+# Load order is critical: environment → compinit → completions → keybinds → directory → prompt → utilities
 
 # Module load order (DO NOT CHANGE without updating dependencies)
 typeset -ga _pulse_framework_modules
@@ -31,7 +31,7 @@ _pulse_framework_modules=(
   keybinds     # Set up keybindings
   directory    # Directory navigation and management
   prompt       # Basic prompt setup
-  # utilities  # Utility functions (US6 - not yet implemented)
+  utilities    # Utility functions
 )
 
 # Track loaded modules for debugging
