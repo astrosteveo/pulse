@@ -593,7 +593,7 @@
 ### T029: Write unit tests for utilities.zsh [US6] [P3]
 
 - **Status**: ✅ Complete
-- **Assignee**: Completed  
+- **Assignee**: Completed
 - **Estimated Effort**: 2 hours
 - **Description**: Create unit tests for utility functions (TDD)
 - **Acceptance**:
