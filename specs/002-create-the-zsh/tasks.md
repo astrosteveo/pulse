@@ -807,20 +807,28 @@
 
 ### T040: Update .github/copilot-instructions.md [Cross-Cutting]
 
-- **Status**: Not Started
-- **Assignee**: Unassigned
+- **Status**: ✅ Complete
+- **Assignee**: Completed
 - **Estimated Effort**: 15 minutes
 - **Description**: Update agent context with framework modules information
 - **Acceptance**:
-  - Document all 7 framework modules
-  - Update technology stack
-  - Document performance characteristics
-  - Update project structure
-  - Add module loading order
-  - Note: This may already be done - verify current state
+  - ✅ Document all 7 framework modules (with descriptions and file paths)
+  - ✅ Update technology stack (Zsh 5.0+, builtins, POSIX utils, Git, bats-core)
+  - ✅ Document performance characteristics (all modules <5ms, ~29ms total)
+  - ✅ Update project structure (lib/, tests/, docs/, specs/)
+  - ✅ Add module loading order (1-7 with names)
+  - ✅ Add plugin engine 5-stage pipeline info
+  - ✅ Add framework functions reference
+  - ✅ Update recent changes to reflect 36/40 tasks (90% complete)
 - **Blockers**: T034 (documentation complete)
 - **Parallel**: Yes [P]
 - **Related**: T034
+- **Completion Notes**:
+  - Updated all sections with comprehensive framework information
+  - Documented module loading order and characteristics
+  - Added performance benchmarks and test status
+  - Updated project structure with all directories
+  - Added plugin engine details
 
 ---
 
