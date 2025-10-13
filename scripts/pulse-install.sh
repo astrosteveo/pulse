@@ -193,7 +193,7 @@ check_write_permissions() {
 clone_or_update_repo() {
   local repo_url="$1"
   local target_dir="$2"
-  
+
   # Check if directory exists and has .git
   if [ -d "$target_dir/.git" ]; then
     # Update existing installation
@@ -210,14 +210,14 @@ clone_or_update_repo() {
     else
       print_step "Cloning Pulse repository..."
     fi
-    
+
     # Clone with depth 1 for faster download
     if ! git clone --depth 1 --quiet "$repo_url" "$target_dir" 2>/dev/null; then
       print_error "Failed to clone repository"
       return "$EXIT_DOWNLOAD_FAILED"
     fi
   fi
-  
+
   return "$EXIT_SUCCESS"
 }
 
@@ -230,26 +230,26 @@ clone_or_update_repo() {
 add_pulse_config() {
   local zshrc_path="$1"
   local install_dir="$2"
-  
+
   # Ensure parent directory exists
   local parent_dir
   parent_dir=$(dirname "$zshrc_path")
   mkdir -p "$parent_dir"
-  
+
   # Configuration block template
   local config_block="# BEGIN Pulse Configuration
 # Managed by Pulse installer - do not edit this block manually
 plugins=()
 source $install_dir/pulse.zsh
 # END Pulse Configuration"
-  
+
   # Check if .zshrc exists
   if [ ! -f "$zshrc_path" ]; then
     # Create new .zshrc with Pulse configuration
     echo "$config_block" > "$zshrc_path"
     return "$EXIT_SUCCESS"
   fi
-  
+
   # Check if Pulse block already exists
   if grep -q "BEGIN Pulse Configuration" "$zshrc_path"; then
     # Update existing block - remove old block and insert new one
@@ -259,15 +259,173 @@ source $install_dir/pulse.zsh
       /# END Pulse Configuration/ { in_block=0; next }
       !in_block { print }
     ' "$zshrc_path" > "$zshrc_path.tmp"
-    
+
     mv "$zshrc_path.tmp" "$zshrc_path"
   else
     # Add new block at the end
     echo "" >> "$zshrc_path"
     echo "$config_block" >> "$zshrc_path"
   fi
+
+  return "$EXIT_SUCCESS"
+}
+#
+# Backup Management (T015)
+#
+
+# Create timestamped backup of .zshrc
+# Usage: backup_zshrc ZSHRC_PATH
+backup_zshrc() {
+  local zshrc_path="$1"
+  
+  # Skip if SKIP_BACKUP is set
+  if [ "$SKIP_BACKUP" = "1" ]; then
+    return "$EXIT_SUCCESS"
+  fi
+  
+  # Only backup if file exists
+  if [ ! -f "$zshrc_path" ]; then
+    return "$EXIT_SUCCESS"
+  fi
+  
+  # Create backup with timestamp
+  local backup_path="${zshrc_path}.pulse-backup-$(date +%Y%m%d-%H%M%S)"
+  if ! cp -p "$zshrc_path" "$backup_path" 2>/dev/null; then
+    print_error "Failed to create backup"
+    return "$EXIT_CONFIG_FAILED"
+  fi
+  
+  print_step "Backup created: $backup_path"
+  return "$EXIT_SUCCESS"
+}
+
+#
+# Configuration Validation (T016)
+#
+
+# Validate plugins array comes before source statement
+# Usage: validate_config_order ZSHRC_PATH
+validate_config_order() {
+  local zshrc_path="$1"
+  
+  if [ ! -f "$zshrc_path" ]; then
+    return "$EXIT_CONFIG_FAILED"
+  fi
+  
+  # Find line numbers
+  local plugins_line
+  plugins_line=$(grep -n "plugins=" "$zshrc_path" | head -1 | cut -d: -f1)
+  
+  local source_line
+  source_line=$(grep -n "source.*pulse.zsh" "$zshrc_path" | head -1 | cut -d: -f1)
+  
+  # Check both exist
+  if [ -z "$plugins_line" ] || [ -z "$source_line" ]; then
+    return "$EXIT_CONFIG_FAILED"
+  fi
+  
+  # Verify order
+  if [ "$plugins_line" -lt "$source_line" ]; then
+    return "$EXIT_SUCCESS"
+  else
+    return "$EXIT_CONFIG_FAILED"
+  fi
+}
+
+#
+# Post-Install Verification (T017)
+#
+
+# Verify Pulse loads in a test shell
+# Usage: verify_installation ZSHRC_PATH
+verify_installation() {
+  local zshrc_path="$1"
+  
+  # Skip if requested
+  if [ "$SKIP_VERIFY" = "1" ]; then
+    print_step "Skipping verification (PULSE_SKIP_VERIFY=1)"
+    return "$EXIT_SUCCESS"
+  fi
+  
+  print_step "Verifying installation..."
+  
+  # Test in subshell
+  if zsh -c "source $zshrc_path 2>/dev/null && echo PULSE_OK" 2>/dev/null | grep -q "PULSE_OK"; then
+    print_step "Pulse loads successfully ✓"
+    return "$EXIT_SUCCESS"
+  else
+    print_error "Verification failed - Pulse did not load correctly"
+    print_error "To debug: PULSE_DEBUG=1 zsh -c 'source $zshrc_path'"
+    return "$EXIT_CONFIG_FAILED"
+  fi
+}
+
+#
+# Main Installer Orchestration (T018)
+#
+
+# Main entry point
+main() {
+  print_header
+  
+  print_step "Installation directory: $INSTALL_DIR"
+  print_step "Configuration file: $ZSHRC_PATH"
+  
+  # Phase 1: Validate prerequisites
+  print_step "Checking prerequisites..."
+  
+  if ! check_zsh_version; then
+    error_exit "Zsh 5.0+ is required"
+  fi
+  
+  if ! check_git; then
+    error_exit "Git is not installed"
+  fi
+  
+  if ! check_write_permissions "$INSTALL_DIR"; then
+    error_exit "No write permission for installation directory"
+  fi
+  
+  print_step "Prerequisites validated ✓"
+  
+  # Phase 2: Install/update repository
+  if ! clone_or_update_repo "https://github.com/astrosteveo/pulse.git" "$INSTALL_DIR"; then
+    error_exit "Failed to install Pulse repository"
+  fi
+  
+  # Phase 3: Configure .zshrc
+  if ! backup_zshrc "$ZSHRC_PATH"; then
+    error_exit "Failed to create backup"
+  fi
+  
+  if ! add_pulse_config "$ZSHRC_PATH" "$INSTALL_DIR"; then
+    error_exit "Failed to configure .zshrc"
+  fi
+  
+  # Phase 4: Validate configuration
+  if ! validate_config_order "$ZSHRC_PATH"; then
+    error_exit "Configuration order validation failed"
+  fi
+  
+  # Phase 5: Verify installation
+  if ! verify_installation "$ZSHRC_PATH"; then
+    error_exit "Installation verification failed"
+  fi
+  
+  # Success!
+  print_success
+  
+  echo ""
+  echo "Next steps:"
+  echo "  1. Restart your shell: ${COLOR_BOLD}exec zsh${COLOR_RESET}"
+  echo "  2. Verify Pulse is loaded: ${COLOR_BOLD}echo \$PULSE_VERSION${COLOR_RESET}"
+  echo ""
+  echo "For documentation: https://github.com/astrosteveo/pulse"
   
   return "$EXIT_SUCCESS"
 }
 
-
+# Run main if executed directly
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+  main "$@"
+fi

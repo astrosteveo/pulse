@@ -26,10 +26,10 @@ teardown() {
   # Create existing .zshrc
   create_mock_zshrc "# My custom config
 export PATH=\$HOME/bin:\$PATH"
-  
+
   run add_pulse_config "$PULSE_ZSHRC" "$INSTALL_DIR"
   assert_success
-  
+
   # Should preserve existing content
   assert_string_in_file "My custom config" "$PULSE_ZSHRC"
   assert_string_in_file "BEGIN Pulse Configuration" "$PULSE_ZSHRC"
@@ -41,10 +41,10 @@ export PATH=\$HOME/bin:\$PATH"
 plugins=(git zsh-syntax-highlighting)
 source $INSTALL_DIR/pulse.zsh
 # END Pulse Configuration"
-  
+
   run add_pulse_config "$PULSE_ZSHRC" "$INSTALL_DIR"
   assert_success
-  
+
   # Should only have one BEGIN/END pair
   local begin_count
   begin_count=$(count_in_file "BEGIN Pulse Configuration" "$PULSE_ZSHRC")
@@ -57,13 +57,13 @@ source $INSTALL_DIR/pulse.zsh
 plugins=()
 source /old/path/pulse.zsh
 # END Pulse Configuration"
-  
+
   run add_pulse_config "$PULSE_ZSHRC" "$INSTALL_DIR"
   assert_success
-  
+
   # Should update to new path
   assert_string_in_file "source $INSTALL_DIR/pulse.zsh" "$PULSE_ZSHRC"
-  
+
   # Should not contain old path
   if grep -q "/old/path/pulse.zsh" "$PULSE_ZSHRC"; then
     echo "Old path should be removed"
@@ -77,10 +77,10 @@ source /old/path/pulse.zsh
 source $INSTALL_DIR/pulse.zsh
 plugins=(git)
 # END Pulse Configuration"
-  
+
   run add_pulse_config "$PULSE_ZSHRC" "$INSTALL_DIR"
   assert_success
-  
+
   # Should fix order: plugins before source
   verify_config_order || {
     echo "Configuration order should be: plugins declaration, then source"
@@ -91,7 +91,7 @@ plugins=(git)
 @test "add_pulse_config handles .zshrc in non-existent directory" {
   # Set .zshrc path in directory that doesn't exist
   local custom_zshrc="$TEST_HOME/custom/dir/.zshrc"
-  
+
   run add_pulse_config "$custom_zshrc" "$INSTALL_DIR"
   assert_success
   assert_file_exists "$custom_zshrc"
