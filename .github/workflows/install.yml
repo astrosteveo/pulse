@@ -1,0 +1,77 @@
+name: Installer Tests
+
+on:
+  push:
+    branches:
+      - main
+      - '**-implement-an-install'
+    paths:
+      - 'scripts/pulse-install.sh'
+      - 'tests/install/**'
+      - '.github/workflows/install.yml'
+  pull_request:
+    paths:
+      - 'scripts/pulse-install.sh'
+      - 'tests/install/**'
+      - '.github/workflows/install.yml'
+
+jobs:
+  test:
+    name: Run Installer Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Install Zsh
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zsh
+          zsh --version
+      
+      - name: Verify bats-core
+        run: |
+          tests/bats-core/bin/bats --version
+      
+      - name: Run test helper verification
+        run: |
+          tests/bats-core/bin/bats tests/install/test_helper_verification.bats
+      
+      - name: Run foundation tests (when available)
+        run: |
+          if [ -f tests/install/foundation.bats ]; then
+            tests/bats-core/bin/bats tests/install/foundation.bats
+          else
+            echo "Foundation tests not yet implemented"
+          fi
+      
+      - name: Run fresh install tests (when available)
+        run: |
+          if [ -f tests/install/fresh_install.bats ]; then
+            tests/bats-core/bin/bats tests/install/fresh_install.bats
+          else
+            echo "Fresh install tests not yet implemented"
+          fi
+      
+      - name: Run idempotent re-run tests (when available)
+        run: |
+          if [ -f tests/install/rerun_idempotent.bats ]; then
+            tests/bats-core/bin/bats tests/install/rerun_idempotent.bats
+          else
+            echo "Re-run tests not yet implemented"
+          fi
+      
+      - name: Run failure mode tests (when available)
+        run: |
+          if [ -f tests/install/failure_modes.bats ]; then
+            tests/bats-core/bin/bats tests/install/failure_modes.bats
+          else
+            echo "Failure mode tests not yet implemented"
+          fi
+      
+      - name: Test summary
+        if: always()
+        run: |
+          echo "::notice::Installer test suite execution complete"
+          echo "Check individual steps for test results"
