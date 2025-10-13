@@ -15,5 +15,59 @@
 
 set -e  # Exit on error
 
-# Script will be implemented in phases following TDD workflow
-# Implementation starts with T004: Output formatting functions
+# Colors for output formatting
+if [ -t 1 ]; then
+  # Terminal supports colors
+  COLOR_RESET="\033[0m"
+  COLOR_GREEN="\033[0;32m"
+  COLOR_RED="\033[0;31m"
+  COLOR_BLUE="\033[0;34m"
+  COLOR_BOLD="\033[1m"
+else
+  # No color support
+  COLOR_RESET=""
+  COLOR_GREEN=""
+  COLOR_RED=""
+  COLOR_BLUE=""
+  COLOR_BOLD=""
+fi
+
+#
+# Output Formatting Functions (T004)
+#
+
+# Print formatted header banner
+print_header() {
+  echo ""
+  echo "${COLOR_BOLD}${COLOR_BLUE}╔═══════════════════════════════════════╗${COLOR_RESET}"
+  echo "${COLOR_BOLD}${COLOR_BLUE}║                                       ║${COLOR_RESET}"
+  echo "${COLOR_BOLD}${COLOR_BLUE}║       Pulse Framework Installer       ║${COLOR_RESET}"
+  echo "${COLOR_BOLD}${COLOR_BLUE}║                                       ║${COLOR_RESET}"
+  echo "${COLOR_BOLD}${COLOR_BLUE}╚═══════════════════════════════════════╝${COLOR_RESET}"
+  echo ""
+}
+
+# Print a step with checkmark
+# Usage: print_step "Step description"
+print_step() {
+  local message="$1"
+  echo "${COLOR_GREEN}✓${COLOR_RESET} ${message}"
+}
+
+# Print an error message with error marker
+# Usage: print_error "Error description"
+print_error() {
+  local message="$1"
+  echo "${COLOR_RED}✗${COLOR_RESET} ${message}" >&2
+}
+
+# Print success completion banner
+print_success() {
+  echo ""
+  echo "${COLOR_BOLD}${COLOR_GREEN}╔═══════════════════════════════════════╗${COLOR_RESET}"
+  echo "${COLOR_BOLD}${COLOR_GREEN}║                                       ║${COLOR_RESET}"
+  echo "${COLOR_BOLD}${COLOR_GREEN}║   Installation completed successfully! ║${COLOR_RESET}"
+  echo "${COLOR_BOLD}${COLOR_GREEN}║                                       ║${COLOR_RESET}"
+  echo "${COLOR_BOLD}${COLOR_GREEN}╚═══════════════════════════════════════╝${COLOR_RESET}"
+  echo ""
+}
