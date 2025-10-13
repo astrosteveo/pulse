@@ -22,36 +22,45 @@ Pulse is a minimal, intelligent Zsh plugin orchestrator that automatically handl
 
 ### Quick Install (Recommended)
 
+**One-Command Installation**:
+
+```bash
+# Run the installation script
+curl -fsSL https://raw.githubusercontent.com/astrosteveo/pulse/main/install.sh | bash
+```
+
+This will:
+- ✅ Install Pulse to `~/.local/share/pulse`
+- ✅ Add `pulse` command to your PATH
+- ✅ Set up your `.zshrc` automatically
+- ✅ Back up existing configuration
+
+Then just restart your shell:
+```bash
+exec zsh
+```
+
+### Alternative: Manual Install
+
 ```bash
 # 1. Clone Pulse
 git clone https://github.com/astrosteveo/pulse ~/.local/share/pulse
 
-# 2. Copy the template configuration
-cp ~/.local/share/pulse/pulse.zshrc.template ~/.zshrc
+# 2. Add pulse to PATH
+echo 'export PATH="$HOME/.local/share/pulse/bin:$PATH"' >> ~/.zshenv
 
-# 3. Edit ~/.zshrc and uncomment plugins you want
-$EDITOR ~/.zshrc
-
-# 4. Restart your shell
-exec zsh
-```
-
-### Manual Install
-
-If you already have a `.zshrc`, add these lines:
-
-```zsh
-# Declare your plugins FIRST
+# 3. Add to your .zshrc
+cat >> ~/.zshrc <<'EOF'
 plugins=(
   zsh-users/zsh-autosuggestions
   zsh-users/zsh-syntax-highlighting
 )
-
-# Then load Pulse
 source ~/.local/share/pulse/pulse.zsh
-```
+EOF
 
-Then restart your shell: `exec zsh`
+# 4. Restart your shell
+exec zsh
+```
 
 ---
 
@@ -63,30 +72,43 @@ Add plugins to the `plugins` array in your `.zshrc`:
 
 ```zsh
 plugins=(
-  zsh-users/zsh-autosuggestions           # GitHub shorthand
-  zsh-users/zsh-syntax-highlighting
-  https://gitlab.com/user/repo.git         # Full URL
-  /path/to/local/plugin                    # Local path
+  # GitHub shorthand - auto-installed on next shell start
+  zsh-users/zsh-autosuggestions
+  
+  # Version locking with tags
+  zsh-users/zsh-syntax-highlighting@v0.7.1
+  
+  # Specific branches
+  zsh-users/zsh-completions@master
+  
+  # Full Git URLs
+  https://github.com/romkatv/powerlevel10k.git
+  
+  # Local paths (no auto-install)
+  /path/to/local/plugin
 )
 ```
 
-**Note**: In this MVP, you'll need to manually clone plugins first:
+**Automatic Installation**: Pulse will automatically clone missing plugins from GitHub when you restart your shell. No manual cloning needed!
+
+**Or use the CLI**:
 
 ```bash
-# Create plugins directory
-mkdir -p ~/.local/share/pulse/plugins
+# Install plugins manually
+pulse install zsh-users/zsh-autosuggestions
+pulse install zsh-users/zsh-syntax-highlighting@v0.7.1
 
-# Clone plugins manually
-cd ~/.local/share/pulse/plugins
-git clone https://github.com/zsh-users/zsh-autosuggestions
-git clone https://github.com/zsh-users/zsh-syntax-highlighting
+# Update all plugins
+pulse update
+
+# List installed plugins
+pulse list
 ```
-
-Future versions will handle cloning automatically.
 
 ### Plugin Formats Supported
 
-- **GitHub shorthand**: `owner/repo`
+- **GitHub shorthand**: `owner/repo` (default branch)
+- **Version locking**: `owner/repo@tag` or `owner/repo@branch`
 - **Full Git URL**: `https://github.com/owner/repo.git`
 - **Local path**: `/absolute/path/to/plugin`
 

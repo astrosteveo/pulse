@@ -36,15 +36,41 @@ Your shell should be alive, responsive, and reliable—the heartbeat of your wor
 
 ### Installation
 
+**Quick Install (Recommended)**:
+
+```bash
+# Run the installation script
+curl -fsSL https://raw.githubusercontent.com/astrosteveo/pulse/main/install.sh | bash
+
+# Or if you prefer to clone first:
+git clone https://github.com/astrosteveo/pulse.git /tmp/pulse
+cd /tmp/pulse
+./install.sh
+```
+
+The installer will:
+- ✅ Install Pulse to `~/.local/share/pulse`
+- ✅ Add the `pulse` command to your PATH
+- ✅ Set up your `.zshrc` with Pulse configuration
+- ✅ Back up your existing configuration
+
+**Manual Installation**:
+
 ```bash
 # Clone Pulse to ~/.local/share/pulse
 git clone https://github.com/astrosteveo/pulse.git ~/.local/share/pulse
 
-# Copy the template configuration to your .zshrc
-cp ~/.local/share/pulse/pulse.zshrc.template ~/.zshrc
+# Add pulse to PATH in ~/.zshenv
+echo 'export PATH="$HOME/.local/share/pulse/bin:$PATH"' >> ~/.zshenv
 
-# Edit ~/.zshrc and uncomment the plugins you want
-$EDITOR ~/.zshrc
+# Add to your .zshrc
+cat >> ~/.zshrc <<'EOF'
+plugins=(
+  zsh-users/zsh-autosuggestions
+  zsh-users/zsh-syntax-highlighting
+)
+source ~/.local/share/pulse/pulse.zsh
+EOF
 
 # Restart your shell
 exec zsh
@@ -84,21 +110,61 @@ That's it! Pulse will:
 
 ### Plugin Formats
 
-Pulse supports multiple plugin formats:
+Pulse supports multiple plugin formats with **automatic installation**:
 
 ```zsh
 plugins=(
-  # GitHub shorthand (most common)
+  # GitHub shorthand (default branch)
   zsh-users/zsh-autosuggestions
 
-  # Full Git URLs
-  https://github.com/zsh-users/zsh-syntax-highlighting.git
+  # Version locking with tags
+  zsh-users/zsh-syntax-highlighting@v0.7.1
 
-  # Local paths
+  # Specific branches
+  zsh-users/zsh-completions@master
+
+  # Full Git URLs
+  https://github.com/romkatv/powerlevel10k.git
+
+  # Local paths (no auto-install)
   ~/.local/share/my-custom-plugin
   /usr/local/share/zsh/plugins/work-plugin
 )
 ```
+
+**Auto-Installation**: When you add a plugin to the `plugins` array, Pulse will automatically clone it from GitHub on the next shell startup if it's not already installed. No manual cloning needed!
+
+### Plugin Management CLI
+
+Pulse provides a command-line tool for managing plugins:
+
+```bash
+# Install specific plugins
+pulse install zsh-users/zsh-autosuggestions
+pulse install zsh-users/zsh-syntax-highlighting@v0.7.1
+
+# Install all plugins from your .zshrc
+pulse install
+
+# Update all plugins
+pulse update
+
+# Update specific plugins
+pulse update zsh-autosuggestions zsh-syntax-highlighting
+
+# List installed plugins
+pulse list
+
+# Remove plugins
+pulse remove zsh-autosuggestions
+```
+
+**Available Commands**:
+- `pulse install [plugin-spec ...]` - Install plugins
+- `pulse update [plugin-name ...]` - Update plugins to latest versions
+- `pulse list` - List all installed plugins with their versions
+- `pulse remove <plugin-name ...>` - Remove plugins
+- `pulse help` - Show help message
 
 ---
 
