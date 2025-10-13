@@ -28,8 +28,6 @@ All development MUST adhere to the project constitution at `.specify/memory/cons
 - **Test Framework**: bats-core v1.12.0
 - **Caching**: zcompdump in $PULSE_CACHE_DIR (~/.cache/pulse)
 - **History**: HISTFILE for shell history management
-- Zsh (compatible with Zsh 5.0+) + Zsh builtins (compinit, bindkey, setopt, zstyle), POSIX utilities (ls, less) (002-create-the-zsh)
-- Cache files (zcompdump in $PULSE_CACHE_DIR), HISTFILE for shell history (002-create-the-zsh)
 
 ## Framework Modules
 
