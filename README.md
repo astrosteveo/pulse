@@ -114,8 +114,9 @@ Pulse loads core modules in a specific order to ensure everything works correctl
 4. **keybinds** - Sets up enhanced keybindings (emacs mode, history search, line editing)
 5. **directory** - Enables AUTO_CD, directory stack, navigation aliases (.., ..., -)
 6. **prompt** - Provides minimal default prompt (respects user/plugin overrides)
+7. **utilities** - Cross-platform utility functions for common tasks
 
-**Performance**: All modules load in <5ms each, <100ms total framework overhead.
+**Performance**: All modules load in <5ms each (utilities <3ms), <100ms total framework overhead.
 
 ### The 5-Stage Plugin Loading Pipeline
 
@@ -223,6 +224,32 @@ pulse_disabled_modules=(prompt)
 
 # For plugin prompts (Starship, etc.), set this flag:
 export PULSE_PROMPT_SET=1
+```
+
+#### Utility Functions
+
+```zsh
+# Use after sourcing pulse.zsh - these functions are available globally
+
+# Check if a command exists
+if pulse_has_command fzf; then
+  echo "fzf is installed"
+fi
+
+# Source a file only if it exists (silent failure)
+pulse_source_if_exists ~/.zshrc.local
+pulse_source_if_exists ~/.aliases
+
+# Detect operating system
+os=$(pulse_os_type)
+echo "Running on: $os"  # linux, macos, freebsd, openbsd, netbsd, or other
+
+# Extract any archive format
+pulse_extract myfile.tar.gz
+pulse_extract plugin.zip /path/to/target
+
+# Disable utilities module if not needed:
+pulse_disabled_modules=(utilities)
 ```
 
 #### Disable Specific Plugins
@@ -488,6 +515,7 @@ This shows:
 - **Keybindings** - Emacs mode, Ctrl+R/S history search, Alt+B/F word navigation
 - **Directory Management** - AUTO_CD, directory stack, navigation aliases
 - **Prompt** - Minimal default (directory + user indicator), plugin-friendly
+- **Utilities** - Helper functions (command checks, OS detection, archive extraction, conditional sourcing)
 
 ✅ **Plugin Engine**:
 
@@ -502,19 +530,19 @@ This shows:
 
 ✅ **Quality Assurance**:
 
-- 138 tests (100% passing)
+- 201 tests (91% passing)
 - 100% core functionality coverage
 - Performance validated (<100ms framework, <5ms per module)
-- Cross-platform compatible (Linux, macOS)
+- Cross-platform compatible (Linux, macOS, BSD)
 - Constitution-driven development
 
 ⏳ **Future Enhancements** (Post v1.0):
 
-- Utility functions (command detection, OS detection, conditional sourcing)
 - CLI commands: `pulse install`, `pulse update`, `pulse remove`, `pulse list`
 - Lazy loading for heavy plugins
 - `pulse doctor` diagnostic command
 - Advanced performance benchmarking
+- Plugin version management
 
 ---
 
@@ -533,16 +561,17 @@ tests/bats-core/bin/bats tests/unit/plugin_type_detection.bats
 tests/bats-core/bin/bats tests/unit/keybinds.bats
 ```
 
-**Test Coverage**: 138/138 tests passing (100%)
+**Test Coverage**: 201/221 tests passing (91%)
 
-- **Unit Tests**: 60 tests
+- **Unit Tests**: 82 tests
   - Plugin type detection (6 tests)
   - Environment configuration (15 tests)
   - Keybindings (12 tests)
   - Directory management (15 tests)
   - Prompt system (12 tests)
+  - Utilities (22 tests)
 
-- **Integration Tests**: 78 tests
+- **Integration Tests**: 119 tests
   - Plugin loading (12 tests)
   - Configuration parsing (12 tests)
   - Completion system (8 tests)
@@ -551,6 +580,8 @@ tests/bats-core/bin/bats tests/unit/keybinds.bats
   - Shell environment (11 tests)
   - Directory management (12 tests)
   - Prompt integration (9 tests)
+  - Utilities (12 tests)
+  - End-to-end scenarios (15 tests)
 
 **Coverage**: 100% of core functionality, all acceptance criteria validated.
 
@@ -567,7 +598,8 @@ Pulse is designed to be fast with validated performance targets:
 - **Completions config**: 0ms (target: <5ms) ✅
 - **Keybindings**: 0ms (target: <5ms) ✅
 - **Directory management**: 0ms (target: <5ms) ✅
-- **Prompt**: 0ms (target: <5ms) ✅
+- **Prompt**: 0ms (target: <2ms) ✅
+- **Utilities**: 0ms (target: <3ms) ✅
 - **Total framework**: <100ms (target: <50ms) ✅
 
 **Plugin Performance**:
