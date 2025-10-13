@@ -91,3 +91,42 @@ load ../test_helper
   [[ "$output" == *"standard:normal"* ]]
   [[ "$output" == *"syntax:late"* ]]
 }
+
+@test "plugin with dots in name is resolved correctly from GitHub shorthand" {
+  # Create a mock plugin with dots in the name
+  local plugin_dir="${PULSE_DIR}/plugins/my.custom.plugin"
+  mkdir -p "${plugin_dir}"
+  echo 'echo "my.custom.plugin loaded"' > "${plugin_dir}/my.custom.plugin.plugin.zsh"
+
+  # Source pulse.zsh in a subshell with GitHub shorthand containing dots
+  run zsh -c "
+    export PULSE_DIR='${PULSE_DIR}'
+    export PULSE_CACHE_DIR='${PULSE_CACHE_DIR}'
+    plugins=(user/my.custom.plugin)
+    source ${PULSE_ROOT}/pulse.zsh
+    echo \${pulse_plugins[my.custom.plugin]}
+  "
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"${plugin_dir}"* ]]
+}
+
+@test "plugin with dots can be added using plugins+= syntax" {
+  # Create a mock plugin with dots in the name
+  local plugin_dir="${PULSE_DIR}/plugins/test.plugin"
+  mkdir -p "${plugin_dir}"
+  echo 'echo "test.plugin loaded"' > "${plugin_dir}/test.plugin.plugin.zsh"
+
+  # Test adding plugin with += operator
+  run zsh -c "
+    export PULSE_DIR='${PULSE_DIR}'
+    export PULSE_CACHE_DIR='${PULSE_CACHE_DIR}'
+    plugins=()
+    plugins+=(owner/test.plugin)
+    source ${PULSE_ROOT}/pulse.zsh
+    echo \${pulse_plugins[test.plugin]}
+  "
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"${plugin_dir}"* ]]
+}
