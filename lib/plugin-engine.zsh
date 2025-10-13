@@ -83,7 +83,7 @@ _pulse_resolve_plugin_source() {
   fi
 
   # Case 3: GitHub shorthand (user/repo)
-  if [[ "$source_spec" =~ ^[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+$ ]]; then
+  if [[ "$source_spec" =~ ^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$ ]]; then
     local plugin_name="${source_spec##*/}"
     plugin_dir="${PULSE_DIR}/plugins/${plugin_name}"
     echo "$plugin_dir"
