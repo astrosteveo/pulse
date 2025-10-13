@@ -108,3 +108,78 @@ error_exit() {
   print_error "$message"
   exit "$exit_code"
 }
+
+#
+# Prerequisite Checks (T008-T010)
+#
+
+# Check Zsh version is 5.0 or higher
+check_zsh_version() {
+  # Check if zsh command exists
+  if ! command -v zsh >/dev/null 2>&1; then
+    print_error "Zsh is not installed"
+    return "$EXIT_PREREQ_FAILED"
+  fi
+  
+  # Get Zsh version (zsh command should work if it exists)
+  local zsh_version
+  if ! zsh_version=$(zsh --version 2>/dev/null | head -n1); then
+    print_error "Zsh is not installed"
+    return "$EXIT_PREREQ_FAILED"
+  fi
+  
+  # Extract major.minor version (e.g., "5.9" from "zsh 5.9 (x86_64-pc-linux-gnu)")
+  local version_number
+  version_number=$(echo "$zsh_version" | grep -oE '[0-9]+\.[0-9]+' | head -n1)
+  
+  if [ -z "$version_number" ]; then
+    print_error "Could not detect Zsh version"
+    return "$EXIT_PREREQ_FAILED"
+  fi
+  
+  # Compare version (require 5.0+)
+  local major minor
+  major=$(echo "$version_number" | cut -d. -f1)
+  minor=$(echo "$version_number" | cut -d. -f2)
+  
+  if [ "$major" -lt 5 ]; then
+    print_error "Zsh 5.0 or higher required (found $version_number)"
+    return "$EXIT_PREREQ_FAILED"
+  fi
+  
+  return "$EXIT_SUCCESS"
+}
+
+# Check if Git is installed
+check_git() {
+  if ! command -v git >/dev/null 2>&1; then
+    print_error "Git is not installed"
+    return "$EXIT_PREREQ_FAILED"
+  fi
+  
+  return "$EXIT_SUCCESS"
+}
+
+# Check write permissions for installation directory
+check_write_permissions() {
+  local target_dir="$1"
+  
+  # If directory exists, check if writable
+  if [ -d "$target_dir" ]; then
+    if [ ! -w "$target_dir" ]; then
+      print_error "No write permission for $target_dir"
+      return "$EXIT_PREREQ_FAILED"
+    fi
+  else
+    # Check if parent directory exists and is writable
+    local parent_dir
+    parent_dir=$(dirname "$target_dir")
+    
+    if [ ! -d "$parent_dir" ] || [ ! -w "$parent_dir" ]; then
+      print_error "No write permission for installation directory"
+      return "$EXIT_PREREQ_FAILED"
+    fi
+  fi
+  
+  return "$EXIT_SUCCESS"
+}
