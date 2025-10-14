@@ -237,12 +237,14 @@ _pulse_resolve_plugin_source() {
 #
 
 # Clone a plugin from a Git URL
-# Usage: _pulse_clone_plugin <plugin_url> <plugin_name> [plugin_ref]
+# Usage: _pulse_clone_plugin <plugin_url> <plugin_name> [plugin_ref] [sparse_path]
 # Returns: 0 on success, 1 on failure
+# sparse_path: Optional subdirectory path for sparse checkout (e.g., "plugins/kubectl" for omz)
 _pulse_clone_plugin() {
   local plugin_url="$1"
   local plugin_name="$2"
   local plugin_ref="${3:-}"
+  local sparse_path="${4:-}"
   local plugin_dir="${PULSE_DIR}/plugins/${plugin_name}"
 
   # Check if git is available
@@ -254,11 +256,76 @@ _pulse_clone_plugin() {
   # Create plugins directory if it doesn't exist
   mkdir -p "${PULSE_DIR}/plugins"
 
+  # Determine if we should use sparse checkout
+  local use_sparse=0
+  if [[ -n "$sparse_path" ]]; then
+    use_sparse=1
+    [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Using sparse checkout for $plugin_name (path: $sparse_path)..." >&2
+  fi
+
   # Clone the plugin
   [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Cloning $plugin_name from $plugin_url..." >&2
   
-  if [[ -n "$plugin_ref" ]]; then
-    # Clone specific branch/tag
+  if [[ $use_sparse -eq 1 ]]; then
+    # Sparse checkout approach for framework plugins
+    # This significantly reduces disk usage by only fetching needed files
+    
+    # Step 1: Clone with --filter=blob:none --no-checkout
+    if ! git clone --quiet --filter=blob:none --no-checkout "$plugin_url" "$plugin_dir" 2>/dev/null; then
+      [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Failed to clone $plugin_name with sparse checkout" >&2
+      rm -rf "$plugin_dir" 2>/dev/null
+      return 1
+    fi
+    
+    # Step 2: Configure sparse-checkout
+    local checkout_failed=0
+    local original_dir="$PWD"
+    if ! cd "$plugin_dir" 2>/dev/null; then
+      [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Failed to cd to $plugin_dir" >&2
+      cd "$original_dir"
+      rm -rf "$plugin_dir" 2>/dev/null
+      return 1
+    fi
+    
+    # Enable sparse checkout and set the path
+    if ! git sparse-checkout set --no-cone "$sparse_path" 2>/dev/null; then
+      [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Failed to configure sparse checkout" >&2
+      cd "$original_dir"
+      rm -rf "$plugin_dir" 2>/dev/null
+      return 1
+    fi
+    
+    # Step 3: Checkout the files (defaults to default branch or specified ref)
+    if [[ -n "$plugin_ref" ]]; then
+      if ! git checkout --quiet "$plugin_ref" 2>/dev/null; then
+        [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Failed to checkout $plugin_ref" >&2
+        cd "$original_dir"
+        rm -rf "$plugin_dir" 2>/dev/null
+        return 1
+      fi
+    else
+      if ! git checkout 2>/dev/null; then
+        [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Failed to checkout files" >&2
+        cd "$original_dir"
+        rm -rf "$plugin_dir" 2>/dev/null
+        return 1
+      fi
+    fi
+    
+    cd "$original_dir"
+    
+    # Verify checkout succeeded
+    if [[ -d "$plugin_dir/.git" ]] && [[ -d "$plugin_dir/$sparse_path" ]]; then
+      [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully cloned $plugin_name with sparse checkout" >&2
+      return 0
+    else
+      [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Sparse checkout incomplete for $plugin_name" >&2
+      rm -rf "$plugin_dir" 2>/dev/null
+      return 1
+    fi
+    
+  elif [[ -n "$plugin_ref" ]]; then
+    # Clone specific branch/tag (standard approach)
     local clone_error=""
     if git clone --quiet --depth 1 --branch "$plugin_ref" "$plugin_url" "$plugin_dir" 2>&1 | read -r clone_error; then
       [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully cloned $plugin_name@$plugin_ref" >&2
@@ -293,7 +360,7 @@ _pulse_clone_plugin() {
     [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Failed to clone $plugin_name@$plugin_ref" >&2
     return 1
   else
-    # Clone default branch
+    # Clone default branch (standard approach)
     local clone_error=""
     if git clone --quiet --depth 1 "$plugin_url" "$plugin_dir" 2>&1 | read -r clone_error; then
       # Verify clone succeeded by checking .git directory
@@ -596,22 +663,33 @@ _pulse_discover_plugins() {
       # Ensure plugins directory exists before creating lock
       mkdir -p "${PULSE_DIR}/plugins"
       
-      # For framework plugins, we need to clone the entire framework repo
+      # For framework plugins, we use sparse checkout to only fetch needed files
       # Determine the actual target directory for cloning
       local clone_target_dir="${PULSE_DIR}/plugins/${plugin_name}"
       
-      # For framework plugins, check if framework root exists, not the specific plugin dir
+      # For framework plugins, determine sparse path and check if already cloned
       local framework_root=""
+      local sparse_path=""
       if [[ "$plugin_spec" =~ ^ohmyzsh/ohmyzsh/plugins/ ]]; then
         framework_root="${PULSE_DIR}/plugins/ohmyzsh"
+        # Extract the plugin subdirectory path (e.g., "plugins/kubectl")
+        local omz_plugin="${plugin_spec#ohmyzsh/ohmyzsh/}"
+        sparse_path="$omz_plugin"
       elif [[ "$plugin_spec" =~ ^sorin-ionescu/prezto/modules/ ]]; then
         framework_root="${PULSE_DIR}/plugins/prezto"
+        # Extract the module subdirectory path (e.g., "modules/git")
+        local prezto_module="${plugin_spec#sorin-ionescu/prezto/}"
+        sparse_path="$prezto_module"
       fi
       
-      # If it's a framework plugin and the framework root already exists, we're done
-      if [[ -n "$framework_root" ]] && [[ -d "$framework_root" ]]; then
-        [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Framework already installed at $framework_root" >&2
-      else
+      # Check if the specific plugin/module path already exists
+      local plugin_already_exists=0
+      if [[ -n "$framework_root" ]] && [[ -d "$plugin_path" ]]; then
+        plugin_already_exists=1
+        [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Plugin already installed at $plugin_path" >&2
+      fi
+      
+      if [[ $plugin_already_exists -eq 0 ]]; then
         # Create lock file to prevent race conditions
         local lock_file="${PULSE_DIR}/plugins/.${plugin_name}.lock"
         local lock_acquired=0
@@ -627,13 +705,30 @@ _pulse_discover_plugins() {
         done
         
         if [[ $lock_acquired -eq 1 ]]; then
-          # Check again if directory exists (another shell may have created it)
-          
-          if [[ ! -d "${framework_root:-$clone_target_dir}" ]]; then
-            if _pulse_clone_plugin "$plugin_url" "$plugin_name" "$plugin_ref"; then
-              [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully installed $plugin_name" >&2
+          # Check again if plugin path exists (another shell may have created it)
+          if [[ ! -d "$plugin_path" ]]; then
+            # For framework plugins with existing repo, add sparse path
+            if [[ -n "$framework_root" ]] && [[ -d "$framework_root/.git" ]] && [[ -n "$sparse_path" ]]; then
+              [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Adding $sparse_path to existing framework at $framework_root..." >&2
+              
+              # Add the new sparse path to existing checkout
+              local original_dir="$PWD"
+              if cd "$framework_root" 2>/dev/null; then
+                # Add the new path to sparse-checkout
+                if git sparse-checkout add --no-cone "$sparse_path" 2>/dev/null; then
+                  [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully added $sparse_path to framework" >&2
+                else
+                  [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Warning: Failed to add $sparse_path to framework" >&2
+                fi
+                cd "$original_dir"
+              fi
             else
-              [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Warning: Failed to install $plugin_name" >&2
+              # Clone the plugin (with sparse checkout for frameworks)
+              if _pulse_clone_plugin "$plugin_url" "$plugin_name" "$plugin_ref" "$sparse_path"; then
+                [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully installed $plugin_name" >&2
+              else
+                [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Warning: Failed to install $plugin_name" >&2
+              fi
             fi
           fi
           # Release lock
