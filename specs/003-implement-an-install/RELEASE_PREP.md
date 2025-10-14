@@ -328,7 +328,7 @@ echo "efb4fd7be8b428674ea79a89deb1459bba52c62b0c1b420b1b5a5f00c2e3211a  pulse-in
 - **Test Coverage**: 47/47 tests passing (100%)
 - **Constitution**: v1.2.0 compliant (all principles satisfied)
 - **Performance**: <60s installation time (target: <120s)
-- **Code Quality**: 563 LOC, 100% POSIX compliant
+- **Code Quality**: 643 LOC, Bash script (uses bash-specific features)
 
 ## 📦 Assets
 

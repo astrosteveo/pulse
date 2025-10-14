@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Pulse Framework Installer
-# Version: 1.0.0
+# Version: 0.1.0-beta
 # Description: One-command installer for the Pulse Zsh framework
 #
 # Usage: curl -fsSL https://raw.githubusercontent.com/astrosteveo/pulse/main/scripts/pulse-install.sh | bash
@@ -125,10 +125,9 @@ EOF
   done
 }
 
-readonly SKIP_BACKUP
-readonly DEBUG
-readonly SKIP_VERIFY
-readonly VERBOSE
+# Note: SKIP_BACKUP, DEBUG, SKIP_VERIFY, VERBOSE are mutable runtime flags
+# They can be overridden by CLI arguments via parse_arguments()
+# Do NOT mark as readonly or CLI flags will fail to update them
 
 #
 # Output Formatting Functions (T004)
@@ -190,7 +189,7 @@ error_exit() {
   local exit_code="${2:-$EXIT_INSTALL_FAILED}"
 
   print_error "$message"
-  
+
   # FR-009: Automatic rollback if backup exists
   if [ -n "$BACKUP_FILE" ] && [ -f "$BACKUP_FILE" ]; then
     print_step "Rolling back changes..."
@@ -203,7 +202,7 @@ error_exit() {
       print_error "Backup location: $BACKUP_FILE"
     fi
   fi
-  
+
   exit "$exit_code"
 }
 
@@ -372,17 +371,17 @@ add_pulse_config() {
   local install_dir="$2"
 
   print_verbose "Configuring $zshrc_path"
-  
+
   # Ensure parent directory exists
   local parent_dir
   parent_dir=$(dirname "$zshrc_path")
   mkdir -p "$parent_dir"
 
-  # Configuration block template
+  # Configuration block template (use actual install_dir path)
   local config_block="# BEGIN Pulse Configuration
 # Managed by Pulse installer - do not edit this block manually
 plugins=()
-source \"\$PULSE_INSTALL_DIR/pulse.zsh\"
+source $install_dir/pulse.zsh
 # END Pulse Configuration"
 
   # Check if .zshrc exists
@@ -397,12 +396,12 @@ source \"\$PULSE_INSTALL_DIR/pulse.zsh\"
   # Check if Pulse block already exists
   if grep -q "BEGIN Pulse Configuration" "$zshrc_path"; then
     print_verbose "Existing Pulse configuration block found"
-    
+
     # FR-004: Check if order is correct
     if ! validate_config_order "$zshrc_path"; then
       print_step "Detected incorrect configuration order - auto-fixing..."
       print_verbose "Configuration has 'source' before 'plugins' - this must be corrected"
-      
+
       # Extract existing plugin entries (preserve user customizations)
       local user_plugins
       user_plugins=$(awk '
@@ -412,9 +411,9 @@ source \"\$PULSE_INSTALL_DIR/pulse.zsh\"
           if (in_plugins) print
         }
       ' "$zshrc_path")
-      
+
       print_verbose "Preserving user plugin entries:${user_plugins:+ (found)}"
-      
+
       # Build corrected config block with user plugins
       local corrected_block="# BEGIN Pulse Configuration
 # Managed by Pulse installer - do not edit this block manually
@@ -423,27 +422,49 @@ $user_plugins
 )
 source $install_dir/pulse.zsh
 # END Pulse Configuration"
-      
+
       # Replace with corrected block
       awk -v block="$corrected_block" '
         /# BEGIN Pulse Configuration/ { in_block=1; print block; next }
         /# END Pulse Configuration/ { in_block=0; next }
         !in_block { print }
       ' "$zshrc_path" > "$zshrc_path.tmp"
-      
+
       mv "$zshrc_path.tmp" "$zshrc_path"
       print_step "Fixed configuration order (plugins now before source)"
     else
       print_verbose "Configuration order is correct"
-      # Update existing block with new path (in case INSTALL_DIR changed)
-      awk -v block="$config_block" '
+
+      # Extract existing plugin entries to preserve user customizations
+      local user_plugins
+      user_plugins=$(awk '
+        /# BEGIN Pulse Configuration/,/# END Pulse Configuration/ {
+          if (/plugins=\(/) { in_plugins=1; next }
+          if (in_plugins && /\)/) { in_plugins=0; next }
+          if (in_plugins) print
+        }
+      ' "$zshrc_path")
+
+      print_verbose "Preserving user plugins from existing configuration"
+
+      # Build updated config block with preserved plugins
+      local updated_block="# BEGIN Pulse Configuration
+# Managed by Pulse installer - do not edit this block manually
+plugins=(
+$user_plugins
+)
+source $install_dir/pulse.zsh
+# END Pulse Configuration"
+
+      # Replace block while preserving plugins
+      awk -v block="$updated_block" '
         /# BEGIN Pulse Configuration/ { in_block=1; print block; next }
         /# END Pulse Configuration/ { in_block=0; next }
         !in_block { print }
       ' "$zshrc_path" > "$zshrc_path.tmp"
 
       mv "$zshrc_path.tmp" "$zshrc_path"
-      print_verbose "Updated existing configuration block"
+      print_verbose "Updated configuration block (plugins preserved)"
     fi
   else
     # Add new block at the end
@@ -479,7 +500,7 @@ backup_zshrc() {
   # Create backup with timestamp
   BACKUP_FILE="${zshrc_path}.pulse-backup-$(date +%Y%m%d-%H%M%S)"
   print_verbose "Creating backup: $BACKUP_FILE"
-  
+
   if ! cp -p "$zshrc_path" "$BACKUP_FILE" 2>/dev/null; then
     print_error "Failed to create backup"
     return "$EXIT_CONFIG_FAILED"
@@ -503,19 +524,29 @@ validate_config_order() {
     return "$EXIT_CONFIG_FAILED"
   fi
 
-  # Find line numbers
+  # Extract only the Pulse Configuration block to avoid false positives
+  # from unrelated plugins/source lines outside the block
+  local pulse_block
+  pulse_block=$(sed -n '/# BEGIN Pulse Configuration/,/# END Pulse Configuration/p' "$zshrc_path")
+
+  if [ -z "$pulse_block" ]; then
+    # No Pulse block found
+    return "$EXIT_CONFIG_FAILED"
+  fi
+
+  # Find line numbers within the extracted block
   local plugins_line
-  plugins_line=$(grep -n "plugins=" "$zshrc_path" | head -1 | cut -d: -f1)
+  plugins_line=$(echo "$pulse_block" | grep -n "plugins=" | head -1 | cut -d: -f1)
 
   local source_line
-  source_line=$(grep -n "source.*pulse.zsh" "$zshrc_path" | head -1 | cut -d: -f1)
+  source_line=$(echo "$pulse_block" | grep -n "source.*pulse.zsh" | head -1 | cut -d: -f1)
 
   # Check both exist
   if [ -z "$plugins_line" ] || [ -z "$source_line" ]; then
     return "$EXIT_CONFIG_FAILED"
   fi
 
-  # Verify order
+  # Verify order (within block)
   if [ "$plugins_line" -lt "$source_line" ]; then
     return "$EXIT_SUCCESS"
   else
