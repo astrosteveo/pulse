@@ -439,6 +439,7 @@ source $install_dir/pulse.zsh
       local user_plugins
       user_plugins=$(awk '
         /# BEGIN Pulse Configuration/,/# END Pulse Configuration/ {
+          if (/plugins=\(.*\)/) { next }  # Skip single-line plugins=()
           if (/plugins=\(/) { in_plugins=1; next }
           if (in_plugins && /\)/) { in_plugins=0; next }
           if (in_plugins) print
