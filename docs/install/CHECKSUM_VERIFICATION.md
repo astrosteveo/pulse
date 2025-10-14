@@ -35,7 +35,7 @@ The checksum should be published in:
 curl -fsSL https://raw.githubusercontent.com/astrosteveo/pulse/main/scripts/pulse-install.sh -o pulse-install.sh
 
 # Download the checksum (published in README or release notes)
-echo "<PUBLISHED_SHA256>  pulse-install.sh" > pulse-install.sh.sha256
+echo "efb4fd7be8b428674ea79a89deb1459bba52c62b0c1b420b1b5a5f00c2e3211a  pulse-install.sh" > pulse-install.sh.sha256
 
 # Verify
 sha256sum -c pulse-install.sh.sha256
@@ -51,7 +51,7 @@ bash pulse-install.sh
 curl -fsSL https://raw.githubusercontent.com/astrosteveo/pulse/main/scripts/pulse-install.sh -o pulse-install.sh
 
 # Verify checksum matches published value
-if echo "<PUBLISHED_SHA256>  pulse-install.sh" | sha256sum -c -; then
+if echo "efb4fd7be8b428674ea79a89deb1459bba52c62b0c1b420b1b5a5f00c2e3211a  pulse-install.sh" | sha256sum -c -; then
   bash pulse-install.sh
 else
   echo "ERROR: Checksum verification failed!"
@@ -68,7 +68,7 @@ fi
 set -e
 
 INSTALLER_URL="https://raw.githubusercontent.com/astrosteveo/pulse/main/scripts/pulse-install.sh"
-EXPECTED_CHECKSUM="<PUBLISHED_SHA256>"
+EXPECTED_CHECKSUM="efb4fd7be8b428674ea79a89deb1459bba52c62b0c1b420b1b5a5f00c2e3211a"
 
 # Download installer
 echo "Downloading Pulse installer..."
@@ -99,14 +99,16 @@ bash /tmp/pulse-install.sh "$@"
 
 ## Current Checksum
 
-**Version**: 1.0.0  
-**Script**: `scripts/pulse-install.sh`  
-**SHA256**: `<TO_BE_GENERATED_BEFORE_RELEASE>`
+**Version**: 1.0.0-beta
+**Script**: `scripts/pulse-install.sh`
+**SHA256**: `efb4fd7be8b428674ea79a89deb1459bba52c62b0c1b420b1b5a5f00c2e3211a`
+**Generated**: 2025-10-13
 
-To generate the current checksum:
+To verify the current checksum:
 
 ```bash
 sha256sum scripts/pulse-install.sh
+# Should output: efb4fd7be8b428674ea79a89deb1459bba52c62b0c1b420b1b5a5f00c2e3211a
 ```
 
 ## Security Best Practices
