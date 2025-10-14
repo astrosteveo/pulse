@@ -372,6 +372,7 @@ add_pulse_config() {
   # Configuration block template (use actual install_dir path)
   local config_block="# BEGIN Pulse Configuration
 # Managed by Pulse installer - do not edit this block manually
+export PATH=\"$install_dir/bin:\$PATH\"
 plugins=()
 source $install_dir/pulse.zsh
 # END Pulse Configuration"
@@ -409,6 +410,7 @@ source $install_dir/pulse.zsh
       # Build corrected config block with user plugins
       local corrected_block="# BEGIN Pulse Configuration
 # Managed by Pulse installer - do not edit this block manually
+export PATH=\"$install_dir/bin:\$PATH\"
 plugins=(
 $user_plugins
 )
@@ -443,6 +445,7 @@ source $install_dir/pulse.zsh
       # Build updated config block with preserved plugins
       local updated_block="# BEGIN Pulse Configuration
 # Managed by Pulse installer - do not edit this block manually
+export PATH=\"$install_dir/bin:\$PATH\"
 plugins=(
 $user_plugins
 )

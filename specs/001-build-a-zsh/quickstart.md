@@ -59,6 +59,7 @@ Add these lines to your existing `~/.zshrc`:
 
 ```zsh
 # Load Pulse
+export PATH="$HOME/.local/share/pulse/bin:$PATH"
 source ~/.local/share/pulse/pulse.zsh
 
 # Declare your plugins (examples - uncomment what you want)
@@ -134,6 +135,58 @@ Plugin                            Status   Stage    Load Time
 zsh-users/zsh-autosuggestions     loaded   normal   42ms
 zsh-users/zsh-syntax-highlighting loaded   late     67ms
 ```
+
+---
+
+## Managing Plugins with the CLI
+
+Pulse includes a command-line tool for managing your plugins:
+
+```bash
+# List all installed plugins
+pulse list
+
+# Show detailed information about a plugin
+pulse info zsh-autosuggestions
+
+# Run diagnostics to check for issues
+pulse doctor
+
+# Clear the plugin cache
+pulse cache clear
+
+# Show Pulse version
+pulse version
+```
+
+**Available Commands:**
+
+- `pulse list` - Show all installed plugins with their status and type
+  - `--format=table` (default) - Formatted table view
+  - `--format=json` - JSON output for scripting
+  - `--format=simple` - Plain list, one per line
+
+- `pulse info <plugin>` - Show detailed information about a specific plugin
+  - Plugin path, type, git info, and files
+
+- `pulse doctor` - Run diagnostic checks
+  - Zsh version compatibility
+  - Git availability  
+  - Directory permissions
+  - Plugin state
+
+- `pulse cache clear` - Clear cached plugin metadata
+  
+- `pulse version` - Show Pulse version and git commit
+
+**Coming Soon:**
+- `pulse update` - Update plugins to latest versions
+- `pulse install` - Install new plugins without restarting
+- `pulse remove` - Remove plugins cleanly
+- `pulse benchmark` - Measure shell startup performance
+- `pulse validate` - Validate configuration files
+
+The `pulse` command is automatically available after installation.
 
 ---
 

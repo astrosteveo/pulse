@@ -107,6 +107,9 @@ plugins=(
 # LOAD PULSE FRAMEWORK
 # ============================================================================
 
+# Add Pulse bin directory to PATH for the pulse command
+export PATH="${HOME}/.local/share/pulse/bin:${PATH}"
+
 # Source Pulse (adjust path if you installed elsewhere)
 # This MUST come AFTER plugin configuration above!
 source "${HOME}/.local/share/pulse/pulse.zsh"
