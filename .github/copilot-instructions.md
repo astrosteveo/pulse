@@ -32,6 +32,8 @@ All development MUST adhere to the project constitution at `.specify/memory/cons
 - N/A (installs into file system under `~/.local/share/pulse`) (003-implement-an-install)
 - POSIX shell (sh) with Zsh-specific verification (requires Zsh ≥5.0 on target system) + Git (for repository cloning), curl or wget (for script download), coreutils (cp, mv, chmod), sha256sum or shasum (for checksum verification) (003-implement-an-install)
 - File system operations only - writes to `~/.local/share/pulse`, `~/.zshrc`, marker file `.pulse-installed` (003-implement-an-install)
+- Zsh ≥5.0 (primary), POSIX shell for CLI portability + Git (for plugin operations), existing plugin-engine.zsh infrastructure (004-polish-and-refinement)
+- File-based (lock file in `$PULSE_DIR`, typically `~/.local/share/pulse/plugins.lock`) (004-polish-and-refinement)
 
 ## Framework Modules
 
@@ -109,9 +111,9 @@ specs/                 # Feature specifications
 - **Testing (ABSOLUTE REQUIREMENT)**: TDD MANDATORY—tests written FIRST and MUST FAIL before implementation, Red-Green-Refactor cycle STRICTLY enforced, 100% core functionality coverage target, pull requests without tests REJECTED without review
 
 ## Recent Changes
+- 004-polish-and-refinement: Added Zsh ≥5.0 (primary), POSIX shell for CLI portability + Git (for plugin operations), existing plugin-engine.zsh infrastructure
+- 004-polish-and-refinement: Added Zsh ≥5.0 (primary), POSIX shell for CLI portability + Git (for plugin operations), existing plugin-engine.zsh infrastructure
 - 003-implement-an-install: Added POSIX shell (sh) with Zsh-specific verification (requires Zsh ≥5.0 on target system) + Git (for repository cloning), curl or wget (for script download), coreutils (cp, mv, chmod), sha256sum or shasum (for checksum verification)
-- 003-implement-an-install: Added POSIX shell (sh) with Zsh-specific verification (Zsh ≥ 5.0) + Git (for clone/update), curl (fallback wget), coreutils (cp, mv, chmod), bats-core for automated tests
-- 002-create-the-zsh: Added Zsh (compatible with Zsh 5.0+) + Zsh builtins (compinit, bindkey, setopt, zstyle), POSIX utilities (ls, less)
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->
