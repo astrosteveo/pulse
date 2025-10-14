@@ -1,35 +1,41 @@
-# Implementation Plan: Polish & Refinement
+# Implementation Plan: [FEATURE]
 
-**Branch**: `004-polish-and-refinement` | **Date**: 2025-10-14 | **Spec**: [spec.md](./spec.md)
-**Input**: Feature specification from `/specs/004-polish-and-refinement/spec.md`
+**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
+**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
 
 **Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
 
 ## Summary
 
-This feature adds polish and refinement to the Pulse framework through five key enhancements: (1) explicit `@latest` keyword support for plugin version specifications, (2) command-line interface tools for plugin management (`pulse list`, `pulse update`, `pulse doctor`), (3) automatic version lock file generation for reproducible environments, (4) on-demand update checking to discover outdated plugins, and (5) comprehensive documentation of version management features. The implementation extends the existing plugin engine with `@latest` parsing, creates an optional standalone CLI binary, implements lock file generation/reading, and adds git-based update checking—all while maintaining 100% backward compatibility with existing configurations.
+[Extract from feature spec: primary requirement + technical approach from research]
 
 ## Technical Context
 
-**Language/Version**: Zsh ≥5.0 (primary), POSIX shell for CLI portability
-**Primary Dependencies**: Git (for plugin operations), existing plugin-engine.zsh infrastructure
-**Storage**: File-based (lock file in `$PULSE_DIR`, typically `~/.local/share/pulse/plugins.lock`)
-**Testing**: bats-core v1.12.0 (existing test infrastructure)
-**Target Platform**: Linux, macOS, BSD variants (cross-platform Zsh environments)
-**Project Type**: Single project (extends existing Pulse framework)
-**Performance Goals**: CLI operations <2 seconds, lock file parsing <10ms, update checks <5 seconds
-**Constraints**: Zero external dependencies beyond git, 100% backward compatibility, CLI must be optional
-**Scale/Scope**: Support 10-50 plugins per user, lock file <100KB, CLI handles typical configurations efficiently
+<!--
+  ACTION REQUIRED: Replace the content in this section with the technical details
+  for the project. The structure here is presented in advisory capacity to guide
+  the iteration process.
+-->
+
+**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]
+**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]
+**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]
+**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
+**Project Type**: [single/web/mobile - determines source structure]
+**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]
+**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]
+**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-- [x] **Radical Simplicity** – Core features (version pinning, CLI list/update/doctor) serve 90% of users; CLI is optional (doesn't add complexity to framework); lock file is informational (framework works without it); semver constraints explicitly excluded as Phase 2
-- [x] **Quality Over Features** – Zsh builtins used for parsing and file operations; CLI uses standard Zsh conventions; error handling defined (graceful degradation, offline support); documentation includes README updates and CLI help; performance measured (CLI <2s, lock parsing <10ms); Zsh ≥5.0 documented
-- [x] **Test-Driven Reliability (ABSOLUTE REQUIREMENT)** – Tests MUST be written first for: `@latest` parsing, CLI commands (list/update/doctor), lock file generation/reading, update checking; Red-Green-Refactor cycle documented in tasks.md; coverage targets: 100% for version parsing and lock file operations, 90% for CLI commands; test environments: bats-core with fixtures for multiple plugin scenarios
-- [x] **Consistent User Experience** – Backward compatible (`@latest` optional, omitting `@` still works); CLI is opt-in enhancement; lock file warnings only in debug mode; error messages include remediation steps; zero breaking changes to existing configs
-- [x] **Zero Configuration** – `@latest` works immediately without configuration; CLI available after installation without setup; lock file generated automatically; existing configurations continue working without modification
+- [ ] **Radical Simplicity** – Feature delivers core value to 90% of users and complexity is justified
+- [ ] **Quality Over Features** – Zsh conventions MANDATORY (zstyle preferred over env vars, builtins preferred, Zsh ≥5.0 documented), error handling, docs, and performance measurements defined
+- [ ] **Test-Driven Reliability (ABSOLUTE REQUIREMENT)** – Tests WRITTEN FIRST and MUST FAIL before implementation, Red-Green-Refactor cycle explicitly documented, coverage targets (100% core, 90% utilities) specified, test environments documented, zero tolerance enforcement acknowledged
+- [ ] **Consistent User Experience** – Default behavior, migration expectations, and feedback loops defined
+- [ ] **Zero Configuration** – Works out-of-the-box, smart defaults documented, and configuration examples declare `plugins` before sourcing `pulse.zsh`
 
 ## Project Structure
 
@@ -46,48 +52,57 @@ specs/[###-feature]/
 ```
 
 ### Source Code (repository root)
+<!--
+  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
+  for this feature. Delete unused options and expand the chosen structure with
+  real paths (e.g., apps/admin, packages/something). The delivered plan must
+  not include Option labels.
+-->
 
 ```text
-lib/
-├── plugin-engine.zsh       # EXTEND: Add @latest parsing logic
-└── utilities.zsh           # EXTEND: Add lock file read/write functions
-
-bin/
-└── pulse                   # NEW: CLI entry point
-
-lib/cli/                    # NEW: CLI implementation
-├── commands/
-│   ├── list.zsh           # NEW: pulse list command
-│   ├── update.zsh         # NEW: pulse update command
-│   └── doctor.zsh         # NEW: pulse doctor command
+# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
+src/
+├── models/
+├── services/
+├── cli/
 └── lib/
-    ├── lock-file.zsh      # NEW: Lock file operations
-    └── update-check.zsh   # NEW: Update checking logic
 
 tests/
+├── contract/
 ├── integration/
-│   ├── cli_commands.bats         # NEW: CLI integration tests
-│   ├── version_pinning.bats      # NEW: @latest and version pinning tests
-│   └── lock_file_workflow.bats   # NEW: Lock file generation/restore tests
 └── unit/
-    ├── version_parsing.bats      # NEW: @latest parsing unit tests
-    └── lock_file_format.bats     # NEW: Lock file read/write unit tests
 
-docs/
-├── README.md                      # UPDATE: Add version pinning examples
-└── CLI_REFERENCE.md              # NEW: Command-line interface documentation
+# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
+backend/
+├── src/
+│   ├── models/
+│   ├── services/
+│   └── api/
+└── tests/
 
-scripts/
-└── pulse-install.sh              # UPDATE: Install bin/pulse to PATH
+frontend/
+├── src/
+│   ├── components/
+│   ├── pages/
+│   └── services/
+└── tests/
+
+# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
+api/
+└── [same as backend above]
+
+ios/ or android/
+└── [platform-specific structure: feature modules, UI flows, platform tests]
 ```
 
-**Structure Decision**: Single project extension - this feature builds on existing Pulse infrastructure. Core changes extend `lib/plugin-engine.zsh` for `@latest` support and `lib/utilities.zsh` for lock file operations. New CLI tooling is isolated in `bin/pulse` and `lib/cli/` to keep it optional. Tests follow existing structure (bats-core in `tests/integration` and `tests/unit`). Lock file stored at runtime in `$PULSE_DIR/plugins.lock` (typically `~/.local/share/pulse/plugins.lock`).
+**Structure Decision**: [Document the selected structure and reference the real
+directories captured above]
 
 ## Complexity Tracking
 
-No constitution violations - all checks passed. This feature:
+Fill ONLY if Constitution Check has violations that must be justified
 
-- Serves 90%+ of users (version pinning, plugin management, reproducibility)
-- Maintains radical simplicity (CLI is optional, lock file is informational)
-- Zero configuration required (everything works automatically)
-- 100% backward compatible (no breaking changes)
+| Violation | Why Needed | Simpler Alternative Rejected Because |
+|-----------|------------|-------------------------------------|
+| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
+| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
