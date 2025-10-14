@@ -118,7 +118,9 @@ assert_string_in_file() {
 count_in_file() {
   local string="$1"
   local file="$2"
-  grep -c "$string" "$file" 2>/dev/null || echo "0"
+  local count
+  count=$(grep -c -F -- "$string" "$file" 2>/dev/null || true)
+  echo "${count:-0}"
 }
 
 # Bats assertion helpers (minimal implementations for T007.5)
