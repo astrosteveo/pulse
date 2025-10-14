@@ -8,6 +8,10 @@
 ## User Scenarios & Testing *(mandatory)*
 
 <!--
+  CRITICAL TDD REQUIREMENT: User stories define TEST SCENARIOS FIRST.
+  These scenarios will be converted to failing tests BEFORE any implementation begins.
+  This is NOT OPTIONAL - it is MANDATORY per the project constitution.
+
   IMPORTANT: User stories should be PRIORITIZED as user journeys ordered by importance.
   Each user story/journey must be INDEPENDENTLY TESTABLE - meaning if you implement just ONE of them,
   you should still have a viable MVP (Minimum Viable Product) that delivers value.
@@ -15,9 +19,11 @@
   Assign priorities (P1, P2, P3, etc.) to each story, where P1 is the most critical.
   Think of each story as a standalone slice of functionality that can be:
   - Developed independently
-  - Tested independently
+  - Tested independently (RED phase first, then GREEN, then REFACTOR)
   - Deployed independently
   - Demonstrated to users independently
+
+  Each acceptance scenario MUST be testable and will become a test case.
 -->
 
 ### User Story 1 - [Brief Title] (Priority: P1)

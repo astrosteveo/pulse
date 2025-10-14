@@ -1,0 +1,51 @@
+name: Installer Tests
+
+on:
+    push:
+        branches:
+            - main
+            - "**-implement-an-install"
+        paths:
+            - "scripts/pulse-install.sh"
+            - "tests/install/**"
+            - ".github/workflows/install.yml"
+    pull_request:
+        paths:
+            - "scripts/pulse-install.sh"
+            - "tests/install/**"
+            - ".github/workflows/install.yml"
+
+jobs:
+    test:
+        name: Run Installer Tests
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+              with:
+                  submodules: recursive
+
+            - name: Install Zsh
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y zsh
+                  zsh --version
+
+            - name: Verify bats-core
+              run: |
+                  tests/bats-core/bin/bats --version
+
+            - name: Run test helper verification
+              run: |
+                  tests/bats-core/bin/bats tests/install/test_helper_verification.bats
+
+            - name: Run all installer tests
+              run: |
+                  tests/bats-core/bin/bats tests/install/*.bats
+
+            - name: Test summary
+              if: always()
+              run: |
+                  echo "::notice::Installer test suite execution complete"
+                  echo "Check individual steps for test results"

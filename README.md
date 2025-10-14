@@ -2,7 +2,7 @@
 
 **Pulse** is a minimal, intelligent Zsh framework that combines smart plugin orchestration with essential shell features—completions, keybindings, directory management, and more—all with zero configuration required.
 
-**Version**: 1.0.0-beta (October 2025)
+**Version**: 0.1.0-beta (October 2025)
 
 ## Features
 
@@ -34,7 +34,55 @@ Your shell should be alive, responsive, and reliable—the heartbeat of your wor
 
 ## Quick Start
 
-### Installation
+### One-Command Installation (Recommended)
+
+Install Pulse with a single command:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/astrosteveo/pulse/main/scripts/pulse-install.sh | bash
+```
+
+**What it does**:
+
+- ✅ Validates prerequisites (Zsh ≥5.0, Git)
+- ✅ Clones Pulse to `~/.local/share/pulse`
+- ✅ Backs up your existing `.zshrc`
+- ✅ Adds Pulse configuration block with correct plugin ordering
+- ✅ Verifies installation works
+- ✅ Safe to re-run (idempotent, preserves customizations)
+
+**Advanced options**:
+
+```bash
+# Verify checksum before installation (recommended)
+curl -fsSL https://raw.githubusercontent.com/astrosteveo/pulse/main/scripts/pulse-install.sh -o pulse-install.sh
+echo "efb4fd7be8b428674ea79a89deb1459bba52c62b0c1b420b1b5a5f00c2e3211a  pulse-install.sh" | sha256sum -c && bash pulse-install.sh
+
+# Verbose output
+curl -fsSL https://raw.githubusercontent.com/astrosteveo/pulse/main/scripts/pulse-install.sh | bash -s -- --verbose
+
+# Custom installation directory
+PULSE_INSTALL_DIR=~/my-pulse curl -fsSL https://raw.githubusercontent.com/astrosteveo/pulse/main/scripts/pulse-install.sh | bash
+
+# Install specific version
+PULSE_VERSION=v0.1.0-beta curl -fsSL https://raw.githubusercontent.com/astrosteveo/pulse/main/scripts/pulse-install.sh | bash
+```
+
+**Environment variables**:
+
+- `PULSE_INSTALL_DIR` - Installation directory (default: `~/.local/share/pulse`)
+- `PULSE_ZSHRC` - Target .zshrc file (default: `~/.zshrc`)
+- `PULSE_VERSION` - Git ref to install (default: `main`)
+- `PULSE_SKIP_BACKUP` - Skip .zshrc backup (not recommended)
+- `PULSE_SKIP_VERIFY` - Skip post-install verification (not recommended)
+
+**SHA256 Checksum**: `711208c9d076a1e6b561a714443763fb6b229afc5b2161ce5a6d789acb7db98d`
+
+For more details, see [Installation Quickstart](docs/install/QUICKSTART.md) and [Checksum Verification](docs/install/CHECKSUM_VERIFICATION.md).
+
+### Manual Installation
+
+If you prefer manual installation:
 
 **Quick Install (Recommended)**:
 
@@ -604,7 +652,7 @@ This shows:
 - Cross-platform compatible (Linux, macOS, BSD)
 - Constitution-driven development
 
-⏳ **Future Enhancements** (Post v1.0):
+⏳ **Future Enhancements** (Post v1.0 - currently in beta):
 
 - CLI commands: `pulse install`, `pulse update`, `pulse remove`, `pulse list`
 - Lazy loading for heavy plugins

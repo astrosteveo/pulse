@@ -32,8 +32,8 @@
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
 - [ ] **Radical Simplicity** – Feature delivers core value to 90% of users and complexity is justified
-- [ ] **Quality Over Features** – Zsh conventions, error handling, docs, and performance measurements defined
-- [ ] **Test-Driven Reliability** – Tests written first with explicit coverage targets and environments documented
+- [ ] **Quality Over Features** – Zsh conventions MANDATORY (zstyle preferred over env vars, builtins preferred, Zsh ≥5.0 documented), error handling, docs, and performance measurements defined
+- [ ] **Test-Driven Reliability (ABSOLUTE REQUIREMENT)** – Tests WRITTEN FIRST and MUST FAIL before implementation, Red-Green-Refactor cycle explicitly documented, coverage targets (100% core, 90% utilities) specified, test environments documented, zero tolerance enforcement acknowledged
 - [ ] **Consistent User Experience** – Default behavior, migration expectations, and feedback loops defined
 - [ ] **Zero Configuration** – Works out-of-the-box, smart defaults documented, and configuration examples declare `plugins` before sourcing `pulse.zsh`
 

@@ -1,15 +1,17 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version Change: 1.0.0 → 1.1.0
-Modified Principles: Zero Configuration (expanded validation checklist)
-Added Sections: Configuration Order Compliance
+Version Change: 1.1.0 → 1.2.0
+Modified Principles:
+  - Quality Over Features → Enhanced: Explicit zstyle requirement over environment variables
+  - Test-Driven Reliability → Strengthened: Enforcement language hardened, penalties clarified
+Added Sections: Zsh Best Practices (new subsection under Quality Over Features)
 Removed Sections: None
 Templates Requiring Updates:
-  ✅ .specify/templates/plan-template.md (constitution gates include configuration order)
-  ✅ .specify/templates/spec-template.md (requirements guidance references configuration order)
-  ✅ .specify/templates/tasks-template.md (documentation tasks enforce configuration order)
-  ✅ .github/copilot-instructions.md (core principles version + guidance updated)
+  ✅ .specify/templates/plan-template.md (constitution check language strengthened)
+  ✅ .specify/templates/spec-template.md (requirements validation updated)
+  ✅ .specify/templates/tasks-template.md (TDD enforcement in task workflow)
+  ✅ .github/copilot-instructions.md (core principles version + TDD emphasis updated)
 Follow-up TODOs: None
 -->
 
@@ -32,25 +34,55 @@ Every feature must serve 90% of users—edge cases are explicitly excluded. No s
 
 Code style MUST follow Zsh conventions and idioms. Error handling strategy is defined before implementation begins. Documentation is mandatory: inline comments for complex logic, user-facing documentation for all features. Performance impact is assessed and measured—no feature ships without understanding its cost.
 
+**Zsh Best Practices (MANDATORY)**:
+
+- **Configuration**: Use `zstyle` over environment variables for framework configuration where applicable
+- **Builtins**: Prefer Zsh builtins (`setopt`, `autoload`, `bindkey`, `zle`) over external commands
+- **Arrays**: Use Zsh array syntax and features (zero-indexing optional, associative arrays, parameter expansion)
+- **Globbing**: Leverage extended glob patterns (`setopt extendedglob`) for file matching
+- **Performance**: Avoid subshells (`$(...)`) when builtins suffice; minimize forks
+- **Naming**: Prefix all functions with `pulse_` to prevent namespace collisions
+- **Completion**: Use `compinit`, `compdef`, and `zstyle` for completion configuration
+- **Portability**: Require Zsh ≥5.0, document Zsh-specific features used
+
 **Validation Checklist**:
 
-- [ ] Code style follows Zsh conventions
+- [ ] Code style follows Zsh conventions and idioms (zstyle, builtins, arrays)
+- [ ] Zsh-specific features documented (version requirements, feature usage)
 - [ ] Error handling strategy defined
 - [ ] Documentation approach specified
 - [ ] Performance impact assessed
 
-### III. Test-Driven Reliability (NON-NEGOTIABLE)
+### III. Test-Driven Reliability (ABSOLUTE REQUIREMENT)
 
-Test-Driven Development is MANDATORY. Tests are written first, user scenarios are validated before implementation, and the Red-Green-Refactor cycle is strictly enforced. Integration tests cover plugin loading workflows, cross-platform compatibility (Linux, macOS, BSD), and interaction with the Zsh ecosystem. Coverage targets are 100% for core functionality, 90% for utilities.
+Test-Driven Development is **MANDATORY and NON-NEGOTIABLE**. This is not optional, not recommended, not suggested—it is **REQUIRED**. Tests MUST be written first, user scenarios MUST be validated before implementation, and the Red-Green-Refactor cycle MUST be strictly enforced. Integration tests MUST cover plugin loading workflows, cross-platform compatibility (Linux, macOS, BSD), and interaction with the Zsh ecosystem. Coverage targets are 100% for core functionality, 90% for utilities.
+
+**TDD Workflow (STRICTLY ENFORCED)**:
+
+1. **RED**: Write failing tests that define desired behavior
+2. **Verify RED**: Run tests, confirm they fail (no false positives)
+3. **GREEN**: Write minimal code to make tests pass
+4. **Verify GREEN**: Run tests, confirm they pass
+5. **REFACTOR**: Improve code while maintaining passing tests
+6. **Verify REFACTOR**: Run tests, confirm they still pass
 
 **Validation Checklist**:
 
 - [ ] Test strategy defined (unit, integration, real-world scenarios)
-- [ ] Test environment requirements documented
-- [ ] Coverage targets specified
-- [ ] Tests will be written BEFORE implementation (TDD cycle enforced)
+- [ ] Test environment requirements documented (bats-core, fixtures, test helpers)
+- [ ] Coverage targets specified (100% core, 90% utilities)
+- [ ] Tests WRITTEN FIRST—implementation BLOCKED until tests exist and fail
+- [ ] Red-Green-Refactor cycle documented in implementation plan
+- [ ] Cross-platform test coverage specified (Linux, macOS, BSD variants)
 
-**Enforcement**: No implementation task begins until tests are written. Pull requests without tests are rejected without review.
+**Enforcement (ZERO TOLERANCE)**:
+
+- **BLOCK**: No implementation task begins until tests are written and failing
+- **REJECT**: Pull requests without tests are rejected without review—no exceptions
+- **REVERT**: Code merged without tests will be reverted immediately
+- **MANDATE**: Every feature branch MUST include test results before merge consideration
+- **VALIDATE**: CI pipeline MUST enforce test coverage thresholds (fails below target)
+- **DOCUMENT**: Test failure means specification is wrong—update spec first, then tests, then implementation
 
 ### IV. Consistent User Experience
 
@@ -138,4 +170,4 @@ Amendments require:
 - Features adding complexity MUST justify necessity
 - Agent guidance file (`.github/copilot-instructions.md`) reflects current constitution state
 
-**Version**: 1.1.0 | **Ratified**: 2025-10-11 | **Last Amended**: 2025-10-12
+**Version**: 1.2.0 | **Ratified**: 2025-10-11 | **Last Amended**: 2025-10-13
