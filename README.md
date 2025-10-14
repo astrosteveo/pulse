@@ -76,7 +76,10 @@ PULSE_VERSION=v0.1.0-beta curl -fsSL https://raw.githubusercontent.com/astrostev
 - `PULSE_SKIP_BACKUP` - Skip .zshrc backup (not recommended)
 - `PULSE_SKIP_VERIFY` - Skip post-install verification (not recommended)
 
-**SHA256 Checksum**: `711208c9d076a1e6b561a714443763fb6b229afc5b2161ce5a6d789acb7db98d`
+SHA256 checksum (verify with `sha256sum -c scripts/pulse-install.sh.sha256`):
+```
+78ac4831656fa828a917f4fe210f718c569daca0d7b9c1a2ff1ef5149b475d6c
+```
 
 For more details, see [Installation Quickstart](docs/install/QUICKSTART.md) and [Checksum Verification](docs/install/CHECKSUM_VERIFICATION.md).
 
