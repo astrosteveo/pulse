@@ -6,18 +6,25 @@
 
 ## Overview
 
-This task list breaks down the installer implementation into executable units organized by user story priority. Following Test-Driven Development (TDD), tests are written before implementation for each story.
+This task list breaks down the installer implementation into executable units organized by user story priority. Following **Test-Driven Development (TDD) - ABSOLUTE REQUIREMENT per Constitution v1.2.0**, tests are written FIRST and MUST FAIL before implementation for each story.
 
 **Total Tasks**: 29 (27 original + 2 foundation TDD tasks added during remediation)
 **User Stories**: 3 (P1, P2, P3)
 **Parallel Opportunities**: 8 tasks marked [P]
 **Estimated Delivery**: 3 phases (MVP = Phase 3 only)
 
-**Remediation Note**: Tasks T003.5 and T007.5 added to enforce NON-NEGOTIABLE TDD requirement from constitution for foundation utilities.
+**Constitution Compliance**: This task list enforces the MANDATORY Red-Green-Refactor cycle:
+
+- 🔴 **RED**: Write failing tests that define desired behavior
+- ✅ **GREEN**: Write minimal code to make tests pass
+- ♻️ **REFACTOR**: Improve code while maintaining passing tests
+
+**Remediation Note**: Tasks T003.5 and T007.5 added to enforce ABSOLUTE REQUIREMENT TDD from constitution for foundation utilities.
 
 ## Progress Update (2025-10-13)
 
 - [X] T007 — Fresh install verification confirms `PULSE_VERSION` is exported (tests updated in `tests/install/foundation.bats`).
+- [X] Constitution v1.2.0 alignment — Updated task list to reflect ABSOLUTE REQUIREMENT for TDD with explicit Red-Green-Refactor cycle enforcement.
 
 ---
 
@@ -121,7 +128,7 @@ Core utilities needed by all user stories.
 **Story**: Foundation TDD
 **File**: `tests/install/foundation.bats`
 
-**TDD**: Test First (NON-NEGOTIABLE per Constitution)
+**TDD**: Test First (ABSOLUTE REQUIREMENT per Constitution v1.2.0) - 🔴 RED phase
 
 ```bash
 @test "print_header outputs formatted header" {
@@ -244,7 +251,7 @@ PULSE_SKIP_VERIFY="${PULSE_SKIP_VERIFY:-false}"
 **Story**: Foundation TDD
 **File**: `tests/install/foundation.bats`
 
-**TDD**: Test First (NON-NEGOTIABLE per Constitution)
+**TDD**: Test First (ABSOLUTE REQUIREMENT per Constitution v1.2.0) - 🔴 RED phase
 
 ```bash
 @test "check_zsh_version succeeds with Zsh 5.0+" {
@@ -1094,6 +1101,33 @@ T020: Documentation   [P] (while T012-T019 execute)
 
 ---
 
+## TDD Enforcement Policy (Constitution v1.2.0)
+
+**ZERO TOLERANCE**: The following rules are MANDATORY and NON-NEGOTIABLE:
+
+1. **BLOCK**: No implementation task begins until tests are written and failing (RED phase verified)
+2. **VERIFY RED**: Tests MUST fail before implementation (confirms tests work correctly)
+3. **VERIFY GREEN**: Tests MUST pass after implementation (confirms implementation works)
+4. **VERIFY REFACTOR**: Tests MUST still pass after refactoring (confirms no regressions)
+5. **REJECT**: Pull requests without tests are rejected without review—no exceptions
+6. **DOCUMENT**: If tests fail unexpectedly, update spec first, then tests, then implementation
+
+**Red-Green-Refactor Cycle** (repeat for each task marked with TDD):
+
+```text
+1. 🔴 RED: Write test → Run test → Verify FAILS (exit code ≠ 0)
+2. ✅ GREEN: Write code → Run test → Verify PASSES (exit code = 0)
+3. ♻️ REFACTOR: Improve code → Run test → Verify STILL PASSES
+```
+
+**Test Coverage Targets**:
+
+- **100%** of critical paths (install, upgrade, rollback)
+- **90%** of error handling branches
+- **Cross-platform**: Linux + macOS minimum
+
+---
+
 ## Success Validation
 
 After completing all phases, verify success criteria from spec.md:
@@ -1108,8 +1142,12 @@ After completing all phases, verify success criteria from spec.md:
 ## Next Steps
 
 1. Begin with **Phase 1-3 for MVP** (T001-T020)
-2. Checkpoint after US1 completion
-3. Continue with US2 and US3 as enhancements
-4. Finalize with polish phase
+2. **Verify RED phase** for each test task before proceeding to implementation
+3. **Verify GREEN phase** after each implementation task
+4. Checkpoint after US1 completion
+5. Continue with US2 and US3 as enhancements
+6. Finalize with polish phase
 
 **Ready to implement**: Start with T001 (project structure creation)
+
+**Remember**: Tests FIRST, implementation SECOND, refactor THIRD. No exceptions.
