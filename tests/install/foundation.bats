@@ -36,3 +36,10 @@ load test_helper
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Success" ]] || [[ "$output" =~ "complete" ]]
 }
+
+@test "pulse.zsh exports PULSE_VERSION" {
+  local version
+  version=$(zsh -c "source '$BATS_TEST_DIRNAME/../../pulse.zsh'; print -r -- \$PULSE_VERSION" | tail -n 1)
+  [ -n "$version" ]
+  [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.+][A-Za-z0-9._-]+)?$ ]]
+}

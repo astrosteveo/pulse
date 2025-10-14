@@ -15,6 +15,10 @@ This task list breaks down the installer implementation into executable units or
 
 **Remediation Note**: Tasks T003.5 and T007.5 added to enforce NON-NEGOTIABLE TDD requirement from constitution for foundation utilities.
 
+## Progress Update (2025-10-13)
+
+- [X] T007 — Fresh install verification confirms `PULSE_VERSION` is exported (tests updated in `tests/install/foundation.bats`).
+
 ---
 
 ## Implementation Strategy

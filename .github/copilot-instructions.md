@@ -6,11 +6,11 @@ Auto-generated from all feature plans. Last updated: 2025-10-12
 
 All development MUST adhere to the project constitution at `.specify/memory/constitution.md`.
 
-**Core Principles** (v1.1.0):
+**Core Principles** (v1.2.0):
 
 1. **Radical Simplicity** - Features serve 90% of users; edge cases excluded; every line justified
-2. **Quality Over Features** - Zsh conventions, error handling, documentation, performance measurement
-3. **Test-Driven Reliability** (NON-NEGOTIABLE) - Tests written FIRST, 100% core coverage, TDD mandatory
+2. **Quality Over Features** - Zsh conventions MANDATORY (zstyle over env vars, builtins preferred, Zsh ≥5.0), error handling, documentation, performance measurement
+3. **Test-Driven Reliability** (ABSOLUTE REQUIREMENT - NOT OPTIONAL) - Tests written FIRST and MUST FAIL before implementation, 100% core coverage, Red-Green-Refactor STRICTLY enforced, zero tolerance policy
 4. **Consistent User Experience** - Sensible defaults, no surprises, graceful degradation
 5. **Zero Configuration** - Works immediately, smart auto-detection, minimal configuration, documentation always declares `plugins` before sourcing `pulse.zsh`
 
@@ -99,12 +99,12 @@ specs/                 # Feature specifications
 - pulse_extract() - Extract archives
 
 ## Code Style
-- **Zsh conventions**: Use Zsh-specific features (arrays, parameter expansion, builtins)
+- **Zsh conventions (MANDATORY)**: Use Zsh-specific features (arrays, parameter expansion, builtins), prefer `zstyle` over environment variables for configuration, require Zsh ≥5.0
 - **Naming**: All functions prefixed with `pulse_` to avoid collisions
 - **Error handling**: Graceful degradation, no breaking failures
-- **Performance**: Minimize subshells, prefer builtins over external commands
-- **Documentation**: Comments explain complex logic, usage examples in docs
-- **Testing**: TDD mandatory, 100% core functionality coverage target
+- **Performance**: Minimize subshells, prefer builtins over external commands (no `$(...)` when builtins suffice)
+- **Documentation**: Comments explain complex logic, usage examples in docs, document Zsh version requirements
+- **Testing (ABSOLUTE REQUIREMENT)**: TDD MANDATORY—tests written FIRST and MUST FAIL before implementation, Red-Green-Refactor cycle STRICTLY enforced, 100% core functionality coverage target, pull requests without tests REJECTED without review
 
 ## Recent Changes
 - 003-implement-an-install: Added POSIX shell (sh) with Zsh-specific verification (Zsh ≥ 5.0) + Git (for clone/update), curl (fallback wget), coreutils (cp, mv, chmod), bats-core for automated tests

@@ -3,6 +3,9 @@
 # An intelligent declarative Zsh plugin framework
 # (c) 2025, Unlicense. Inspired by mattmc3/zsh_unplugged and zephyr.
 
+# Framework version (update alongside releases)
+typeset -gx PULSE_VERSION="${PULSE_VERSION:-1.0.0-mvp}"
+
 # Get the directory where pulse.zsh is located
 PULSE_SCRIPT_DIR="${0:A:h}"
 

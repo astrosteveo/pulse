@@ -80,7 +80,7 @@ echo $PULSE_VERSION
 **Expected Output**:
 
 ```text
-0.1.0
+1.0.0-mvp
 ```
 
 **Validation**:
