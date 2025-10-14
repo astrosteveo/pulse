@@ -59,6 +59,9 @@ DEBUG="${PULSE_DEBUG:-0}"
 SKIP_VERIFY="${PULSE_SKIP_VERIFY:-0}"
 VERBOSE="0"
 
+# Backup file path for rollback (FR-009)
+BACKUP_FILE=""
+
 # Parse command-line arguments (FR-011) - Only when executed, not sourced
 parse_arguments() {
   while [ $# -gt 0 ]; do
@@ -180,13 +183,27 @@ print_success() {
 # Exit Code Handling (T005)
 #
 
-# Exit with error message and code
+# Exit with error message and code (FR-009: with rollback support)
 # Usage: error_exit "Error message" EXIT_CODE
 error_exit() {
   local message="$1"
   local exit_code="${2:-$EXIT_INSTALL_FAILED}"
 
   print_error "$message"
+  
+  # FR-009: Automatic rollback if backup exists
+  if [ -n "$BACKUP_FILE" ] && [ -f "$BACKUP_FILE" ]; then
+    print_step "Rolling back changes..."
+    print_verbose "Restoring backup: $BACKUP_FILE → $ZSHRC_PATH"
+    if cp -p "$BACKUP_FILE" "$ZSHRC_PATH" 2>/dev/null; then
+      print_step "Backup restored successfully"
+      print_step "Backup preserved at: $BACKUP_FILE"
+    else
+      print_error "Failed to restore backup (manual recovery required)"
+      print_error "Backup location: $BACKUP_FILE"
+    fi
+  fi
+  
   exit "$exit_code"
 }
 
@@ -442,29 +459,34 @@ source $install_dir/pulse.zsh
 # Backup Management (T015)
 #
 
-# Create timestamped backup of .zshrc
+# Create timestamped backup of .zshrc (FR-009: supports rollback)
 # Usage: backup_zshrc ZSHRC_PATH
 backup_zshrc() {
   local zshrc_path="$1"
 
   # Skip if SKIP_BACKUP is set
   if [ "$SKIP_BACKUP" = "1" ]; then
+    print_verbose "Skipping backup (SKIP_BACKUP=1)"
     return "$EXIT_SUCCESS"
   fi
 
   # Only backup if file exists
   if [ ! -f "$zshrc_path" ]; then
+    print_verbose "No existing .zshrc to backup"
     return "$EXIT_SUCCESS"
   fi
 
   # Create backup with timestamp
-  local backup_path="${zshrc_path}.pulse-backup-$(date +%Y%m%d-%H%M%S)"
-  if ! cp -p "$zshrc_path" "$backup_path" 2>/dev/null; then
+  BACKUP_FILE="${zshrc_path}.pulse-backup-$(date +%Y%m%d-%H%M%S)"
+  print_verbose "Creating backup: $BACKUP_FILE"
+  
+  if ! cp -p "$zshrc_path" "$BACKUP_FILE" 2>/dev/null; then
     print_error "Failed to create backup"
     return "$EXIT_CONFIG_FAILED"
   fi
 
-  print_step "Backup created: $backup_path"
+  print_step "Backup created: $BACKUP_FILE"
+  export BACKUP_FILE  # Make available to error_exit for rollback
   return "$EXIT_SUCCESS"
 }
 
