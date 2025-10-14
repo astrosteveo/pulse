@@ -715,7 +715,7 @@ _pulse_discover_plugins() {
               local original_dir="$PWD"
               if cd "$framework_root" 2>/dev/null; then
                 # Add the new path to sparse-checkout
-                if git sparse-checkout add --no-cone "$sparse_path" 2>/dev/null; then
+                if git sparse-checkout add "$sparse_path" 2>/dev/null; then
                   [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully added $sparse_path to framework" >&2
                 else
                   [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Warning: Failed to add $sparse_path to framework" >&2
