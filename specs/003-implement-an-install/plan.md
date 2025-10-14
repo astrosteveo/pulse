@@ -1,41 +1,35 @@
-# Implementation Plan: [FEATURE]
+# Implementation Plan: Pulse Zero-Config Install Script
 
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+**Branch**: `003-implement-an-install` | **Date**: 2025-10-13 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `/specs/003-implement-an-install/spec.md`
 
 **Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
 
 ## Summary
 
-[Extract from feature spec: primary requirement + technical approach from research]
+Implement a zero-configuration install script that enables users to install Pulse with a single command, automatically configures their `.zshrc` with correct plugin ordering, validates prerequisites, and provides idempotent upgrade/repair capabilities with automatic rollback on failure.
 
 ## Technical Context
 
-<!--
-  ACTION REQUIRED: Replace the content in this section with the technical details
-  for the project. The structure here is presented in advisory capacity to guide
-  the iteration process.
--->
-
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [single/web/mobile - determines source structure]
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Language/Version**: POSIX shell (sh) with Zsh-specific verification (requires Zsh ≥5.0 on target system)
+**Primary Dependencies**: Git (for repository cloning), curl or wget (for script download), coreutils (cp, mv, chmod), sha256sum or shasum (for checksum verification)
+**Storage**: File system operations only - writes to `~/.local/share/pulse`, `~/.zshrc`, marker file `.pulse-installed`
+**Testing**: bats-core (Bash Automated Testing System) for install script validation, fixture-based integration tests
+**Target Platform**: macOS (Darwin), Linux (various distributions), BSD variants (future consideration)
+**Project Type**: Single script installer with supporting infrastructure (checksums, documentation, tests)
+**Performance Goals**: Complete installation within 2 minutes on typical home broadband, prerequisite checks <5 seconds
+**Constraints**: Must work on minimal POSIX systems, no Python/Ruby/Node.js dependencies, network failures must trigger clean rollback
+**Scale/Scope**: Single-user workstation installations, idempotent for upgrades, <500 LOC for maintainability
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-- [ ] **Radical Simplicity** – Feature delivers core value to 90% of users and complexity is justified
-- [ ] **Quality Over Features** – Zsh conventions MANDATORY (zstyle preferred over env vars, builtins preferred, Zsh ≥5.0 documented), error handling, docs, and performance measurements defined
-- [ ] **Test-Driven Reliability (ABSOLUTE REQUIREMENT)** – Tests WRITTEN FIRST and MUST FAIL before implementation, Red-Green-Refactor cycle explicitly documented, coverage targets (100% core, 90% utilities) specified, test environments documented, zero tolerance enforcement acknowledged
-- [ ] **Consistent User Experience** – Default behavior, migration expectations, and feedback loops defined
-- [ ] **Zero Configuration** – Works out-of-the-box, smart defaults documented, and configuration examples declare `plugins` before sourcing `pulse.zsh`
+- [x] **Radical Simplicity** – Single-command install serves 90% of users (power users get `--verbose` and `PULSE_VERSION` for edge cases), no simpler alternative exists than a shell script for zero-dependency installation
+- [x] **Quality Over Features** – POSIX shell best practices enforced, error handling strategy defined (rollback on failure), documentation includes inline comments and user-facing install guide, performance measured against 2-minute target
+- [x] **Test-Driven Reliability (ABSOLUTE REQUIREMENT)** – bats-core tests MUST be written first covering: prerequisite detection, idempotent behavior, rollback scenarios, checksum verification, configuration order validation. 100% coverage of critical paths (install, upgrade, rollback). Red-Green-Refactor cycle documented in tasks.
+- [x] **Consistent User Experience** – Sensible defaults (latest version, `~/.local/share/pulse`), clear error messages with remediation steps, `--verbose` flag for troubleshooting, automatic rollback prevents broken states, preserves user customizations
+- [x] **Zero Configuration** – Works immediately after single command execution, auto-detects prerequisites, auto-fixes incorrect plugin ordering, no manual configuration required, documentation shows correct `plugins` before `pulse.zsh` ordering
 
 ## Project Structure
 
@@ -52,57 +46,49 @@ specs/[###-feature]/
 ```
 
 ### Source Code (repository root)
-<!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
--->
 
 ```text
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
-src/
-├── models/
-├── services/
-├── cli/
-└── lib/
+scripts/
+└── pulse-install.sh         # Main install script (POSIX shell)
+
+docs/
+└── install/
+    ├── QUICKSTART.md         # Installation quick start guide
+    └── TROUBLESHOOTING.md    # Common installation issues and solutions
 
 tests/
-├── contract/
-├── integration/
-└── unit/
+└── install/
+    ├── prerequisites.bats    # Prerequisite detection tests
+    ├── foundation.bats       # Core install logic tests
+    ├── configuration.bats    # .zshrc modification tests
+    ├── orchestration.bats    # End-to-end install workflow tests
+    ├── repository.bats       # Git operations and version selection tests
+    ├── test_helper.bash      # Shared test utilities and fixtures
+    └── fixtures/
+        ├── zshrc-templates/  # Various .zshrc configurations for testing
+        ├── mock_env.sh       # Mock environment setup
+        └── pulse-mock/       # Mock Pulse installation for testing
 
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+README.md                     # Must include SHA256 checksum of pulse-install.sh
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+**Structure Decision**: Single project structure with install script in `scripts/`, comprehensive test coverage in `tests/install/`, and installation documentation in `docs/install/`. The install script is standalone and can be downloaded directly or executed via curl/wget piping. Checksum verification requires SHA256 hash published in README.md.
 
 ## Complexity Tracking
 
-Fill ONLY if Constitution Check has violations that must be justified
+No constitution violations. All complexity is justified:
 
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+- POSIX shell script: Minimal dependency, maximum compatibility
+- SHA256 verification: Security requirement, not complexity
+- Rollback mechanism: Reliability requirement, not complexity
+- Marker files: Simplest state tracking possible
+
+## Post-Phase-1 Constitution Re-Check
+
+✅ **All gates passed after design phase**
+
+- ✅ **Radical Simplicity**: Design maintains single-script approach, marker files are simplest state tracking
+- ✅ **Quality Over Features**: POSIX best practices documented in research.md, comprehensive error handling defined
+- ✅ **Test-Driven Reliability**: Test structure defined (prerequisites.bats, foundation.bats, configuration.bats, orchestration.bats, repository.bats), fixtures planned, 100% critical path coverage target confirmed
+- ✅ **Consistent User Experience**: Default behavior fully specified (latest version, standard paths), error messages defined with remediation steps, rollback ensures no broken states
+- ✅ **Zero Configuration**: Single command install confirmed, auto-detection of all prerequisites, auto-fix of configuration order issues
