@@ -610,10 +610,8 @@ _pulse_discover_plugins() {
         
         if [[ $lock_acquired -eq 1 ]]; then
           # Check again if directory exists (another shell may have created it)
-          local check_dir="$clone_target_dir"
-          [[ -n "$framework_root" ]] && check_dir="$framework_root"
           
-          if [[ ! -d "$check_dir" ]]; then
+          if [[ ! -d "${framework_root:-$clone_target_dir}" ]]; then
             if _pulse_clone_plugin "$plugin_url" "$plugin_name" "$plugin_ref"; then
               [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully installed $plugin_name" >&2
             else
