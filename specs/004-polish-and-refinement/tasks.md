@@ -21,6 +21,7 @@ This task list breaks down the polish and refinement feature into executable, te
 ### MVP Scope (Minimum Viable Product)
 
 **User Story 1 (US1)** - `@latest` keyword support
+
 - Provides immediate value: explicit version management
 - Foundational for other features
 - Small, well-defined scope
@@ -42,13 +43,14 @@ Each phase can be deployed independently without breaking changes.
 
 These tasks prepare the project for all user stories.
 
-### T001: [Setup] Create CLI directory structure
+### T001: [Setup] Create CLI directory structure ✅
 
 **File**: Create directories
 **Story**: Infrastructure
 **Type**: Setup
 
 **Actions**:
+
 ```bash
 mkdir -p bin
 mkdir -p lib/cli/commands
@@ -58,6 +60,7 @@ mkdir -p tests/unit
 ```
 
 **Validation**:
+
 - All directories exist
 - Directory structure matches plan.md
 
@@ -65,19 +68,21 @@ mkdir -p tests/unit
 
 ---
 
-### T002: [Setup] Create CLI entry point scaffold
+### T002: [Setup] Create CLI entry point scaffold ✅
 
 **File**: `bin/pulse`
 **Story**: Infrastructure
 **Type**: Setup
 
 **Actions**:
+
 1. Create `bin/pulse` with shebang `#!/usr/bin/env zsh`
 2. Add basic argument parsing structure
 3. Add command dispatcher (case statement)
 4. Make executable: `chmod +x bin/pulse`
 
 **Validation**:
+
 - File exists and is executable
 - Running `bin/pulse` displays help message
 - Invalid command shows error
@@ -90,13 +95,16 @@ mkdir -p tests/unit
 
 These tasks must complete before ANY user story can be implemented.
 
-### T003: [Foundation] Create test fixtures for mock plugins
+---
+
+### T003: [Setup] Create test fixtures ✅
 
 **File**: `tests/fixtures/mock-plugins/`
 **Story**: Infrastructure
-**Type**: Foundation
+**Type**: Setup
 
 **Actions**:
+
 1. Create `tests/fixtures/mock-plugins/` directory
 2. Initialize mock plugin repos:
    - `plugin-a/` with multiple tags (v1.0, v1.1, v2.0)
@@ -105,6 +113,7 @@ These tasks must complete before ANY user story can be implemented.
 3. Add setup script to initialize git repos
 
 **Validation**:
+
 - Mock plugin directories exist
 - Each has valid .git directory
 - Tags/branches are available
@@ -129,6 +138,7 @@ These tasks must complete before ANY user story can be implemented.
 **Parallel**: [P] with other test files
 
 **Actions**:
+
 1. Create `tests/unit/version_parsing.bats`
 2. Write test: "parses @latest as empty ref"
    - Input: `zsh-users/plugin@latest`
@@ -140,6 +150,7 @@ These tasks must complete before ANY user story can be implemented.
 5. **Verify test FAILS** (function doesn't exist yet)
 
 **Validation**:
+
 - Test file created
 - Test runs and FAILS with expected error
 - Test is repeatable
@@ -155,18 +166,22 @@ These tasks must complete before ANY user story can be implemented.
 **Type**: Implementation (GREEN)
 
 **Actions**:
+
 1. Locate `_pulse_parse_plugin_spec()` function (around line 115-130)
 2. Add conditional after extracting `plugin_ref`:
+
    ```zsh
    # Treat @latest as empty ref (clone default branch)
    if [[ "$plugin_ref" == "latest" ]]; then
      plugin_ref=""
    fi
    ```
+
 3. Run test: `bats tests/unit/version_parsing.bats`
 4. **Verify test PASSES**
 
 **Validation**:
+
 - Test passes (GREEN)
 - `@latest` treated as empty ref
 - Backward compatible (omitted `@` still works)
@@ -183,6 +198,7 @@ These tasks must complete before ANY user story can be implemented.
 **Parallel**: [P] with other test files
 
 **Actions**:
+
 1. Create `tests/integration/version_pinning.bats`
 2. Write test: "installs plugin with @latest"
    - Setup: Mock plugin repo with tags
@@ -198,6 +214,7 @@ These tasks must complete before ANY user story can be implemented.
 5. **Verify test FAILS** (update mechanism not implemented yet)
 
 **Validation**:
+
 - Integration test created
 - Test fails with expected behavior
 - Mock plugin fixtures used correctly
@@ -213,12 +230,14 @@ These tasks must complete before ANY user story can be implemented.
 **Type**: Refactoring
 
 **Actions**:
+
 1. Add validation: ensure `@latest` doesn't conflict with specific version
 2. Add debug output: `[Pulse] Plugin using @latest (default branch)`
 3. Run all US1 tests: `bats tests/unit/version_parsing.bats tests/integration/version_pinning.bats`
 4. **Verify all tests PASS**
 
 **Validation**:
+
 - All US1 tests pass
 - Debug output shows @latest detection
 - No regressions in existing tests
@@ -245,6 +264,7 @@ These tasks must complete before ANY user story can be implemented.
 **Parallel**: [P] with other test files
 
 **Actions**:
+
 1. Create `tests/unit/lock_file_format.bats`
 2. Write test: "writes lock entry in INI format"
    - Input: plugin data (name, url, ref, commit, timestamp, stage)
@@ -257,6 +277,7 @@ These tasks must complete before ANY user story can be implemented.
 5. **Verify test FAILS** (function doesn't exist)
 
 **Validation**:
+
 - Test file created
 - Test fails with expected error
 - INI format expectations documented
@@ -273,6 +294,7 @@ These tasks must complete before ANY user story can be implemented.
 **Parallel**: [P] with non-overlapping files
 
 **Actions**:
+
 1. Create `lib/cli/lib/lock-file.zsh`
 2. Implement `pulse_write_lock_entry()`:
    - Parameters: plugin_name url ref commit timestamp stage
@@ -285,6 +307,7 @@ These tasks must complete before ANY user story can be implemented.
 5. **Verify test PASSES**
 
 **Validation**:
+
 - Tests pass (GREEN)
 - Lock file created with correct format
 - INI sections properly formatted
@@ -300,6 +323,7 @@ These tasks must complete before ANY user story can be implemented.
 **Type**: Test (RED)
 
 **Actions**:
+
 1. Add test: "reads all plugin sections from lock file"
    - Setup: Create lock file with 3 plugin sections
    - Action: Call `pulse_read_lock_file`
@@ -312,6 +336,7 @@ These tasks must complete before ANY user story can be implemented.
 4. **Verify test FAILS** (read functions don't exist)
 
 **Validation**:
+
 - New tests fail as expected
 - Test data uses valid INI format
 
@@ -326,6 +351,7 @@ These tasks must complete before ANY user story can be implemented.
 **Type**: Implementation (GREEN)
 
 **Actions**:
+
 1. Implement `pulse_read_lock_file()`:
    - Use awk to extract all section names
    - Return array of plugin names
@@ -337,6 +363,7 @@ These tasks must complete before ANY user story can be implemented.
 4. **Verify all tests PASS**
 
 **Validation**:
+
 - All lock file tests pass
 - Read/write operations symmetric
 - Handles missing files gracefully
@@ -352,6 +379,7 @@ These tasks must complete before ANY user story can be implemented.
 **Type**: Test (RED)
 
 **Actions**:
+
 1. Add test: "validates lock file format"
    - Setup: Lock file with valid format
    - Action: Call `pulse_validate_lock_file`
@@ -368,6 +396,7 @@ These tasks must complete before ANY user story can be implemented.
 5. **Verify tests FAIL**
 
 **Validation**:
+
 - Validation tests fail as expected
 - Error cases documented
 
@@ -382,6 +411,7 @@ These tasks must complete before ANY user story can be implemented.
 **Type**: Implementation (GREEN)
 
 **Actions**:
+
 1. Implement `pulse_validate_lock_file()`:
    - Check version header exists
    - For each section, validate required fields present
@@ -394,6 +424,7 @@ These tasks must complete before ANY user story can be implemented.
 3. **Verify all tests PASS**
 
 **Validation**:
+
 - All validation tests pass
 - Error messages are clear and actionable
 - Performance <10ms for typical lock files
@@ -410,6 +441,7 @@ These tasks must complete before ANY user story can be implemented.
 **Parallel**: [P] with other integration test files
 
 **Actions**:
+
 1. Create `tests/integration/lock_file_workflow.bats`
 2. Write test: "generates lock file on plugin installation"
    - Setup: Clean environment, no lock file
@@ -430,6 +462,7 @@ These tasks must complete before ANY user story can be implemented.
 6. **Verify tests FAIL** (integration not wired up)
 
 **Validation**:
+
 - Integration tests created
 - Tests fail appropriately
 - Scenarios cover acceptance criteria
@@ -445,6 +478,7 @@ These tasks must complete before ANY user story can be implemented.
 **Type**: Implementation (GREEN)
 
 **Actions**:
+
 1. Source `lib/cli/lib/lock-file.zsh` at top of plugin-engine.zsh
 2. In `_pulse_load_plugin()`, after successful clone:
    - Extract commit SHA: `git -C "$plugin_path" rev-parse HEAD`
@@ -457,6 +491,7 @@ These tasks must complete before ANY user story can be implemented.
 5. **Verify tests PASS**
 
 **Validation**:
+
 - Integration tests pass
 - Lock file generated automatically
 - Corruption recovery works
@@ -473,6 +508,7 @@ These tasks must complete before ANY user story can be implemented.
 **Type**: Refactoring
 
 **Actions**:
+
 1. Add debug output: `[Pulse] Lock file created at $lock_path`
 2. Add debug output: `[Pulse] Lock file updated for $plugin_name`
 3. Add debug output: `[Pulse] Lock file invalid, regenerating...`
@@ -480,6 +516,7 @@ These tasks must complete before ANY user story can be implemented.
 5. **Verify all tests PASS**
 
 **Validation**:
+
 - All US3 tests pass
 - Debug output helpful for troubleshooting
 - No regressions
@@ -506,6 +543,7 @@ These tasks must complete before ANY user story can be implemented.
 **Parallel**: [P] with other test files
 
 **Actions**:
+
 1. Create `tests/integration/cli_commands.bats`
 2. Write test: "pulse list shows installed plugins in table format"
    - Setup: 3 plugins installed with lock file
@@ -522,6 +560,7 @@ These tasks must complete before ANY user story can be implemented.
 5. **Verify tests FAIL** (command not implemented)
 
 **Validation**:
+
 - Tests created
 - Tests fail appropriately
 - Expected output format documented
@@ -538,6 +577,7 @@ These tasks must complete before ANY user story can be implemented.
 **Parallel**: [P] with other command files
 
 **Actions**:
+
 1. Create `lib/cli/commands/list.zsh`
 2. Implement `_pulse_cmd_list()`:
    - Check if lock file exists
@@ -551,6 +591,7 @@ These tasks must complete before ANY user story can be implemented.
 5. **Verify list tests PASS**
 
 **Validation**:
+
 - List command tests pass
 - Table format readable
 - Exit code 0 on success, 2 if no plugins
@@ -566,6 +607,7 @@ These tasks must complete before ANY user story can be implemented.
 **Type**: Test (RED)
 
 **Actions**:
+
 1. Add test: "pulse update updates all outdated plugins"
    - Setup: 2 plugins installed, 1 outdated
    - Action: Run `bin/pulse update`
@@ -590,6 +632,7 @@ These tasks must complete before ANY user story can be implemented.
 6. **Verify tests FAIL**
 
 **Validation**:
+
 - Update tests created
 - Tests fail as expected
 - Scenarios cover acceptance criteria
@@ -606,6 +649,7 @@ These tasks must complete before ANY user story can be implemented.
 **Parallel**: [P] with command files
 
 **Actions**:
+
 1. Create `lib/cli/lib/update-check.zsh`
 2. Implement `pulse_check_updates()`:
    - Parameters: plugin_name url ref
@@ -622,6 +666,7 @@ These tasks must complete before ANY user story can be implemented.
 5. **Verify functions work**
 
 **Validation**:
+
 - Functions implemented
 - Cache mechanism works
 - Network failure handled gracefully
@@ -638,6 +683,7 @@ These tasks must complete before ANY user story can be implemented.
 **Parallel**: [P] with other command files
 
 **Actions**:
+
 1. Create `lib/cli/commands/update.zsh`
 2. Source `lib/cli/lib/update-check.zsh` and `lib/cli/lib/lock-file.zsh`
 3. Implement `_pulse_cmd_update()`:
@@ -659,6 +705,7 @@ These tasks must complete before ANY user story can be implemented.
 6. **Verify update tests PASS**
 
 **Validation**:
+
 - Update command tests pass
 - Locking prevents concurrent updates
 - Local changes handled correctly
@@ -675,6 +722,7 @@ These tasks must complete before ANY user story can be implemented.
 **Type**: Test (RED)
 
 **Actions**:
+
 1. Add test: "pulse doctor checks git availability"
    - Action: Run `bin/pulse doctor`
    - Assert: Output contains git check result
@@ -697,6 +745,7 @@ These tasks must complete before ANY user story can be implemented.
 6. **Verify tests FAIL**
 
 **Validation**:
+
 - Doctor tests created
 - Tests fail appropriately
 - Diagnostic checks documented
@@ -713,6 +762,7 @@ These tasks must complete before ANY user story can be implemented.
 **Parallel**: [P] with other command files
 
 **Actions**:
+
 1. Create `lib/cli/commands/doctor.zsh`
 2. Source `lib/cli/lib/lock-file.zsh`
 3. Implement `_pulse_cmd_doctor()`:
@@ -734,6 +784,7 @@ These tasks must complete before ANY user story can be implemented.
 6. **Verify doctor tests PASS**
 
 **Validation**:
+
 - Doctor command tests pass
 - All 8 checks implemented
 - Output is clear and actionable
@@ -750,6 +801,7 @@ These tasks must complete before ANY user story can be implemented.
 **Type**: Implementation (GREEN)
 
 **Actions**:
+
 1. Implement `_pulse_show_help()` function:
    - Print main help message with all commands
    - Show usage examples
@@ -765,6 +817,7 @@ These tasks must complete before ANY user story can be implemented.
 5. **Verify help output is clear**
 
 **Validation**:
+
 - Help messages comprehensive
 - Examples included
 - Version information correct
@@ -780,6 +833,7 @@ These tasks must complete before ANY user story can be implemented.
 **Type**: Test (RED)
 
 **Actions**:
+
 1. Add test: "CLI returns 0 on success"
    - Action: Run `bin/pulse list` (with plugins)
    - Assert: Exit code 0
@@ -794,6 +848,7 @@ These tasks must complete before ANY user story can be implemented.
 5. **Verify tests FAIL or PASS** (may already pass from previous tasks)
 
 **Validation**:
+
 - Exit code tests created
 - POSIX conventions followed
 
@@ -808,6 +863,7 @@ These tasks must complete before ANY user story can be implemented.
 **Type**: Refactoring
 
 **Actions**:
+
 1. Add error handling wrapper:
    - Catch command failures
    - Map to appropriate exit codes
@@ -823,6 +879,7 @@ These tasks must complete before ANY user story can be implemented.
 5. **Verify all tests PASS**
 
 **Validation**:
+
 - All US2 tests pass
 - Error messages helpful
 - Security warnings functional
@@ -849,6 +906,7 @@ These tasks must complete before ANY user story can be implemented.
 **Type**: Test (RED)
 
 **Actions**:
+
 1. Add test: "pulse list --outdated shows plugins with updates"
    - Setup: 2 plugins, 1 pinned to old version
    - Action: Run `bin/pulse list --outdated`
@@ -863,6 +921,7 @@ These tasks must complete before ANY user story can be implemented.
 4. **Verify tests FAIL**
 
 **Validation**:
+
 - Tests created
 - Tests fail as expected
 
@@ -877,6 +936,7 @@ These tasks must complete before ANY user story can be implemented.
 **Type**: Implementation (GREEN)
 
 **Actions**:
+
 1. Update `_pulse_cmd_list()` to accept `--outdated` flag
 2. When `--outdated` specified:
    - For each plugin, call `pulse_needs_update`
@@ -888,6 +948,7 @@ These tasks must complete before ANY user story can be implemented.
 5. **Verify tests PASS**
 
 **Validation**:
+
 - Outdated detection tests pass
 - Output shows version comparison
 - Cache used to minimize network calls
@@ -903,6 +964,7 @@ These tasks must complete before ANY user story can be implemented.
 **Type**: Refactoring
 
 **Actions**:
+
 1. For outdated plugins, attempt to add release notes link:
    - Parse git tags for semantic versions
    - Find latest stable tag
@@ -914,6 +976,7 @@ These tasks must complete before ANY user story can be implemented.
 4. **Verify tests PASS**
 
 **Validation**:
+
 - All US4 tests pass
 - Release links helpful
 - Color coding improves readability
@@ -939,6 +1002,7 @@ These tasks must complete before ANY user story can be implemented.
 **Type**: Documentation
 
 **Actions**:
+
 1. Add "Version Management" section:
    - Explain `@latest` keyword with examples
    - Show version pinning with tags: `user/repo@v1.0`
@@ -955,6 +1019,7 @@ These tasks must complete before ANY user story can be implemented.
    - Show how to verify CLI installation: `pulse --version`
 
 **Validation**:
+
 - README updated with examples
 - Examples tested and accurate
 - Clear and beginner-friendly
@@ -970,6 +1035,7 @@ These tasks must complete before ANY user story can be implemented.
 **Type**: Documentation
 
 **Actions**:
+
 1. Create `docs/CLI_REFERENCE.md`
 2. Document each command:
    - `pulse list` - Synopsis, options, examples, exit codes
@@ -987,6 +1053,7 @@ These tasks must complete before ANY user story can be implemented.
 5. Cross-reference from README
 
 **Validation**:
+
 - CLI reference complete
 - All commands documented
 - Examples tested
@@ -1007,6 +1074,7 @@ These tasks must complete before ANY user story can be implemented.
 **Type**: Implementation
 
 **Actions**:
+
 1. Add CLI installation step:
    - Create `~/.local/bin` if it doesn't exist
    - Symlink `bin/pulse` to `~/.local/bin/pulse`
@@ -1018,6 +1086,7 @@ These tasks must complete before ANY user story can be implemented.
 3. Update installer success message to mention CLI
 
 **Validation**:
+
 - CLI installed by installer
 - Symlink created correctly
 - PATH instructions shown if needed
@@ -1033,6 +1102,7 @@ These tasks must complete before ANY user story can be implemented.
 **Type**: Testing
 
 **Actions**:
+
 1. Run full test suite: `bats tests/unit/*.bats tests/integration/*.bats`
 2. Check code coverage:
    - 100% for version parsing
@@ -1043,6 +1113,7 @@ These tasks must complete before ANY user story can be implemented.
 5. **Verify all tests PASS**
 
 **Validation**:
+
 - All tests pass
 - Coverage targets met
 - No known issues
@@ -1058,6 +1129,7 @@ These tasks must complete before ANY user story can be implemented.
 **Type**: Testing
 
 **Actions**:
+
 1. Measure CLI command performance:
    - `time pulse list` with 50 plugins
    - Assert: <2 seconds
@@ -1071,6 +1143,7 @@ These tasks must complete before ANY user story can be implemented.
 4. Optimize if targets not met
 
 **Validation**:
+
 - All performance targets met
 - No degradation from baseline
 
@@ -1085,6 +1158,7 @@ These tasks must complete before ANY user story can be implemented.
 **Type**: Testing
 
 **Actions**:
+
 1. Test on Linux (primary)
 2. Test on macOS
 3. Test on BSD if available
@@ -1095,6 +1169,7 @@ These tasks must complete before ANY user story can be implemented.
 5. Document any known platform limitations
 
 **Validation**:
+
 - Tests pass on Linux and macOS
 - Platform issues documented
 - Graceful degradation if needed
@@ -1111,13 +1186,13 @@ These tasks must complete before ANY user story can be implemented.
 graph TD
     T001[T001: Setup dirs] --> T002[T002: CLI scaffold]
     T001 --> T003[T003: Test fixtures]
-    
+
     T003 --> T004[T004: US1 Test]
     T004 --> T005[T005: US1 Impl]
     T005 --> T006[T006: US1 Integration]
     T005 --> T007[T007: US1 Refactor]
     T006 --> T007
-    
+
     T003 --> T008[T008: US3 Write test]
     T008 --> T009[T009: US3 Write impl]
     T009 --> T010[T010: US3 Read test]
@@ -1127,7 +1202,7 @@ graph TD
     T013 --> T014[T014: US3 Integration test]
     T014 --> T015[T015: US3 Integration impl]
     T015 --> T016[T016: US3 Refactor]
-    
+
     T003 --> T017[T017: US2 List test]
     T015 --> T017
     T017 --> T018[T018: US2 List impl]
@@ -1139,14 +1214,14 @@ graph TD
     T023 --> T024[T024: US2 Help]
     T024 --> T025[T025: US2 Exit codes]
     T025 --> T026[T026: US2 Refactor]
-    
+
     T026 --> T027[T027: US4 Test]
     T027 --> T028[T028: US4 Impl]
     T028 --> T029[T029: US4 Refactor]
-    
+
     T029 --> T030[T030: US5 README]
     T030 --> T031[T031: US5 CLI Ref]
-    
+
     T031 --> T032[T032: Installer]
     T032 --> T033[T033: Full tests]
     T033 --> T034[T034: Performance]
@@ -1158,22 +1233,26 @@ graph TD
 ## Parallel Execution Opportunities
 
 ### Within User Story 1 (US1)
+
 - T004 and T006 can run in parallel (different test files)
 
 ### Within User Story 3 (US3)
+
 - T008, T010, T012 can run in parallel (same file, but separate test development)
 - T009 implementation work is sequential (same file)
 
 ### Within User Story 2 (US2)
+
 - T017, T019, T022, T025, T027 can all be developed in parallel (test file additions)
 - T018, T020, T023 can run in parallel (different implementation files)
 
 ### Example: Parallel Implementation of US2
+
 ```bash
 # Terminal 1: List command
 bats tests/integration/cli_commands.bats -f "pulse list"
 
-# Terminal 2: Update command  
+# Terminal 2: Update command
 bats tests/integration/cli_commands.bats -f "pulse update"
 
 # Terminal 3: Doctor command
@@ -1185,15 +1264,18 @@ bats tests/integration/cli_commands.bats -f "pulse doctor"
 ## Test Coverage Summary
 
 ### Unit Tests
+
 - **version_parsing.bats** (T004): @latest parsing, backward compatibility
 - **lock_file_format.bats** (T008-T013): Write, read, validate operations
 
 ### Integration Tests
+
 - **version_pinning.bats** (T006): End-to-end @latest functionality
 - **lock_file_workflow.bats** (T014): Automatic generation, updates, recovery
 - **cli_commands.bats** (T017-T027): All CLI commands with various scenarios
 
 ### Coverage Targets
+
 - **100%**: Version parsing, lock file operations (core functionality)
 - **90%**: CLI commands (utilities)
 - **Test-First**: All tests written before implementation (Red-Green-Refactor)
@@ -1205,7 +1287,7 @@ bats tests/integration/cli_commands.bats -f "pulse doctor"
 Each user story has independent test criteria from spec.md:
 
 ✅ **US1**: Plugin with `@latest` clones from default branch and updates work
-✅ **US2**: Commands list, update, and diagnose plugins successfully  
+✅ **US2**: Commands list, update, and diagnose plugins successfully
 ✅ **US3**: Lock file created automatically with exact versions
 ✅ **US4**: `--outdated` flag shows available updates
 ✅ **US5**: Documentation complete with examples and CLI reference

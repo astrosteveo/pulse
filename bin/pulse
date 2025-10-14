@@ -1,0 +1,84 @@
+#!/usr/bin/env zsh
+# pulse - CLI for Pulse framework plugin management
+# Version: 0.2.0
+# Usage: pulse <command> [options]
+
+setopt LOCAL_OPTIONS ERR_RETURN PIPE_FAIL
+
+# Resolve script directory and load libraries
+typeset -g PULSE_CLI_DIR="${0:A:h}"
+typeset -g PULSE_LIB_DIR="${PULSE_CLI_DIR:h}/lib"
+typeset -g PULSE_CLI_LIB_DIR="${PULSE_LIB_DIR}/cli/lib"
+
+# Version info
+typeset -gr PULSE_VERSION="0.2.0"
+
+# Command dispatcher
+pulse_main() {
+  local cmd="${1:-help}"
+  shift || true
+
+  case "${cmd}" in
+    list|ls)
+      # TODO: Implement list command
+      echo "pulse list - Show installed plugins" >&2
+      return 1
+      ;;
+    
+    update)
+      # TODO: Implement update command
+      echo "pulse update - Update plugins" >&2
+      return 1
+      ;;
+    
+    doctor|check)
+      # TODO: Implement doctor command
+      echo "pulse doctor - Check installation health" >&2
+      return 1
+      ;;
+    
+    version|-v|--version)
+      echo "pulse version ${PULSE_VERSION}"
+      return 0
+      ;;
+    
+    help|-h|--help)
+      pulse_show_help
+      return 0
+      ;;
+    
+    *)
+      echo "pulse: unknown command '${cmd}'" >&2
+      echo "Run 'pulse help' for usage." >&2
+      return 1
+      ;;
+  esac
+}
+
+# Help system
+pulse_show_help() {
+  cat <<'HELP'
+pulse - Zsh framework plugin manager
+
+USAGE:
+    pulse <command> [options]
+
+COMMANDS:
+    list, ls          Show installed plugins and their status
+    update [plugin]   Update all plugins or a specific plugin
+    doctor, check     Verify installation health and configuration
+    version           Show pulse version
+    help              Show this help message
+
+EXAMPLES:
+    pulse list                    # List all installed plugins
+    pulse update                  # Update all plugins
+    pulse update user/repo        # Update specific plugin
+    pulse doctor                  # Check for issues
+
+For more information, see: https://github.com/yourusername/pulse
+HELP
+}
+
+# Entry point
+pulse_main "$@"
