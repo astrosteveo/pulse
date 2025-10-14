@@ -306,26 +306,18 @@ clone_or_update_repo() {
   # Check if directory exists and has .git
   if [ -d "$target_dir/.git" ]; then
     print_verbose "Existing installation detected"
-    # Update existing installation
-    if [ -n "$PULSE_VERSION" ]; then
-      print_step "Switching to version $PULSE_VERSION..."
-      print_verbose "Fetching tags from remote..."
-      if ! git -C "$target_dir" fetch --quiet --tags 2>/dev/null; then
-        print_error "Failed to fetch tags"
-        return "$EXIT_DOWNLOAD_FAILED"
-      fi
-      print_verbose "Checking out version $PULSE_VERSION..."
-      if ! git -C "$target_dir" checkout --quiet "$PULSE_VERSION" 2>/dev/null; then
-        print_error "Failed to checkout version $PULSE_VERSION"
-        return "$EXIT_DOWNLOAD_FAILED"
-      fi
-    else
-      print_step "Updating existing Pulse installation..."
-      print_verbose "Running git pull..."
-      if ! git -C "$target_dir" pull --quiet 2>/dev/null; then
-        print_error "Failed to update repository"
-        return "$EXIT_DOWNLOAD_FAILED"
-      fi
+    # Update existing installation - always just pull latest
+    # (PULSE_VERSION is ignored for updates to avoid conflicts with exported env var)
+    print_step "Updating existing Pulse installation..."
+    print_verbose "Fetching latest changes..."
+    if ! git -C "$target_dir" fetch --quiet 2>/dev/null; then
+      print_error "Failed to fetch updates"
+      return "$EXIT_DOWNLOAD_FAILED"
+    fi
+    print_verbose "Pulling updates..."
+    if ! git -C "$target_dir" pull --quiet 2>/dev/null; then
+      print_error "Failed to update repository"
+      return "$EXIT_DOWNLOAD_FAILED"
     fi
   else
     # Fresh clone (or repair corrupted installation)
@@ -439,6 +431,7 @@ source $install_dir/pulse.zsh
       local user_plugins
       user_plugins=$(awk '
         /# BEGIN Pulse Configuration/,/# END Pulse Configuration/ {
+          if (/plugins=\(.*\)/) { next }  # Skip single-line plugins=()
           if (/plugins=\(/) { in_plugins=1; next }
           if (in_plugins && /\)/) { in_plugins=0; next }
           if (in_plugins) print
@@ -593,7 +586,8 @@ main() {
   print_step "Installation directory: $INSTALL_DIR"
   print_step "Configuration file: $ZSHRC_PATH"
 
-  if [ -n "$PULSE_VERSION" ]; then
+  # Only show version for fresh installs (not updates)
+  if [ -n "$PULSE_VERSION" ] && [ ! -d "$INSTALL_DIR/.git" ]; then
     print_step "Target version: $PULSE_VERSION"
   fi
 
