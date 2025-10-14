@@ -369,6 +369,7 @@ _pulse_setup_framework_env() {
     mkdir -p "${ZSH_CACHE_DIR}/completions"
     
     # Add oh-my-zsh completions to fpath if not already present
+    # Check if completions directory is not already in fpath
     if (( ! ${fpath[(Ie)${ZSH_CACHE_DIR}/completions]} )); then
       fpath=("${ZSH_CACHE_DIR}/completions" $fpath)
     fi
