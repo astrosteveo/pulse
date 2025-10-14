@@ -388,6 +388,8 @@ _pulse_setup_framework_env() {
     # Define pmodload function if not already defined
     if ! typeset -f pmodload >/dev/null 2>&1; then
       # Minimal pmodload implementation for compatibility
+      # Prezto modules expect the pmodload function to be defined.
+      # This shim loads the init.zsh file for each specified Prezto module.
       pmodload() {
         local pmodule
         for pmodule in "$@"; do
