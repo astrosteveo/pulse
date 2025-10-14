@@ -278,7 +278,6 @@ _pulse_clone_plugin() {
     fi
     
     # Step 2: Configure sparse-checkout
-    local checkout_failed=0
     local original_dir="$PWD"
     if ! cd "$plugin_dir" 2>/dev/null; then
       [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Failed to cd to $plugin_dir" >&2
