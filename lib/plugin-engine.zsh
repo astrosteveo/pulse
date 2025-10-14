@@ -119,14 +119,13 @@ _pulse_parse_plugin_spec() {
     fi
     plugin_ref="${source_spec##*@}"
     source_spec="${source_spec%@*}"
-
+    
     # Treat @latest as empty ref (clone default branch)
     # This provides explicit self-documenting syntax for default branch
     if [[ "$plugin_ref" == "latest" ]]; then
+      [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Plugin using @latest (default branch): $source_spec" >&2
       plugin_ref=""
-    fi
-
-    # Validate ref is not empty (handles trailing @)
+    fi    # Validate ref is not empty (handles trailing @)
     if [[ -z "$plugin_ref" ]]; then
       [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Warning: Empty version ref in spec (trailing @): $1" >&2
       plugin_ref=""

@@ -190,7 +190,7 @@ These tasks must complete before ANY user story can be implemented.
 
 ---
 
-### T006: [US1] [TEST] Write integration test for @latest plugin installation
+### T006: [US1] [TEST] Write integration test for @latest plugin installation ✅
 
 **File**: `tests/integration/version_pinning.bats`
 **Story**: US1
@@ -223,7 +223,7 @@ These tasks must complete before ANY user story can be implemented.
 
 ---
 
-### T007: [US1] [REFACTOR] Add error handling for @latest
+### T007: [US1] [REFACTOR] Add error handling for @latest ✅
 
 **File**: `lib/plugin-engine.zsh`
 **Story**: US1
