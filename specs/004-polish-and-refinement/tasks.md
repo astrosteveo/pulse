@@ -130,7 +130,7 @@ These tasks must complete before ANY user story can be implemented.
 
 **Tasks**: 4 (T004-T007)
 
-### T004: [US1] [TEST] Write failing test for @latest parsing
+### T004: [US1] [TEST] Write failing test for @latest parsing ✅
 
 **File**: `tests/unit/version_parsing.bats`
 **Story**: US1
@@ -159,7 +159,7 @@ These tasks must complete before ANY user story can be implemented.
 
 ---
 
-### T005: [US1] [IMPL] Add @latest parsing to plugin engine
+### T005: [US1] [IMPL] Add @latest parsing to plugin engine ✅
 
 **File**: `lib/plugin-engine.zsh`
 **Story**: US1

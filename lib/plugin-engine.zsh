@@ -119,7 +119,13 @@ _pulse_parse_plugin_spec() {
     fi
     plugin_ref="${source_spec##*@}"
     source_spec="${source_spec%@*}"
-    
+
+    # Treat @latest as empty ref (clone default branch)
+    # This provides explicit self-documenting syntax for default branch
+    if [[ "$plugin_ref" == "latest" ]]; then
+      plugin_ref=""
+    fi
+
     # Validate ref is not empty (handles trailing @)
     if [[ -z "$plugin_ref" ]]; then
       [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Warning: Empty version ref in spec (trailing @): $1" >&2
@@ -219,7 +225,7 @@ _pulse_clone_plugin() {
 
   # Clone the plugin
   [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Cloning $plugin_name from $plugin_url..." >&2
-  
+
   if [[ -n "$plugin_ref" ]]; then
     # Clone specific branch/tag
     local clone_error=""
@@ -243,7 +249,7 @@ _pulse_clone_plugin() {
           checkout_failed=1
         fi
         cd - >/dev/null
-        
+
         if [[ $checkout_failed -eq 0 ]]; then
           [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully cloned $plugin_name and checked out $plugin_ref" >&2
           return 0
@@ -467,14 +473,14 @@ _pulse_discover_plugins() {
     # Auto-install if missing and we have a URL
     if [[ ! -d "$plugin_path" ]] && [[ -n "$plugin_url" ]]; then
       [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Plugin '$plugin_name' not found, attempting to install..." >&2
-      
+
       # Ensure plugins directory exists before creating lock
       mkdir -p "${PULSE_DIR}/plugins"
-      
+
       # Create lock file to prevent race conditions
       local lock_file="${PULSE_DIR}/plugins/.${plugin_name}.lock"
       local lock_acquired=0
-      
+
       # Try to acquire lock with timeout
       for i in {1..30}; do
         if mkdir "$lock_file" 2>/dev/null; then
@@ -484,7 +490,7 @@ _pulse_discover_plugins() {
         [[ -n "$PULSE_DEBUG" ]] && [[ $i -eq 1 ]] && echo "[Pulse] Waiting for lock on $plugin_name..." >&2
         sleep 0.1
       done
-      
+
       if [[ $lock_acquired -eq 1 ]]; then
         # Check again if directory exists (another shell may have created it)
         if [[ ! -d "$plugin_path" ]]; then
