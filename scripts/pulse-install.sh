@@ -382,7 +382,7 @@ add_pulse_config() {
   local config_block="# BEGIN Pulse Configuration
 # Managed by Pulse installer - do not edit this block manually
 plugins=()
-source $install_dir/pulse.zsh
+source \"\$PULSE_INSTALL_DIR/pulse.zsh\"
 # END Pulse Configuration"
 
   # Check if .zshrc exists
