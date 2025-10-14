@@ -46,6 +46,18 @@
 
 ---
 
+## Clarifications
+
+### Session 2025-10-14
+
+- Q: How should Pulse handle concurrent plugin updates (e.g., two shell sessions running `pulse update` simultaneously)? → A: Use file-based advisory locking (flock/lockfile) - first process locks, second waits or exits with message
+- Q: How should Pulse handle a corrupted or invalid lock file? → A: Regenerate automatically with warning - scan installed plugins, recreate lock file, warn user
+- Q: What security measures should Pulse enforce for plugin sources? → A: Warn only for SSH URLs - suggest HTTPS, warn if SSH without known_hosts configured
+- Q: How should `pulse update` handle plugin directories with uncommitted local changes? → A: Warn and skip with --force option - skip that plugin, continue others, allow override flag
+- Q: What exit code convention should CLI commands follow for scripting/automation? → A: Standard POSIX exit codes - 0 success, 1 general error, 2 usage error, 126-127 command issues
+
+---
+
 ## User Stories
 
 ### US1: Explicit Version Keywords
@@ -138,24 +150,26 @@
 - **FR-005**: Provide command to list all installed plugins with their current versions and sources
 - **FR-006**: Provide command to show which installed plugins have newer versions available
 - **FR-007**: Provide command to update all plugins or selectively update specific plugins by name
-- **FR-008**: Provide diagnostic command that checks for common configuration issues and suggests fixes
-- **FR-009**: Make commands accessible from user's shell after installation without additional setup
-- **FR-010**: Provide built-in help documentation for all commands
+- **FR-008**: When updating, skip plugins with uncommitted local changes and display warning, unless --force flag provided
+- **FR-009**: Provide diagnostic command that checks for common configuration issues and suggests fixes
+- **FR-010**: Make commands accessible from user's shell after installation without additional setup
+- **FR-011**: Provide built-in help documentation for all commands
 
 ### Version Recording
 
-- **FR-011**: Automatically record exact versions of all installed plugins for future reference
-- **FR-012**: Update version records whenever plugins are installed or updated
-- **FR-013**: Use recorded versions when installing on a new machine to ensure identical setup
-- **FR-014**: Notify users when their installed versions differ from recorded versions
-- **FR-015**: Store version records in structured format with plugin identity, version, and installation timestamp
+- **FR-012**: Automatically record exact versions of all installed plugins for future reference
+- **FR-013**: Update version records whenever plugins are installed or updated
+- **FR-014**: Use recorded versions when installing on a new machine to ensure identical setup
+- **FR-015**: Notify users when their installed versions differ from recorded versions
+- **FR-016**: Store version records in structured format with plugin identity, version, and installation timestamp
+- **FR-017**: Automatically regenerate corrupted or invalid lock files by scanning installed plugins, displaying warning to user
 
 ### Update Discovery
 
-- **FR-016**: Check for plugin updates on demand without automatic background operations
-- **FR-017**: Display update information including current version, available version, and link to release information
-- **FR-018**: Cache update information to avoid repeated network requests within same session
-- **FR-019**: Handle network unavailability gracefully without blocking other operations
+- **FR-018**: Check for plugin updates on demand without automatic background operations
+- **FR-019**: Display update information including current version, available version, and link to release information
+- **FR-020**: Cache update information to avoid repeated network requests within same session
+- **FR-021**: Handle network unavailability gracefully without blocking other operations
 
 ---
 
@@ -171,19 +185,25 @@
 
 - **NFR-004**: Command output is easy to read with clear visual hierarchy
 - **NFR-005**: Error messages explain what went wrong and how to fix it
-- **NFR-006**: Commands follow standard conventions for flags, output, and exit codes
+- **NFR-006**: Commands follow standard POSIX exit code conventions (0=success, 1=general error, 2=usage error, 126-127=command issues)
 
 ### Reliability
 
 - **NFR-007**: Commands never leave plugin installations in broken or inconsistent state
 - **NFR-008**: Version record updates are atomic and never partially complete
 - **NFR-009**: Failed update operations can be reversed to restore previous working state
+- **NFR-010**: Concurrent update operations are serialized using file-based advisory locking to prevent race conditions
+
+### Security
+
+- **NFR-014**: Warn users when using SSH URLs without known_hosts configured to prevent MITM attacks
+- **NFR-015**: Suggest HTTPS URLs as preferred transport for plugin sources
 
 ### Compatibility
 
-- **NFR-010**: Commands work across different shell environments
-- **NFR-011**: Version record format remains compatible across framework versions
-- **NFR-012**: Existing user configurations continue working without modification
+- **NFR-011**: Commands work across different shell environments
+- **NFR-012**: Version record format remains compatible across framework versions
+- **NFR-013**: Existing user configurations continue working without modification
 
 ---
 
