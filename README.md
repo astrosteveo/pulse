@@ -111,6 +111,7 @@ git clone https://github.com/astrosteveo/pulse.git ~/.local/share/pulse
 # 2. Add to .zshrc
 cat >> ~/.zshrc <<'EOF'
 # Pulse Configuration
+export PATH="$HOME/.local/share/pulse/bin:$PATH"
 plugins=()
 source ~/.local/share/pulse/pulse.zsh
 EOF
@@ -243,6 +244,44 @@ pulse_extract plugin.zip /path/to/dest
 ```
 
 </details>
+
+### Command-Line Interface
+
+Pulse includes a `pulse` command for managing your plugins:
+
+```bash
+# List installed plugins
+pulse list
+pulse list --format=json
+pulse list --format=simple
+
+# Show plugin details
+pulse info zsh-autosuggestions
+
+# Diagnose issues
+pulse doctor
+
+# Clear cache
+pulse cache clear
+
+# Show version
+pulse version
+
+# Get help
+pulse help
+```
+
+**Available Commands:**
+- `list` - List installed plugins and their status
+- `info <plugin>` - Show detailed plugin information
+- `doctor` - Run diagnostic checks
+- `cache clear` - Clear plugin cache
+- `version` - Show Pulse version
+- `update` - Update plugins (coming soon)
+- `install` - Install new plugins (coming soon)
+- `remove` - Remove plugins (coming soon)
+
+The `pulse` command is automatically added to your PATH during installation.
 
 ### Examples
 

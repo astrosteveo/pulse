@@ -1,0 +1,492 @@
+#!/usr/bin/env zsh
+# Pulse CLI - Command-line interface for Pulse framework
+# Version: 0.1.0-beta
+
+# Enable pipe fail for better error handling
+setopt PIPE_FAIL 2>/dev/null || true
+
+# Determine Pulse installation directory
+if [[ -n "${PULSE_DIR}" ]]; then
+  PULSE_ROOT="${PULSE_DIR}"
+elif [[ -n "${XDG_DATA_HOME}" ]]; then
+  PULSE_ROOT="${XDG_DATA_HOME}/pulse"
+else
+  PULSE_ROOT="${HOME}/.local/share/pulse"
+fi
+
+# If running from repo during development, use repo root
+if [[ "${0:A:h}" == */bin ]]; then
+  PULSE_ROOT="${0:A:h:h}"
+fi
+
+# Load utilities
+if [[ -f "${PULSE_ROOT}/lib/utilities.zsh" ]]; then
+  source "${PULSE_ROOT}/lib/utilities.zsh"
+fi
+
+# Color output helpers
+if [[ -t 1 ]]; then
+  # Terminal supports colors
+  COLOR_RESET=$'\033[0m'
+  COLOR_BOLD=$'\033[1m'
+  COLOR_RED=$'\033[0;31m'
+  COLOR_GREEN=$'\033[0;32m'
+  COLOR_BLUE=$'\033[0;34m'
+  COLOR_YELLOW=$'\033[0;33m'
+  COLOR_CYAN=$'\033[0;36m'
+else
+  COLOR_RESET=""
+  COLOR_BOLD=""
+  COLOR_RED=""
+  COLOR_GREEN=""
+  COLOR_BLUE=""
+  COLOR_YELLOW=""
+  COLOR_CYAN=""
+fi
+
+# Print usage information
+pulse_usage() {
+  cat <<EOF
+${COLOR_BOLD}Pulse${COLOR_RESET} - The Heartbeat of Your Zsh
+Version: ${PULSE_VERSION:-0.1.0-beta}
+
+${COLOR_BOLD}USAGE${COLOR_RESET}
+  pulse <command> [options] [arguments]
+
+${COLOR_BOLD}COMMANDS${COLOR_RESET}
+  ${COLOR_CYAN}list${COLOR_RESET}      List installed plugins and their status
+  ${COLOR_CYAN}info${COLOR_RESET}      Show detailed information about a plugin
+  ${COLOR_CYAN}update${COLOR_RESET}    Update all or specific plugins
+  ${COLOR_CYAN}install${COLOR_RESET}   Install missing plugins
+  ${COLOR_CYAN}remove${COLOR_RESET}    Remove installed plugins
+  ${COLOR_CYAN}doctor${COLOR_RESET}    Diagnose common problems
+  ${COLOR_CYAN}benchmark${COLOR_RESET} Measure shell startup performance
+  ${COLOR_CYAN}cache${COLOR_RESET}     Manage plugin cache
+  ${COLOR_CYAN}validate${COLOR_RESET}  Validate configuration
+  ${COLOR_CYAN}version${COLOR_RESET}   Show version information
+  ${COLOR_CYAN}help${COLOR_RESET}      Show this help message
+
+${COLOR_BOLD}EXAMPLES${COLOR_RESET}
+  pulse list
+  pulse list --format=json
+  pulse info zsh-autosuggestions
+  pulse update
+  pulse install zsh-users/zsh-autosuggestions
+  pulse doctor
+
+${COLOR_BOLD}DOCUMENTATION${COLOR_RESET}
+  https://github.com/astrosteveo/pulse
+
+EOF
+}
+
+# Show version
+pulse_version() {
+  echo "Pulse version ${PULSE_VERSION:-0.1.0-beta}"
+  if pulse_has_command git && [[ -d "${PULSE_ROOT}/.git" ]]; then
+    local git_hash=$(git -C "${PULSE_ROOT}" rev-parse --short HEAD 2>/dev/null)
+    if [[ -n "$git_hash" ]]; then
+      echo "Git commit: ${git_hash}"
+    fi
+  fi
+}
+
+# List installed plugins
+pulse_list() {
+  local format="table"
+  
+  # Parse options
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --format=*)
+        format="${1#--format=}"
+        shift
+        ;;
+      *)
+        echo "${COLOR_RED}Error:${COLOR_RESET} Unknown option: $1" >&2
+        return 2
+        ;;
+    esac
+  done
+  
+  # Get plugins from the directory
+  local plugin_dir="${PULSE_ROOT}/plugins"
+  if [[ ! -d "$plugin_dir" ]]; then
+    echo "${COLOR_YELLOW}Warning:${COLOR_RESET} Plugin directory not found: $plugin_dir" >&2
+    return 1
+  fi
+  
+  # Find all plugin directories
+  typeset -a plugin_list
+  plugin_list=()
+  for dir in "$plugin_dir"/*(N/); do
+    if [[ -d "$dir" ]]; then
+      plugin_list+=("${dir:t}")
+    fi
+  done
+  
+  if [[ ${#plugin_list} -eq 0 ]]; then
+    echo "${COLOR_YELLOW}Notice:${COLOR_RESET} No plugins installed yet"
+    echo "Add plugins to your plugins=() array in .zshrc and restart your shell"
+    return 0
+  fi
+  
+  case "$format" in
+    table)
+      pulse_list_table "${plugin_list[@]}"
+      ;;
+    json)
+      pulse_list_json "${plugin_list[@]}"
+      ;;
+    simple)
+      pulse_list_simple "${plugin_list[@]}"
+      ;;
+    *)
+      echo "${COLOR_RED}Error:${COLOR_RESET} Invalid format: $format" >&2
+      echo "Valid formats: table, json, simple" >&2
+      return 2
+      ;;
+  esac
+}
+
+# List plugins in table format
+pulse_list_table() {
+  local plugin_list=("$@")
+  local plugin_dir="${PULSE_ROOT}/plugins"
+  
+  printf "${COLOR_BOLD}%-40s %-10s %-10s${COLOR_RESET}\n" "Plugin" "Status" "Type"
+  printf "━%.0s" {1..65}
+  printf "\n"
+  
+  local total=0
+  local loaded=0
+  
+  for plugin_name in "${plugin_list[@]}"; do
+    local plugin_path="${plugin_dir}/${plugin_name}"
+    
+    # Truncate long plugin names
+    local display_name="$plugin_name"
+    if [[ ${#display_name} -gt 38 ]]; then
+      display_name="${display_name:0:35}..."
+    fi
+    
+    # Determine plugin type
+    local plugin_type="standard"
+    if [[ -d "$plugin_path/completions" ]] || [[ -n "$(find "$plugin_path" -maxdepth 1 -name '_*' -type f 2>/dev/null | head -1)" ]]; then
+      plugin_type="completion"
+    elif [[ "$plugin_name" == *-syntax-highlighting* ]]; then
+      plugin_type="syntax"
+    elif [[ -n "$(find "$plugin_path" -maxdepth 1 -name '*.zsh-theme' -type f 2>/dev/null | head -1)" ]]; then
+      plugin_type="theme"
+    fi
+    
+    # Status (we can't easily determine if loaded without full engine, assume installed)
+    local status_display="${COLOR_GREEN}installed${COLOR_RESET}"
+    
+    printf "%-40s %-20s %-10s\n" "$display_name" "$status_display" "$plugin_type"
+    ((total++))
+    ((loaded++))
+  done
+  
+  printf "━%.0s" {1..65}
+  printf "\n"
+  printf "Total: %d plugins\n" "$total"
+}
+
+# List plugins in JSON format
+pulse_list_json() {
+  local plugin_list=("$@")
+  local plugin_dir="${PULSE_ROOT}/plugins"
+  
+  local first=1
+  printf "{\n"
+  printf "  \"plugins\": [\n"
+  
+  for plugin_name in "${plugin_list[@]}"; do
+    if [[ $first -eq 0 ]]; then
+      printf ",\n"
+    fi
+    first=0
+    
+    local plugin_path="${plugin_dir}/${plugin_name}"
+    
+    # Determine plugin type
+    local plugin_type="standard"
+    if [[ -d "$plugin_path/completions" ]] || [[ -n "$(find "$plugin_path" -maxdepth 1 -name '_*' -type f 2>/dev/null | head -1)" ]]; then
+      plugin_type="completion"
+    elif [[ "$plugin_name" == *-syntax-highlighting* ]]; then
+      plugin_type="syntax"
+    elif [[ -n "$(find "$plugin_path" -maxdepth 1 -name '*.zsh-theme' -type f 2>/dev/null | head -1)" ]]; then
+      plugin_type="theme"
+    fi
+    
+    printf "    {\n"
+    printf "      \"name\": \"%s\",\n" "$plugin_name"
+    printf "      \"status\": \"installed\",\n"
+    printf "      \"type\": \"%s\",\n" "$plugin_type"
+    printf "      \"path\": \"%s\"\n" "$plugin_path"
+    printf "    }"
+  done
+  
+  printf "\n  ],\n"
+  
+  printf "  \"stats\": {\n"
+  printf "    \"total\": %d,\n" "${#plugin_list}"
+  printf "    \"installed\": %d\n" "${#plugin_list}"
+  printf "  }\n"
+  printf "}\n"
+}
+
+# List plugins in simple format (one per line)
+pulse_list_simple() {
+  local plugin_list=("$@")
+  for plugin_name in "${plugin_list[@]}"; do
+    echo "$plugin_name"
+  done
+}
+
+# Show info about a specific plugin
+pulse_info() {
+  if [[ $# -eq 0 ]]; then
+    echo "${COLOR_RED}Error:${COLOR_RESET} Plugin name required" >&2
+    echo "Usage: pulse info <plugin-name>" >&2
+    return 2
+  fi
+  
+  local plugin_name="$1"
+  local plugin_dir="${PULSE_ROOT}/plugins"
+  local plugin_path="${plugin_dir}/${plugin_name}"
+  
+  if [[ ! -d "$plugin_path" ]]; then
+    echo "${COLOR_RED}Error:${COLOR_RESET} Plugin not found: $plugin_name" >&2
+    return 1
+  fi
+  
+  printf "${COLOR_BOLD}Plugin: %s${COLOR_RESET}\n" "$plugin_name"
+  printf "━%.0s" {1..75}
+  printf "\n"
+  printf "%-15s %s\n" "Status:" "installed"
+  
+  # Determine plugin type
+  local plugin_type="standard"
+  if [[ -d "$plugin_path/completions" ]] || [[ -n "$(find "$plugin_path" -maxdepth 1 -name '_*' -type f 2>/dev/null | head -1)" ]]; then
+    plugin_type="completion"
+  elif [[ "$plugin_name" == *-syntax-highlighting* ]]; then
+    plugin_type="syntax"
+  elif [[ -n "$(find "$plugin_path" -maxdepth 1 -name '*.zsh-theme' -type f 2>/dev/null | head -1)" ]]; then
+    plugin_type="theme"
+  fi
+  
+  printf "%-15s %s\n" "Type:" "$plugin_type"
+  printf "%-15s %s\n" "Path:" "$plugin_path"
+  
+  # Show git info if available
+  if [[ -d "$plugin_path/.git" ]]; then
+    local git_url=$(git -C "$plugin_path" config --get remote.origin.url 2>/dev/null)
+    local git_hash=$(git -C "$plugin_path" rev-parse --short HEAD 2>/dev/null)
+    local git_branch=$(git -C "$plugin_path" rev-parse --abbrev-ref HEAD 2>/dev/null)
+    
+    if [[ -n "$git_url" ]]; then
+      printf "%-15s %s\n" "URL:" "$git_url"
+    fi
+    if [[ -n "$git_hash" ]]; then
+      printf "%-15s %s\n" "Version:" "$git_hash"
+    fi
+    if [[ -n "$git_branch" ]]; then
+      printf "%-15s %s\n" "Branch:" "$git_branch"
+    fi
+  fi
+  
+  # List main files
+  printf "\n${COLOR_BOLD}Files:${COLOR_RESET}\n"
+  local file_count=0
+  for file in "$plugin_path"/*.zsh(N) "$plugin_path"/*.plugin.zsh(N) "$plugin_path"/*.zsh-theme(N); do
+    if [[ -f "$file" ]]; then
+      printf "  %s\n" "${file:t}"
+      ((file_count++))
+    fi
+  done
+  if [[ $file_count -eq 0 ]]; then
+    echo "  (no .zsh files found)"
+  fi
+}
+
+# Placeholder for future commands
+pulse_update() {
+  echo "${COLOR_YELLOW}Notice:${COLOR_RESET} 'pulse update' command not yet implemented"
+  echo "Use 'cd ${PULSE_ROOT}/plugins/<plugin-name> && git pull' for now"
+  return 1
+}
+
+pulse_install() {
+  echo "${COLOR_YELLOW}Notice:${COLOR_RESET} 'pulse install' command not yet implemented"
+  echo "Plugins are auto-installed when you add them to the plugins array and restart your shell"
+  return 1
+}
+
+pulse_remove() {
+  echo "${COLOR_YELLOW}Notice:${COLOR_RESET} 'pulse remove' command not yet implemented"
+  echo "To remove a plugin: remove it from plugins array and delete its directory"
+  return 1
+}
+
+pulse_doctor() {
+  echo "${COLOR_BOLD}Pulse Diagnostics${COLOR_RESET}"
+  printf "━%.0s" {1..75}
+  printf "\n"
+  
+  local issues=0
+  
+  # Check Zsh version
+  local zsh_version="${ZSH_VERSION}"
+  if [[ -n "$zsh_version" ]]; then
+    printf "${COLOR_GREEN}✓${COLOR_RESET} Zsh version: %s (compatible)\n" "$zsh_version"
+  else
+    printf "${COLOR_RED}✗${COLOR_RESET} Zsh version: unknown\n"
+    ((issues++))
+  fi
+  
+  # Check Git availability
+  if pulse_has_command git; then
+    local git_version=$(git --version 2>/dev/null | cut -d' ' -f3)
+    printf "${COLOR_GREEN}✓${COLOR_RESET} Git available: %s\n" "$git_version"
+  else
+    printf "${COLOR_RED}✗${COLOR_RESET} Git not found\n"
+    ((issues++))
+  fi
+  
+  # Check Pulse directory
+  if [[ -d "$PULSE_ROOT" ]]; then
+    if [[ -w "$PULSE_ROOT" ]]; then
+      printf "${COLOR_GREEN}✓${COLOR_RESET} Pulse directory: %s (writable)\n" "$PULSE_ROOT"
+    else
+      printf "${COLOR_YELLOW}⚠${COLOR_RESET} Pulse directory: %s (not writable)\n" "$PULSE_ROOT"
+      ((issues++))
+    fi
+  else
+    printf "${COLOR_RED}✗${COLOR_RESET} Pulse directory not found: %s\n" "$PULSE_ROOT"
+    ((issues++))
+  fi
+  
+  # Check cache directory
+  local cache_dir="${PULSE_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/pulse}"
+  if [[ -d "$cache_dir" ]]; then
+    if [[ -w "$cache_dir" ]]; then
+      printf "${COLOR_GREEN}✓${COLOR_RESET} Cache directory: %s (writable)\n" "$cache_dir"
+    else
+      printf "${COLOR_YELLOW}⚠${COLOR_RESET} Cache directory: %s (not writable)\n" "$cache_dir"
+      ((issues++))
+    fi
+  else
+    printf "${COLOR_YELLOW}⚠${COLOR_RESET} Cache directory not found: %s\n" "$cache_dir"
+    echo "  (will be created automatically)"
+  fi
+  
+  # Check installed plugins
+  local plugin_dir="${PULSE_ROOT}/plugins"
+  if [[ -d "$plugin_dir" ]]; then
+    local plugin_count=$(find "$plugin_dir" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)
+    printf "${COLOR_GREEN}✓${COLOR_RESET} Plugins directory: %d plugins installed\n" "$plugin_count"
+  else
+    printf "${COLOR_YELLOW}⚠${COLOR_RESET} Plugins directory not found\n"
+  fi
+  
+  printf "━%.0s" {1..75}
+  printf "\n"
+  
+  if [[ $issues -eq 0 ]]; then
+    printf "${COLOR_GREEN}Status: OK${COLOR_RESET}\n"
+    return 0
+  elif [[ $issues -eq 1 ]]; then
+    printf "${COLOR_YELLOW}Status: 1 issue detected${COLOR_RESET}\n"
+    return 1
+  else
+    printf "${COLOR_YELLOW}Status: %d issues detected${COLOR_RESET}\n" "$issues"
+    return 1
+  fi
+}
+
+pulse_benchmark() {
+  echo "${COLOR_YELLOW}Notice:${COLOR_RESET} 'pulse benchmark' command not yet implemented"
+  return 1
+}
+
+pulse_cache() {
+  if [[ $# -eq 0 ]] || [[ "$1" != "clear" ]]; then
+    echo "${COLOR_RED}Error:${COLOR_RESET} Invalid cache command" >&2
+    echo "Usage: pulse cache clear [--all]" >&2
+    return 2
+  fi
+  
+  local cache_dir="${PULSE_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/pulse}"
+  
+  if [[ ! -d "$cache_dir" ]]; then
+    echo "${COLOR_YELLOW}Notice:${COLOR_RESET} Cache directory does not exist: $cache_dir"
+    return 0
+  fi
+  
+  rm -rf "$cache_dir"/*
+  printf "${COLOR_GREEN}✓${COLOR_RESET} Cleared cache: %s\n" "$cache_dir"
+  echo "Next shell startup will rebuild cache."
+  return 0
+}
+
+pulse_validate() {
+  echo "${COLOR_YELLOW}Notice:${COLOR_RESET} 'pulse validate' command not yet implemented"
+  return 1
+}
+
+# Main command dispatcher
+pulse_main() {
+  if [[ $# -eq 0 ]]; then
+    pulse_usage
+    return 0
+  fi
+  
+  local command="$1"
+  shift
+  
+  case "$command" in
+    list)
+      pulse_list "$@"
+      ;;
+    info)
+      pulse_info "$@"
+      ;;
+    update)
+      pulse_update "$@"
+      ;;
+    install)
+      pulse_install "$@"
+      ;;
+    remove)
+      pulse_remove "$@"
+      ;;
+    doctor)
+      pulse_doctor "$@"
+      ;;
+    benchmark)
+      pulse_benchmark "$@"
+      ;;
+    cache)
+      pulse_cache "$@"
+      ;;
+    validate)
+      pulse_validate "$@"
+      ;;
+    version|--version|-v)
+      pulse_version
+      ;;
+    help|--help|-h)
+      pulse_usage
+      ;;
+    *)
+      echo "${COLOR_RED}Error:${COLOR_RESET} Unknown command: $command" >&2
+      echo "Run 'pulse help' for usage information" >&2
+      return 2
+      ;;
+  esac
+}
+
+# Execute main function
+pulse_main "$@"
