@@ -468,6 +468,9 @@ _pulse_discover_plugins() {
     if [[ ! -d "$plugin_path" ]] && [[ -n "$plugin_url" ]]; then
       [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Plugin '$plugin_name' not found, attempting to install..." >&2
       
+      # Ensure plugins directory exists before creating lock
+      mkdir -p "${PULSE_DIR}/plugins"
+      
       # Create lock file to prevent race conditions
       local lock_file="${PULSE_DIR}/plugins/.${plugin_name}.lock"
       local lock_acquired=0
