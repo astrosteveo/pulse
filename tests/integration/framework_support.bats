@@ -220,3 +220,96 @@ EOF
   [ "$status" -eq 0 ]
   [[ "$output" == *"in-fpath"* ]]
 }
+
+@test "sparse checkout clones only specified plugin directory" {
+  # Skip if git is not available or doesn't support sparse-checkout
+  run git sparse-checkout --help
+  [ "$status" -eq 0 ] || skip "git sparse-checkout not available"
+  
+  run zsh -c "
+    export PULSE_DIR='${PULSE_DIR}'
+    export PULSE_CACHE_DIR='${PULSE_CACHE_DIR}'
+    export PULSE_DEBUG=1
+    
+    source ${PULSE_ROOT}/lib/plugin-engine.zsh
+    _pulse_init_engine
+    
+    # Clone with sparse checkout
+    _pulse_clone_plugin 'https://github.com/ohmyzsh/ohmyzsh.git' 'ohmyzsh' '' 'plugins/kubectl'
+    
+    # Check that only kubectl plugin was cloned
+    [[ -d '${PULSE_DIR}/plugins/ohmyzsh/plugins/kubectl' ]] && echo 'kubectl-exists'
+    [[ ! -d '${PULSE_DIR}/plugins/ohmyzsh/plugins/docker' ]] && echo 'docker-not-exists'
+    [[ -f '${PULSE_DIR}/plugins/ohmyzsh/plugins/kubectl/kubectl.plugin.zsh' ]] && echo 'plugin-file-exists'
+  "
+  
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"kubectl-exists"* ]]
+  [[ "$output" == *"docker-not-exists"* ]]
+  [[ "$output" == *"plugin-file-exists"* ]]
+}
+
+@test "sparse checkout adds additional plugin to existing framework" {
+  # Skip if git is not available or doesn't support sparse-checkout
+  run git sparse-checkout --help
+  [ "$status" -eq 0 ] || skip "git sparse-checkout not available"
+  
+  # First, clone with one plugin
+  run zsh -c "
+    export PULSE_DIR='${PULSE_DIR}'
+    export PULSE_CACHE_DIR='${PULSE_CACHE_DIR}'
+    
+    source ${PULSE_ROOT}/lib/plugin-engine.zsh
+    _pulse_init_engine
+    
+    # Clone with sparse checkout
+    _pulse_clone_plugin 'https://github.com/ohmyzsh/ohmyzsh.git' 'ohmyzsh' '' 'plugins/kubectl'
+  "
+  [ "$status" -eq 0 ]
+  
+  # Now add another plugin
+  run zsh -c "
+    export PULSE_DIR='${PULSE_DIR}'
+    export PULSE_CACHE_DIR='${PULSE_CACHE_DIR}'
+    export PULSE_DEBUG=1
+    
+    cd '${PULSE_DIR}/plugins/ohmyzsh'
+    git sparse-checkout add 'plugins/docker'
+    
+    # Check that both plugins exist
+    [[ -d '${PULSE_DIR}/plugins/ohmyzsh/plugins/kubectl' ]] && echo 'kubectl-exists'
+    [[ -d '${PULSE_DIR}/plugins/ohmyzsh/plugins/docker' ]] && echo 'docker-exists'
+  "
+  
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"kubectl-exists"* ]]
+  [[ "$output" == *"docker-exists"* ]]
+}
+
+@test "sparse checkout reduces disk usage compared to full clone" {
+  # Skip if git is not available or doesn't support sparse-checkout
+  run git sparse-checkout --help
+  [ "$status" -eq 0 ] || skip "git sparse-checkout not available"
+  
+  # Clone with sparse checkout
+  run zsh -c "
+    export PULSE_DIR='${PULSE_DIR}'
+    export PULSE_CACHE_DIR='${PULSE_CACHE_DIR}'
+    
+    source ${PULSE_ROOT}/lib/plugin-engine.zsh
+    _pulse_init_engine
+    
+    _pulse_clone_plugin 'https://github.com/ohmyzsh/ohmyzsh.git' 'ohmyzsh' '' 'plugins/kubectl'
+    
+    # Get size in KB
+    du -sk '${PULSE_DIR}/plugins/ohmyzsh' | awk '{print \$1}'
+  "
+  [ "$status" -eq 0 ]
+  
+  # Parse the size from output
+  local sparse_size=$(echo "$output" | tail -1)
+  
+  # Sparse checkout should be less than 10MB (10240KB)
+  # Full clone is typically around 15MB
+  [ "$sparse_size" -lt 10240 ]
+}

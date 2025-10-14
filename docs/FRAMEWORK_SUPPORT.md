@@ -12,13 +12,17 @@ Oh-My-Zsh (OMZ) is one of the most popular Zsh frameworks, with hundreds of comm
 
 When you specify an Oh-My-Zsh plugin path like `ohmyzsh/ohmyzsh/plugins/kubectl`, Pulse:
 
-1. **Automatically clones** the oh-my-zsh repository to `$PULSE_DIR/plugins/ohmyzsh` (only once)
-2. **Sets up environment variables** that OMZ plugins expect:
+1. **Uses sparse checkout** to clone only the specific plugin directory (not the entire 15MB+ repository)
+2. **Automatically clones** the oh-my-zsh repository to `$PULSE_DIR/plugins/ohmyzsh` (only once per framework)
+3. **Adds additional plugins** to the existing sparse checkout when you specify more OMZ plugins
+4. **Sets up environment variables** that OMZ plugins expect:
    - `$ZSH` - points to the oh-my-zsh installation directory
    - `$ZSH_CACHE_DIR` - directory for plugin-generated completions and cache
    - `$ZSH_CUSTOM` - directory for custom plugins (for compatibility)
-3. **Loads the plugin** from the correct subdirectory
-4. **Creates the cache structure** for completions
+5. **Loads the plugin** from the correct subdirectory
+6. **Creates the cache structure** for completions
+
+**Disk Space Savings**: Using sparse checkout, Pulse only downloads the files you need. A single plugin typically uses ~6MB instead of ~15MB for the full repository.
 
 ### Usage
 
@@ -82,7 +86,12 @@ plugins=(
 
 ### Performance
 
-Pulse only clones the oh-my-zsh repository once, and subsequent shells will use the cached version. Individual plugins load quickly since Pulse uses the intelligent 5-stage loading pipeline.
+Pulse uses git sparse checkout to dramatically reduce disk usage and clone times:
+- **First plugin**: ~6MB initial clone (vs ~15MB for full repository)
+- **Additional plugins**: Only fetches the specific plugin files (~200KB-1MB per plugin)
+- **Subsequent shells**: Use cached version, no additional downloads
+
+Individual plugins load quickly since Pulse uses the intelligent 5-stage loading pipeline.
 
 ---
 
@@ -96,11 +105,15 @@ Prezto is a configuration framework for Zsh that provides useful modules. Pulse 
 
 When you specify a Prezto module path like `sorin-ionescu/prezto/modules/git`, Pulse:
 
-1. **Automatically clones** the prezto repository to `$PULSE_DIR/plugins/prezto` (only once)
-2. **Sets up environment variables**:
+1. **Uses sparse checkout** to clone only the specific module directory (not the entire repository)
+2. **Automatically clones** the prezto repository to `$PULSE_DIR/plugins/prezto` (only once per framework)
+3. **Adds additional modules** to the existing sparse checkout when you specify more Prezto modules
+4. **Sets up environment variables**:
    - `$ZPREZTODIR` - points to the prezto installation directory
-3. **Provides the `pmodload` function** for module dependency loading
-4. **Loads the module** using its `init.zsh` file
+5. **Provides the `pmodload` function** for module dependency loading
+6. **Loads the module** using its `init.zsh` file
+
+**Disk Space Savings**: Just like with Oh-My-Zsh, Pulse uses sparse checkout to only download the modules you need.
 
 ### Usage
 
