@@ -286,8 +286,17 @@ _pulse_clone_plugin() {
       return 1
     fi
     
-    # Enable sparse checkout and set the path
-    if ! git sparse-checkout set --no-cone "$sparse_path" 2>/dev/null; then
+    # Enable sparse checkout and set the path(s)
+    # For Oh-My-Zsh, also include lib/ directory which contains shared helper files
+    # For Prezto, include helper module which is a common dependency
+    local sparse_paths=("$sparse_path")
+    if [[ "$plugin_name" == "ohmyzsh" ]]; then
+      sparse_paths+=("lib")
+    elif [[ "$plugin_name" == "prezto" ]]; then
+      sparse_paths+=("modules/helper")
+    fi
+    
+    if ! git sparse-checkout set --no-cone "${sparse_paths[@]}" 2>/dev/null; then
       [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Failed to configure sparse checkout" >&2
       cd "$original_dir"
       rm -rf "$plugin_dir" 2>/dev/null

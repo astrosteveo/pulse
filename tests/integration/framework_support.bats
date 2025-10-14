@@ -221,7 +221,7 @@ EOF
   [[ "$output" == *"in-fpath"* ]]
 }
 
-@test "sparse checkout clones only specified plugin directory" {
+@test "sparse checkout clones only specified plugin directory plus dependencies" {
   # Skip if git is not available or doesn't support sparse-checkout
   run git sparse-checkout --help
   [ "$status" -eq 0 ] || skip "git sparse-checkout not available"
@@ -237,16 +237,21 @@ EOF
     # Clone with sparse checkout
     _pulse_clone_plugin 'https://github.com/ohmyzsh/ohmyzsh.git' 'ohmyzsh' '' 'plugins/kubectl'
     
-    # Check that only kubectl plugin was cloned
+    # Check that kubectl plugin was cloned
     [[ -d '${PULSE_DIR}/plugins/ohmyzsh/plugins/kubectl' ]] && echo 'kubectl-exists'
     [[ ! -d '${PULSE_DIR}/plugins/ohmyzsh/plugins/docker' ]] && echo 'docker-not-exists'
     [[ -f '${PULSE_DIR}/plugins/ohmyzsh/plugins/kubectl/kubectl.plugin.zsh' ]] && echo 'plugin-file-exists'
+    # Check that lib directory is also included (required for plugin dependencies)
+    [[ -d '${PULSE_DIR}/plugins/ohmyzsh/lib' ]] && echo 'lib-exists'
+    [[ -f '${PULSE_DIR}/plugins/ohmyzsh/lib/git.zsh' ]] && echo 'lib-git-exists'
   "
   
   [ "$status" -eq 0 ]
   [[ "$output" == *"kubectl-exists"* ]]
   [[ "$output" == *"docker-not-exists"* ]]
   [[ "$output" == *"plugin-file-exists"* ]]
+  [[ "$output" == *"lib-exists"* ]]
+  [[ "$output" == *"lib-git-exists"* ]]
 }
 
 @test "sparse checkout adds additional plugin to existing framework" {
@@ -279,11 +284,14 @@ EOF
     # Check that both plugins exist
     [[ -d '${PULSE_DIR}/plugins/ohmyzsh/plugins/kubectl' ]] && echo 'kubectl-exists'
     [[ -d '${PULSE_DIR}/plugins/ohmyzsh/plugins/docker' ]] && echo 'docker-exists'
+    # Check that lib directory is still present
+    [[ -d '${PULSE_DIR}/plugins/ohmyzsh/lib' ]] && echo 'lib-still-exists'
   "
   
   [ "$status" -eq 0 ]
   [[ "$output" == *"kubectl-exists"* ]]
   [[ "$output" == *"docker-exists"* ]]
+  [[ "$output" == *"lib-still-exists"* ]]
 }
 
 @test "sparse checkout reduces disk usage compared to full clone" {
@@ -323,4 +331,35 @@ EOF
     skip "Full clone size could not be determined"
   fi
   [ "$sparse_size" -lt $(( full_size / 2 )) ]
+}
+
+@test "prezto sparse checkout includes helper module dependency" {
+  # Skip if git is not available or doesn't support sparse-checkout
+  run git sparse-checkout --help
+  [ "$status" -eq 0 ] || skip "git sparse-checkout not available"
+  
+  run zsh -c "
+    export PULSE_DIR='${PULSE_DIR}'
+    export PULSE_CACHE_DIR='${PULSE_CACHE_DIR}'
+    export PULSE_DEBUG=1
+    
+    source ${PULSE_ROOT}/lib/plugin-engine.zsh
+    _pulse_init_engine
+    
+    # Clone git module with sparse checkout
+    _pulse_clone_plugin 'https://github.com/sorin-ionescu/prezto.git' 'prezto' '' 'modules/git'
+    
+    # Check that git module was cloned
+    [[ -d '${PULSE_DIR}/plugins/prezto/modules/git' ]] && echo 'git-module-exists'
+    [[ -f '${PULSE_DIR}/plugins/prezto/modules/git/init.zsh' ]] && echo 'git-init-exists'
+    # Check that helper module is also included (required dependency for git module)
+    [[ -d '${PULSE_DIR}/plugins/prezto/modules/helper' ]] && echo 'helper-module-exists'
+    [[ -f '${PULSE_DIR}/plugins/prezto/modules/helper/init.zsh' ]] && echo 'helper-init-exists'
+  "
+  
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"git-module-exists"* ]]
+  [[ "$output" == *"git-init-exists"* ]]
+  [[ "$output" == *"helper-module-exists"* ]]
+  [[ "$output" == *"helper-init-exists"* ]]
 }
