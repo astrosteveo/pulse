@@ -111,8 +111,9 @@ $ awk '/.../{ ... }' test2.zshrc
 ## Files Changed
 
 1. `scripts/pulse-install.sh` - Added single-line check (line 442)
-2. `scripts/pulse-install.sh.sha256` - Updated checksum: `78ac4831656fa828a917f4fe210f718c569daca0d7b9c1a2ff1ef5149b475d6c`
-3. `README.md` - Updated checksum reference
+2. `scripts/pulse-install.sh.sha256` - Updated checksum: `78ac4831656fa828a917f4fe210f718c569daca0d7b9c1a2ff1ef5149b475d6c` (initial fix)
+3. Final checksum after all fixes: `859930b374f434a2bf3133cbdbfb087ba2b6bfebd8437252c5741a0313a08e26`
+4. `README.md` - Updated checksum reference
 
 ## User Impact
 

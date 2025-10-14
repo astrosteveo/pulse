@@ -82,10 +82,6 @@ SHA256 checksum (verify with `sha256sum -c scripts/pulse-install.sh.sha256`):
 859930b374f434a2bf3133cbdbfb087ba2b6bfebd8437252c5741a0313a08e26
 ```
 
-```
-78ac4831656fa828a917f4fe210f718c569daca0d7b9c1a2ff1ef5149b475d6c
-```
-
 For more details, see [Installation Quickstart](docs/install/QUICKSTART.md) and [Checksum Verification](docs/install/CHECKSUM_VERIFICATION.md).
 
 ### Manual Installation
