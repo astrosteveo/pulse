@@ -69,7 +69,7 @@ _pulse_detect_plugin_type() {
 # Parse plugin specification into components
 # Usage: _pulse_parse_plugin_spec <source_spec>
 # Returns: plugin_url plugin_name plugin_ref (space-separated)
-# Supports: user/repo, user/repo@tag, URLs, local paths
+# Supports: user/repo, user/repo@tag, URLs, local paths, framework paths
 _pulse_parse_plugin_spec() {
   local source_spec="$1"
   local plugin_url=""
@@ -91,8 +91,28 @@ _pulse_parse_plugin_spec() {
     echo "" "" ""  # No URL for local paths
     return 0
   fi
+  
+  # Case 2: Framework-specific paths (ohmyzsh/ohmyzsh/plugins/*, sorin-ionescu/prezto/modules/*)
+  # These need special handling to preserve the full path structure
+  if [[ "$source_spec" =~ ^ohmyzsh/ohmyzsh/plugins/ ]]; then
+    # Extract plugin name and construct URL
+    local omz_plugin="${source_spec#ohmyzsh/ohmyzsh/plugins/}"
+    plugin_url="https://github.com/ohmyzsh/ohmyzsh.git"
+    plugin_name="ohmyzsh"
+    echo "$plugin_url" "$plugin_name" "$plugin_ref"
+    return 0
+  fi
+  
+  if [[ "$source_spec" =~ ^sorin-ionescu/prezto/modules/ ]]; then
+    # Extract module name and construct URL
+    local prezto_module="${source_spec#sorin-ionescu/prezto/modules/}"
+    plugin_url="https://github.com/sorin-ionescu/prezto.git"
+    plugin_name="prezto"
+    echo "$plugin_url" "$plugin_name" "$plugin_ref"
+    return 0
+  fi
 
-  # Case 2: Git SSH URL (git@host:user/repo.git or git@host:user/repo.git@ref)
+  # Case 3: Git SSH URL (git@host:user/repo.git or git@host:user/repo.git@ref)
   # Must check BEFORE general @ splitting to avoid breaking SSH URLs
   if [[ "$source_spec" =~ ^git@[^:]+: ]]; then
     # SSH URL format: git@host:path.git or git@host:path.git@ref
@@ -127,7 +147,7 @@ _pulse_parse_plugin_spec() {
     fi
   fi
 
-  # Case 3: GitHub shorthand (user/repo)
+  # Case 4: GitHub shorthand (user/repo)
   if [[ "$source_spec" =~ ^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$ ]]; then
     plugin_url="https://github.com/${source_spec}.git"
     plugin_name="${source_spec##*/}"
@@ -135,7 +155,7 @@ _pulse_parse_plugin_spec() {
     return 0
   fi
 
-  # Case 4: Full Git URL (https://... or http://...)
+  # Case 5: Full Git URL (https://... or http://...)
   if [[ "$source_spec" =~ ^https?:// ]]; then
     plugin_url="$source_spec"
     plugin_name="${source_spec##*/}"
@@ -151,7 +171,7 @@ _pulse_parse_plugin_spec() {
 
 # Resolve plugin source specification to a full path
 # Usage: _pulse_resolve_plugin_source <source_spec>
-# Supports: GitHub user/repo, full URLs, local paths
+# Supports: GitHub user/repo, full URLs, local paths, framework paths
 # Returns: Full path to plugin directory
 _pulse_resolve_plugin_source() {
   local source_spec="$1"
@@ -171,8 +191,24 @@ _pulse_resolve_plugin_source() {
     echo "$(cd "$source_spec" 2>/dev/null && pwd)"
     return 0
   fi
+  
+  # Case 3: Oh-My-Zsh plugin path (ohmyzsh/ohmyzsh/plugins/*)
+  if [[ "$source_spec" =~ ^ohmyzsh/ohmyzsh/plugins/ ]]; then
+    local omz_plugin="${source_spec#ohmyzsh/ohmyzsh/plugins/}"
+    plugin_dir="${PULSE_DIR}/plugins/ohmyzsh/plugins/${omz_plugin}"
+    echo "$plugin_dir"
+    return 0
+  fi
+  
+  # Case 4: Prezto module path (sorin-ionescu/prezto/modules/*)
+  if [[ "$source_spec" =~ ^sorin-ionescu/prezto/modules/ ]]; then
+    local prezto_module="${source_spec#sorin-ionescu/prezto/modules/}"
+    plugin_dir="${PULSE_DIR}/plugins/prezto/modules/${prezto_module}"
+    echo "$plugin_dir"
+    return 0
+  fi
 
-  # Case 3: GitHub shorthand (user/repo)
+  # Case 5: GitHub shorthand (user/repo)
   if [[ "$source_spec" =~ ^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$ ]]; then
     local plugin_name="${source_spec##*/}"
     plugin_dir="${PULSE_DIR}/plugins/${plugin_name}"
@@ -180,7 +216,7 @@ _pulse_resolve_plugin_source() {
     return 0
   fi
 
-  # Case 4: Full Git URL (https://... or git@...)
+  # Case 6: Full Git URL (https://... or git@...)
   if [[ "$source_spec" =~ ^(https?://|git@) ]]; then
     # Extract plugin name from URL (last component without .git)
     local plugin_name="${source_spec##*/}"
@@ -312,6 +348,62 @@ _pulse_assign_stage() {
 }
 
 #
+# Framework Support
+#
+
+# Set up framework-specific environment variables
+# Usage: _pulse_setup_framework_env <plugin_path>
+_pulse_setup_framework_env() {
+  local plugin_path="$1"
+  
+  # Check if this is an oh-my-zsh plugin
+  if [[ "$plugin_path" == */ohmyzsh/plugins/* ]]; then
+    # Set up Oh-My-Zsh environment variables
+    local omz_root="${plugin_path%%/plugins/*}"
+    export ZSH="$omz_root"
+    export ZSH_CACHE_DIR="${PULSE_CACHE_DIR}/ohmyzsh"
+    export ZSH_CUSTOM="${ZSH}/custom"
+    
+    # Create cache directory with completions subdirectory
+    mkdir -p "${ZSH_CACHE_DIR}/completions"
+    
+    # Add oh-my-zsh completions to fpath if not already present
+    if (( ! ${fpath[(Ie)${ZSH_CACHE_DIR}/completions]} )); then
+      fpath=("${ZSH_CACHE_DIR}/completions" $fpath)
+    fi
+    
+    [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Set up Oh-My-Zsh environment: ZSH=$ZSH, ZSH_CACHE_DIR=$ZSH_CACHE_DIR" >&2
+    return 0
+  fi
+  
+  # Check if this is a prezto module
+  if [[ "$plugin_path" == */prezto/modules/* ]]; then
+    # Set up Prezto environment variables
+    local prezto_root="${plugin_path%%/modules/*}"
+    export ZPREZTODIR="$prezto_root"
+    
+    # Define pmodload function if not already defined
+    if ! typeset -f pmodload >/dev/null 2>&1; then
+      # Minimal pmodload implementation for compatibility
+      pmodload() {
+        local pmodule
+        for pmodule in "$@"; do
+          local pmodule_location="${ZPREZTODIR}/modules/${pmodule}/init.zsh"
+          if [[ -f "$pmodule_location" ]]; then
+            source "$pmodule_location"
+          fi
+        done
+      }
+    fi
+    
+    [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Set up Prezto environment: ZPREZTODIR=$ZPREZTODIR" >&2
+    return 0
+  fi
+  
+  return 0
+}
+
+#
 # Plugin Loading
 #
 
@@ -330,6 +422,9 @@ _pulse_load_plugin() {
 
   # Mark as loading
   pulse_plugin_status[$plugin_name]="loading"
+  
+  # Set up framework-specific environment if needed
+  _pulse_setup_framework_env "$plugin_path"
 
   # Find and source the main plugin file
   local plugin_file=""
@@ -454,6 +549,16 @@ _pulse_discover_plugins() {
       plugin_name="${plugin_name%.git}"
       plugin_name="${plugin_name%@*}"
     fi
+    
+    # For framework plugins, create a unique name that includes the subpath
+    local plugin_registry_name="$plugin_name"
+    if [[ "$plugin_spec" =~ ^ohmyzsh/ohmyzsh/plugins/ ]]; then
+      local omz_plugin="${plugin_spec#ohmyzsh/ohmyzsh/plugins/}"
+      plugin_registry_name="omz-${omz_plugin}"
+    elif [[ "$plugin_spec" =~ ^sorin-ionescu/prezto/modules/ ]]; then
+      local prezto_module="${plugin_spec#sorin-ionescu/prezto/modules/}"
+      plugin_registry_name="prezto-${prezto_module}"
+    fi
 
     # Validate plugin name is not empty and doesn't contain path traversal
     if [[ -z "$plugin_name" ]] || [[ "$plugin_name" == *..* ]] || [[ "$plugin_name" == /* ]]; then
@@ -466,38 +571,58 @@ _pulse_discover_plugins() {
 
     # Auto-install if missing and we have a URL
     if [[ ! -d "$plugin_path" ]] && [[ -n "$plugin_url" ]]; then
-      [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Plugin '$plugin_name' not found, attempting to install..." >&2
+      [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Plugin '$plugin_registry_name' not found, attempting to install..." >&2
       
       # Ensure plugins directory exists before creating lock
       mkdir -p "${PULSE_DIR}/plugins"
       
-      # Create lock file to prevent race conditions
-      local lock_file="${PULSE_DIR}/plugins/.${plugin_name}.lock"
-      local lock_acquired=0
+      # For framework plugins, we need to clone the entire framework repo
+      # Determine the actual target directory for cloning
+      local clone_target_dir="${PULSE_DIR}/plugins/${plugin_name}"
       
-      # Try to acquire lock with timeout
-      for i in {1..30}; do
-        if mkdir "$lock_file" 2>/dev/null; then
-          lock_acquired=1
-          break
-        fi
-        [[ -n "$PULSE_DEBUG" ]] && [[ $i -eq 1 ]] && echo "[Pulse] Waiting for lock on $plugin_name..." >&2
-        sleep 0.1
-      done
+      # For framework plugins, check if framework root exists, not the specific plugin dir
+      local framework_root=""
+      if [[ "$plugin_spec" =~ ^ohmyzsh/ohmyzsh/plugins/ ]]; then
+        framework_root="${PULSE_DIR}/plugins/ohmyzsh"
+      elif [[ "$plugin_spec" =~ ^sorin-ionescu/prezto/modules/ ]]; then
+        framework_root="${PULSE_DIR}/plugins/prezto"
+      fi
       
-      if [[ $lock_acquired -eq 1 ]]; then
-        # Check again if directory exists (another shell may have created it)
-        if [[ ! -d "$plugin_path" ]]; then
-          if _pulse_clone_plugin "$plugin_url" "$plugin_name" "$plugin_ref"; then
-            [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully installed $plugin_name" >&2
-          else
-            [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Warning: Failed to install $plugin_name" >&2
-          fi
-        fi
-        # Release lock
-        rmdir "$lock_file" 2>/dev/null
+      # If it's a framework plugin and the framework root already exists, we're done
+      if [[ -n "$framework_root" ]] && [[ -d "$framework_root" ]]; then
+        [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Framework already installed at $framework_root" >&2
       else
-        [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Warning: Could not acquire lock for $plugin_name" >&2
+        # Create lock file to prevent race conditions
+        local lock_file="${PULSE_DIR}/plugins/.${plugin_name}.lock"
+        local lock_acquired=0
+        
+        # Try to acquire lock with timeout
+        for i in {1..30}; do
+          if mkdir "$lock_file" 2>/dev/null; then
+            lock_acquired=1
+            break
+          fi
+          [[ -n "$PULSE_DEBUG" ]] && [[ $i -eq 1 ]] && echo "[Pulse] Waiting for lock on $plugin_name..." >&2
+          sleep 0.1
+        done
+        
+        if [[ $lock_acquired -eq 1 ]]; then
+          # Check again if directory exists (another shell may have created it)
+          local check_dir="$clone_target_dir"
+          [[ -n "$framework_root" ]] && check_dir="$framework_root"
+          
+          if [[ ! -d "$check_dir" ]]; then
+            if _pulse_clone_plugin "$plugin_url" "$plugin_name" "$plugin_ref"; then
+              [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully installed $plugin_name" >&2
+            else
+              [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Warning: Failed to install $plugin_name" >&2
+            fi
+          fi
+          # Release lock
+          rmdir "$lock_file" 2>/dev/null
+        else
+          [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Warning: Could not acquire lock for $plugin_name" >&2
+        fi
       fi
     fi
 
@@ -505,15 +630,15 @@ _pulse_discover_plugins() {
     local plugin_type=$(_pulse_detect_plugin_type "$plugin_path")
 
     # Assign load stage
-    local plugin_stage=$(_pulse_assign_stage "$plugin_name" "$plugin_type")
+    local plugin_stage=$(_pulse_assign_stage "$plugin_registry_name" "$plugin_type")
 
-    # Register plugin
-    pulse_plugins[$plugin_name]="$plugin_path"
-    pulse_plugin_types[$plugin_name]="$plugin_type"
-    pulse_plugin_stages[$plugin_name]="$plugin_stage"
-    pulse_plugin_status[$plugin_name]="registered"
+    # Register plugin with unique name
+    pulse_plugins[$plugin_registry_name]="$plugin_path"
+    pulse_plugin_types[$plugin_registry_name]="$plugin_type"
+    pulse_plugin_stages[$plugin_registry_name]="$plugin_stage"
+    pulse_plugin_status[$plugin_registry_name]="registered"
 
-    [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Registered: $plugin_name (type=$plugin_type, stage=$plugin_stage)" >&2
+    [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Registered: $plugin_registry_name (type=$plugin_type, stage=$plugin_stage, path=$plugin_path)" >&2
   done
 }
 
