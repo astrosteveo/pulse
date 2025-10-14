@@ -308,8 +308,19 @@ EOF
   
   # Parse the size from output
   local sparse_size=$(echo "$output" | tail -1)
-  
-  # Sparse checkout should be less than 10MB (10240KB)
-  # Full clone is typically around 15MB
-  [ "$sparse_size" -lt 10240 ]
+
+  # Now, clone the full repository into a temp dir and measure its size
+  local full_clone_dir
+  full_clone_dir=$(mktemp -d)
+  git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git "$full_clone_dir/ohmyzsh" > /dev/null 2>&1
+  local full_size=$(du -sk "$full_clone_dir/ohmyzsh" | awk '{print $1}')
+
+  # Clean up the temp dir
+  rm -rf "$full_clone_dir"
+
+  # Sparse checkout should be significantly less than full clone (e.g., less than half)
+  if [ "$full_size" -eq 0 ]; then
+    skip "Full clone size could not be determined"
+  fi
+  [ "$sparse_size" -lt $(( full_size / 2 )) ]
 }
