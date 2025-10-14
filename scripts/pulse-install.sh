@@ -50,10 +50,82 @@ readonly INSTALL_DIR
 # Parse target .zshrc path
 readonly ZSHRC_PATH="${PULSE_ZSHRC:-$HOME/.zshrc}"
 
+# Parse version selection (FR-010)
+readonly PULSE_VERSION="${PULSE_VERSION:-}"
+
 # Parse boolean flags (1=true, 0=false)
-readonly SKIP_BACKUP="${PULSE_SKIP_BACKUP:-0}"
-readonly DEBUG="${PULSE_DEBUG:-0}"
-readonly SKIP_VERIFY="${PULSE_SKIP_VERIFY:-0}"
+SKIP_BACKUP="${PULSE_SKIP_BACKUP:-0}"
+DEBUG="${PULSE_DEBUG:-0}"
+SKIP_VERIFY="${PULSE_SKIP_VERIFY:-0}"
+VERBOSE="0"
+
+# Parse command-line arguments (FR-011) - Only when executed, not sourced
+parse_arguments() {
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      -v|--verbose)
+        VERBOSE="1"
+        DEBUG="1"
+        shift
+        ;;
+      --skip-backup)
+        SKIP_BACKUP="1"
+        shift
+        ;;
+      --skip-verify)
+        SKIP_VERIFY="1"
+        shift
+        ;;
+      -h|--help)
+        cat <<EOF
+Usage: $(basename "$0") [OPTIONS]
+
+Pulse Framework Installer - Zero-configuration Zsh framework installation
+
+OPTIONS:
+  -v, --verbose      Enable verbose logging output
+  --skip-backup      Skip .zshrc backup creation
+  --skip-verify      Skip post-install verification
+  -h, --help         Show this help message
+
+ENVIRONMENT VARIABLES:
+  PULSE_INSTALL_DIR  Installation directory (default: ~/.local/share/pulse)
+  PULSE_ZSHRC        Target .zshrc file (default: ~/.zshrc)
+  PULSE_VERSION      Install specific version (default: latest)
+  PULSE_SKIP_BACKUP  Skip backup creation (default: false)
+  PULSE_DEBUG        Enable debug output (default: false)
+  PULSE_SKIP_VERIFY  Skip verification (default: false)
+
+EXAMPLES:
+  # Standard installation
+  ./pulse-install.sh
+
+  # Install with verbose output
+  ./pulse-install.sh --verbose
+
+  # Install specific version
+  PULSE_VERSION=v1.0.0 ./pulse-install.sh
+
+  # Custom installation directory
+  PULSE_INSTALL_DIR=~/my-pulse ./pulse-install.sh
+
+For more information: https://github.com/astrosteveo/pulse
+EOF
+        exit 0
+        ;;
+      *)
+        echo "Unknown option: $1"
+        echo "Use --help for usage information"
+        exit 1
+        ;;
+    esac
+  done
+}
+
+readonly SKIP_BACKUP
+readonly DEBUG
+readonly SKIP_VERIFY
+readonly VERBOSE
 
 #
 # Output Formatting Functions (T004)
@@ -75,6 +147,15 @@ print_header() {
 print_step() {
   local message="$1"
   printf "%b\n" "${COLOR_GREEN}✓${COLOR_RESET} ${message}"
+}
+
+# Print verbose/debug output (FR-011)
+# Usage: print_verbose "Debug message"
+print_verbose() {
+  if [ "$VERBOSE" = "1" ] || [ "$DEBUG" = "1" ]; then
+    local message="$1"
+    printf "%b\n" "${COLOR_BLUE}[DEBUG]${COLOR_RESET} ${message}" >&2
+  fi
 }
 
 # Print an error message with error marker
@@ -115,11 +196,15 @@ error_exit() {
 
 # Check Zsh version is 5.0 or higher
 check_zsh_version() {
+  print_verbose "Checking Zsh installation..."
+
   # Check if zsh command exists
   if ! command -v zsh >/dev/null 2>&1; then
     print_error "Zsh is not installed"
     return "$EXIT_PREREQ_FAILED"
   fi
+
+  print_verbose "Zsh found at: $(command -v zsh)"
 
   # Get Zsh version (zsh command should work if it exists)
   local zsh_version
@@ -127,6 +212,8 @@ check_zsh_version() {
     print_error "Zsh is not installed"
     return "$EXIT_PREREQ_FAILED"
   fi
+
+  print_verbose "Zsh version string: $zsh_version"
 
   # Extract major.minor version (e.g., "5.9" from "zsh 5.9 (x86_64-pc-linux-gnu)")
   local version_number
@@ -142,11 +229,14 @@ check_zsh_version() {
   major=$(echo "$version_number" | cut -d. -f1)
   minor=$(echo "$version_number" | cut -d. -f2)
 
+  print_verbose "Parsed version: $major.$minor (major: $major, minor: $minor)"
+
   if [ "$major" -lt 5 ]; then
     print_error "Zsh 5.0 or higher required (found $version_number)"
     return "$EXIT_PREREQ_FAILED"
   fi
 
+  print_verbose "Zsh version check passed: $version_number >= 5.0"
   return "$EXIT_SUCCESS"
 }
 
@@ -194,28 +284,61 @@ clone_or_update_repo() {
   local repo_url="$1"
   local target_dir="$2"
 
+  print_verbose "Repository URL: $repo_url"
+  print_verbose "Target directory: $target_dir"
+
   # Check if directory exists and has .git
   if [ -d "$target_dir/.git" ]; then
+    print_verbose "Existing installation detected"
     # Update existing installation
-    print_step "Updating existing Pulse installation..."
-    if ! git -C "$target_dir" pull --quiet 2>/dev/null; then
-      print_error "Failed to update repository"
-      return "$EXIT_DOWNLOAD_FAILED"
+    if [ -n "$PULSE_VERSION" ]; then
+      print_step "Switching to version $PULSE_VERSION..."
+      print_verbose "Fetching tags from remote..."
+      if ! git -C "$target_dir" fetch --quiet --tags 2>/dev/null; then
+        print_error "Failed to fetch tags"
+        return "$EXIT_DOWNLOAD_FAILED"
+      fi
+      print_verbose "Checking out version $PULSE_VERSION..."
+      if ! git -C "$target_dir" checkout --quiet "$PULSE_VERSION" 2>/dev/null; then
+        print_error "Failed to checkout version $PULSE_VERSION"
+        return "$EXIT_DOWNLOAD_FAILED"
+      fi
+    else
+      print_step "Updating existing Pulse installation..."
+      print_verbose "Running git pull..."
+      if ! git -C "$target_dir" pull --quiet 2>/dev/null; then
+        print_error "Failed to update repository"
+        return "$EXIT_DOWNLOAD_FAILED"
+      fi
     fi
   else
     # Fresh clone (or repair corrupted installation)
     if [ -d "$target_dir" ]; then
       print_step "Repairing corrupted installation..."
+      print_verbose "Removing corrupted directory: $target_dir"
       rm -rf "$target_dir"
     else
-      print_step "Cloning Pulse repository..."
+      if [ -n "$PULSE_VERSION" ]; then
+        print_step "Cloning Pulse repository (version $PULSE_VERSION)..."
+      else
+        print_step "Cloning Pulse repository..."
+      fi
     fi
 
-    # Clone with depth 1 for faster download
-    if ! git clone --depth 1 --quiet "$repo_url" "$target_dir" 2>/dev/null; then
+    # Build git clone command with optional version
+    local clone_args="--depth 1 --quiet"
+    if [ -n "$PULSE_VERSION" ]; then
+      clone_args="$clone_args --branch $PULSE_VERSION"
+      print_verbose "Clone args: $clone_args"
+    fi
+
+    print_verbose "Executing: git clone $clone_args $repo_url $target_dir"
+    # Clone with version-specific branch/tag if specified
+    if ! git clone $clone_args "$repo_url" "$target_dir" 2>/dev/null; then
       print_error "Failed to clone repository"
       return "$EXIT_DOWNLOAD_FAILED"
     fi
+    print_verbose "Clone completed successfully"
   fi
 
   return "$EXIT_SUCCESS"
@@ -225,12 +348,14 @@ clone_or_update_repo() {
 # Configuration Management (T014)
 #
 
-# Add or update Pulse configuration in .zshrc
+# Add or update Pulse configuration in .zshrc (FR-004: with auto-fix)
 # Usage: add_pulse_config ZSHRC_PATH INSTALL_DIR
 add_pulse_config() {
   local zshrc_path="$1"
   local install_dir="$2"
 
+  print_verbose "Configuring $zshrc_path"
+  
   # Ensure parent directory exists
   local parent_dir
   parent_dir=$(dirname "$zshrc_path")
@@ -245,26 +370,70 @@ source $install_dir/pulse.zsh
 
   # Check if .zshrc exists
   if [ ! -f "$zshrc_path" ]; then
+    print_verbose "Creating new .zshrc file"
     # Create new .zshrc with Pulse configuration
     echo "$config_block" > "$zshrc_path"
+    print_step "Created $zshrc_path with Pulse configuration"
     return "$EXIT_SUCCESS"
   fi
 
   # Check if Pulse block already exists
   if grep -q "BEGIN Pulse Configuration" "$zshrc_path"; then
-    # Update existing block - remove old block and insert new one
-    # Use awk for more reliable block replacement
-    awk -v block="$config_block" '
-      /# BEGIN Pulse Configuration/ { in_block=1; print block; next }
-      /# END Pulse Configuration/ { in_block=0; next }
-      !in_block { print }
-    ' "$zshrc_path" > "$zshrc_path.tmp"
+    print_verbose "Existing Pulse configuration block found"
+    
+    # FR-004: Check if order is correct
+    if ! validate_config_order "$zshrc_path"; then
+      print_step "Detected incorrect configuration order - auto-fixing..."
+      print_verbose "Configuration has 'source' before 'plugins' - this must be corrected"
+      
+      # Extract existing plugin entries (preserve user customizations)
+      local user_plugins
+      user_plugins=$(awk '
+        /# BEGIN Pulse Configuration/,/# END Pulse Configuration/ {
+          if (/plugins=\(/) { in_plugins=1; next }
+          if (in_plugins && /\)/) { in_plugins=0; next }
+          if (in_plugins) print
+        }
+      ' "$zshrc_path")
+      
+      print_verbose "Preserving user plugin entries:${user_plugins:+ (found)}"
+      
+      # Build corrected config block with user plugins
+      local corrected_block="# BEGIN Pulse Configuration
+# Managed by Pulse installer - do not edit this block manually
+plugins=(
+$user_plugins
+)
+source $install_dir/pulse.zsh
+# END Pulse Configuration"
+      
+      # Replace with corrected block
+      awk -v block="$corrected_block" '
+        /# BEGIN Pulse Configuration/ { in_block=1; print block; next }
+        /# END Pulse Configuration/ { in_block=0; next }
+        !in_block { print }
+      ' "$zshrc_path" > "$zshrc_path.tmp"
+      
+      mv "$zshrc_path.tmp" "$zshrc_path"
+      print_step "Fixed configuration order (plugins now before source)"
+    else
+      print_verbose "Configuration order is correct"
+      # Update existing block with new path (in case INSTALL_DIR changed)
+      awk -v block="$config_block" '
+        /# BEGIN Pulse Configuration/ { in_block=1; print block; next }
+        /# END Pulse Configuration/ { in_block=0; next }
+        !in_block { print }
+      ' "$zshrc_path" > "$zshrc_path.tmp"
 
-    mv "$zshrc_path.tmp" "$zshrc_path"
+      mv "$zshrc_path.tmp" "$zshrc_path"
+      print_verbose "Updated existing configuration block"
+    fi
   else
     # Add new block at the end
+    print_verbose "Adding new Pulse configuration block"
     echo "" >> "$zshrc_path"
     echo "$config_block" >> "$zshrc_path"
+    print_step "Added Pulse configuration to $zshrc_path"
   fi
 
   return "$EXIT_SUCCESS"
@@ -371,6 +540,16 @@ main() {
   print_step "Installation directory: $INSTALL_DIR"
   print_step "Configuration file: $ZSHRC_PATH"
 
+  if [ -n "$PULSE_VERSION" ]; then
+    print_step "Target version: $PULSE_VERSION"
+  fi
+
+  if [ "$VERBOSE" = "1" ]; then
+    print_verbose "Verbose logging enabled"
+    print_verbose "SKIP_BACKUP: $SKIP_BACKUP"
+    print_verbose "SKIP_VERIFY: $SKIP_VERIFY"
+  fi
+
   # Phase 1: Validate prerequisites
   print_step "Checking prerequisites..."
 
@@ -425,7 +604,8 @@ main() {
   return "$EXIT_SUCCESS"
 }
 
-# Run main if executed directly
-if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+# Run main if executed directly (not sourced)
+if [ "${BASH_SOURCE[0]}" = "${0}" ] || [ -z "${BASH_SOURCE[0]}" ]; then
+  parse_arguments "$@"
   main "$@"
 fi

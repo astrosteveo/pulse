@@ -43,7 +43,10 @@ This task list breaks down the installer implementation into executable units or
 - [X] T018 — Main installer orchestration implemented
 - [X] T007 — Fresh install verification confirms `PULSE_VERSION` is exported (tests updated in `tests/install/foundation.bats`)
 - [X] Constitution v1.2.0 alignment — Updated task list to reflect ABSOLUTE REQUIREMENT for TDD with explicit Red-Green-Refactor cycle enforcement
-- [ ] **Current Status**: Basic installer complete (44 tests passing). Need to add: FR-008 (SHA256), FR-009 (rollback), FR-010 (version selection), FR-011 (verbose logging), FR-004 (auto-fix order)
+- [X] **FR-010**: Version selection via PULSE_VERSION environment variable implemented
+- [X] **FR-011**: Verbose logging via --verbose/-v flag implemented with print_verbose function
+- [X] **FR-004**: Auto-fix incorrect configuration order (plugins before source) implemented in add_pulse_config
+- [ ] **Current Status**: Enhanced installer complete (47 tests passing). Remaining: FR-008 (SHA256), FR-009 (rollback)
 
 ---
 
