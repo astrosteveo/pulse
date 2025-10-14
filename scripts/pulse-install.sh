@@ -591,26 +591,26 @@ main() {
 
   # Phase 2: Install/update repository
   if ! clone_or_update_repo "https://github.com/astrosteveo/pulse.git" "$INSTALL_DIR"; then
-    error_exit "Failed to install Pulse repository"
+    error_exit "Failed to install Pulse repository" "$EXIT_DOWNLOAD_FAILED"
   fi
 
   # Phase 3: Configure .zshrc
   if ! backup_zshrc "$ZSHRC_PATH"; then
-    error_exit "Failed to create backup"
+    error_exit "Failed to create backup" "$EXIT_CONFIG_FAILED"
   fi
 
   if ! add_pulse_config "$ZSHRC_PATH" "$INSTALL_DIR"; then
-    error_exit "Failed to configure .zshrc"
+    error_exit "Failed to configure .zshrc" "$EXIT_CONFIG_FAILED"
   fi
 
   # Phase 4: Validate configuration
   if ! validate_config_order "$ZSHRC_PATH"; then
-    error_exit "Configuration order validation failed"
+    error_exit "Configuration order validation failed" "$EXIT_CONFIG_FAILED"
   fi
 
   # Phase 5: Verify installation
   if ! verify_installation "$ZSHRC_PATH"; then
-    error_exit "Installation verification failed"
+    error_exit "Installation verification failed" "$EXIT_VERIFY_FAILED"
   fi
 
   # Success!
