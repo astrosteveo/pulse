@@ -23,8 +23,27 @@ This task list breaks down the installer implementation into executable units or
 
 ## Progress Update (2025-10-13)
 
-- [X] T007 — Fresh install verification confirms `PULSE_VERSION` is exported (tests updated in `tests/install/foundation.bats`).
-- [X] Constitution v1.2.0 alignment — Updated task list to reflect ABSOLUTE REQUIREMENT for TDD with explicit Red-Green-Refactor cycle enforcement.
+- [X] T001 — Project structure created (scripts/, docs/install/, tests/install/)
+- [X] T002 — bats-core test framework configured with test_helper.bash
+- [X] T003.5 — Foundation output formatting tests written and passing (5 tests)
+- [X] T004 — Output formatting functions implemented (print_header, print_step, print_error, print_success)
+- [X] T005 — Exit code handling implemented
+- [X] T006 — Environment variable parsing implemented
+- [X] T007.5 — Prerequisite check tests written and passing (8 tests, 2 skipped)
+- [X] T008 — Zsh version check implemented (≥5.0 required)
+- [X] T009 — Git availability check implemented
+- [X] T010 — Write permissions check implemented
+- [X] T011 — Prerequisite validation orchestration implemented
+- [X] T012 — Pulse repository clone/update implemented
+- [X] T013 — .zshrc backup creation implemented
+- [X] T014 — Pulse block generation implemented
+- [X] T015 — .zshrc configuration patching implemented
+- [X] T016 — Configuration order validation implemented
+- [X] T017 — Post-install verification implemented
+- [X] T018 — Main installer orchestration implemented
+- [X] T007 — Fresh install verification confirms `PULSE_VERSION` is exported (tests updated in `tests/install/foundation.bats`)
+- [X] Constitution v1.2.0 alignment — Updated task list to reflect ABSOLUTE REQUIREMENT for TDD with explicit Red-Green-Refactor cycle enforcement
+- [ ] **Current Status**: Basic installer complete (44 tests passing). Need to add: FR-008 (SHA256), FR-009 (rollback), FR-010 (version selection), FR-011 (verbose logging), FR-004 (auto-fix order)
 
 ---
 
