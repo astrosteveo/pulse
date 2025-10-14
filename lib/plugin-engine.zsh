@@ -11,6 +11,7 @@ typeset -gA pulse_plugins          # name -> path
 typeset -gA pulse_plugin_types     # name -> type
 typeset -gA pulse_plugin_stages    # name -> stage
 typeset -gA pulse_plugin_status    # name -> status
+typeset -gA pulse_plugin_basenames # name -> basename (for framework plugins)
 typeset -ga pulse_load_order       # ordered list of plugins to load
 
 # Define load stages
@@ -433,13 +434,22 @@ _pulse_load_plugin() {
 
   # Find and source the main plugin file
   local plugin_file=""
+  
+  # Determine the actual plugin basename to use for file lookup
+  # For framework plugins, use the stored basename; otherwise use plugin_name
+  local plugin_basename="${pulse_plugin_basenames[$plugin_name]:-$plugin_name}"
+  
+  # If no basename stored, extract from path as fallback
+  if [[ -z "$plugin_basename" ]]; then
+    plugin_basename="${plugin_path##*/}"
+  fi
 
   # Common plugin file patterns (in order of preference)
   local patterns=(
-    "${plugin_path}/${plugin_name}.plugin.zsh"
-    "${plugin_path}/${plugin_name}.zsh"
+    "${plugin_path}/${plugin_basename}.plugin.zsh"
+    "${plugin_path}/${plugin_basename}.zsh"
     "${plugin_path}/init.zsh"
-    "${plugin_path}/${plugin_name}.sh"
+    "${plugin_path}/${plugin_basename}.sh"
   )
 
   for pattern in "${patterns[@]}"; do
@@ -555,14 +565,19 @@ _pulse_discover_plugins() {
       plugin_name="${plugin_name%@*}"
     fi
     
-    # For framework plugins, create a unique name that includes the subpath
+    # For framework plugins, extract the basename and use a simpler registry key
+    # Store the basename separately for correct file lookup
+    # Use underscore as delimiter since colon and slash cause issues in Zsh subscripts
     local plugin_registry_name="$plugin_name"
+    local plugin_basename=""
     if [[ "$plugin_spec" =~ ^ohmyzsh/ohmyzsh/plugins/ ]]; then
-      local omz_plugin="${plugin_spec#ohmyzsh/ohmyzsh/plugins/}"
-      plugin_registry_name="omz-${omz_plugin}"
+      plugin_basename="${plugin_spec##*/}"
+      # Use omz_ prefix to avoid collisions while keeping it readable
+      plugin_registry_name="omz_${plugin_basename}"
     elif [[ "$plugin_spec" =~ ^sorin-ionescu/prezto/modules/ ]]; then
-      local prezto_module="${plugin_spec#sorin-ionescu/prezto/modules/}"
-      plugin_registry_name="prezto-${prezto_module}"
+      plugin_basename="${plugin_spec##*/}"
+      # Use prezto_ prefix to avoid collisions while keeping it readable
+      plugin_registry_name="prezto_${plugin_basename}"
     fi
 
     # Validate plugin name is not empty and doesn't contain path traversal
@@ -640,6 +655,11 @@ _pulse_discover_plugins() {
     pulse_plugin_types[$plugin_registry_name]="$plugin_type"
     pulse_plugin_stages[$plugin_registry_name]="$plugin_stage"
     pulse_plugin_status[$plugin_registry_name]="registered"
+    
+    # Store basename for framework plugins to enable correct file lookup
+    if [[ -n "$plugin_basename" ]]; then
+      pulse_plugin_basenames[$plugin_registry_name]="$plugin_basename"
+    fi
 
     [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Registered: $plugin_registry_name (type=$plugin_type, stage=$plugin_stage, path=$plugin_path)" >&2
   done

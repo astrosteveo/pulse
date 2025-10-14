@@ -129,8 +129,8 @@ EOF
     source ${PULSE_ROOT}/pulse.zsh
     
     # Check that both plugins are registered with unique names
-    echo \"git=\${pulse_plugins[omz-git]}\"
-    echo \"docker=\${pulse_plugins[omz-docker]}\"
+    echo \"git=\${pulse_plugins[omz_git]}\"
+    echo \"docker=\${pulse_plugins[omz_docker]}\"
   "
   
   [ "$status" -eq 0 ]
@@ -162,8 +162,8 @@ EOF
     source ${PULSE_ROOT}/pulse.zsh
     
     # Check that both modules are registered with unique names
-    echo \"git=\${pulse_plugins[prezto-git]}\"
-    echo \"terminal=\${pulse_plugins[prezto-terminal]}\"
+    echo \"git=\${pulse_plugins[prezto_git]}\"
+    echo \"terminal=\${pulse_plugins[prezto_terminal]}\"
   "
   
   [ "$status" -eq 0 ]
