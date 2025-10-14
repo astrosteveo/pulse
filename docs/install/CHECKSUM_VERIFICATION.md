@@ -99,7 +99,7 @@ bash /tmp/pulse-install.sh "$@"
 
 ## Current Checksum
 
-**Version**: 1.0.0-beta
+**Version**: 0.1.0-beta
 **Script**: `scripts/pulse-install.sh`
 **SHA256**: `efb4fd7be8b428674ea79a89deb1459bba52c62b0c1b420b1b5a5f00c2e3211a`
 **Generated**: 2025-10-13

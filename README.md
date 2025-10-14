@@ -2,7 +2,7 @@
 
 **Pulse** is a minimal, intelligent Zsh framework that combines smart plugin orchestration with essential shell features—completions, keybindings, directory management, and more—all with zero configuration required.
 
-**Version**: 1.0.0-beta (October 2025)
+**Version**: 0.1.0-beta (October 2025)
 
 ## Features
 
@@ -65,7 +65,7 @@ curl -fsSL https://raw.githubusercontent.com/astrosteveo/pulse/main/scripts/puls
 PULSE_INSTALL_DIR=~/my-pulse curl -fsSL https://raw.githubusercontent.com/astrosteveo/pulse/main/scripts/pulse-install.sh | bash
 
 # Install specific version
-PULSE_VERSION=v1.0.0 curl -fsSL https://raw.githubusercontent.com/astrosteveo/pulse/main/scripts/pulse-install.sh | bash
+PULSE_VERSION=v0.1.0-beta curl -fsSL https://raw.githubusercontent.com/astrosteveo/pulse/main/scripts/pulse-install.sh | bash
 ```
 
 **Environment variables**:
@@ -586,7 +586,7 @@ This shows:
 - Cross-platform compatible (Linux, macOS, BSD)
 - Constitution-driven development
 
-⏳ **Future Enhancements** (Post v1.0):
+⏳ **Future Enhancements** (Post v1.0 - currently in beta):
 
 - CLI commands: `pulse install`, `pulse update`, `pulse remove`, `pulse list`
 - Lazy loading for heavy plugins

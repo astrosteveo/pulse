@@ -225,7 +225,7 @@ Constitution: v1.2.0 compliant (100%)
 
 ```bash
 # Create annotated tag
-git tag -a v1.0.0-beta -m "Release v1.0.0-beta: Pulse Zero-Config Install Script
+git tag -a v0.1.0-beta -m "Release v0.1.0-beta: Pulse Zero-Config Install Script (Beta)
 
 SHA256 Checksum:
 efb4fd7be8b428674ea79a89deb1459bba52c62b0c1b420b1b5a5f00c2e3211a
@@ -242,6 +242,9 @@ Features:
 
 Test Coverage: 47/47 passing (100%)
 Constitution: v1.2.0 compliant
+
+Status: Beta release for testing and feedback
+Next: v0.2.0 will address release-readiness checklist gaps
 
 Implements:
 - FR-001 to FR-011 (all functional requirements)
@@ -272,12 +275,12 @@ git push origin --tags
 
 ### 5. Create GitHub Release
 
-**Title**: `v1.0.0-beta - Zero-Config Installer`
+**Title**: `v0.1.0-beta - Zero-Config Installer`
 
 **Description**:
 
 ```markdown
-# Pulse v1.0.0-beta: Zero-Config Install Script
+# Pulse v0.1.0-beta: Zero-Config Install Script (Beta)
 
 Install Pulse with a single command:
 
@@ -405,4 +408,4 @@ echo "efb4fd7be8b428674ea79a89deb1459bba52c62b0c1b420b1b5a5f00c2e3211a  pulse-in
 
 ---
 
-**Status**: ✅ PRODUCTION READY - All deliverables complete, zero blocking issues, ready for v1.0 release.
+**Status**: ✅ BETA READY - All core deliverables complete, zero blocking issues, ready for v0.1.0-beta release for testing and feedback.
