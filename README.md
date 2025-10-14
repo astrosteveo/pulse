@@ -77,6 +77,7 @@ PULSE_VERSION=v0.1.0-beta curl -fsSL https://raw.githubusercontent.com/astrostev
 - `PULSE_SKIP_VERIFY` - Skip post-install verification (not recommended)
 
 SHA256 checksum (verify with `sha256sum -c scripts/pulse-install.sh.sha256`):
+
 ```
 859930b374f434a2bf3133cbdbfb087ba2b6bfebd8437252c5741a0313a08e26
 ```
