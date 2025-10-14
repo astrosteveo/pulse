@@ -12,7 +12,7 @@ setup() {
   export PULSE_CACHE_DIR="${TEST_TMPDIR}/.cache/pulse"
   mkdir -p "${PULSE_DIR}/plugins"
   mkdir -p "${PULSE_CACHE_DIR}"
-  
+
   # Use mock plugins from fixtures
   export MOCK_PLUGINS_DIR="${PULSE_ROOT}/tests/fixtures/mock-plugins"
 }
@@ -30,7 +30,7 @@ plugins=(
   ${MOCK_PLUGINS_DIR}/plugin-a@latest
 )
 EOF
-  
+
   # Source pulse.zsh to trigger plugin loading
   run zsh -c "
     export PULSE_DIR='${PULSE_DIR}'
@@ -38,11 +38,11 @@ EOF
     export MOCK_PLUGINS_DIR='${MOCK_PLUGINS_DIR}'
     source ${HOME}/.zshrc
     source ${PULSE_ROOT}/pulse.zsh
-    
+
     # Check if plugin was loaded
     [[ -d '${PULSE_DIR}/plugins/plugin-a' ]] && echo 'LOADED'
   "
-  
+
   [ "$status" -eq 0 ]
   [[ "$output" =~ "LOADED" ]]
 }
@@ -53,15 +53,15 @@ EOF
   run zsh -c "
     export PULSE_DIR='${PULSE_DIR}'
     source ${PULSE_ROOT}/lib/plugin-engine.zsh
-    
+
     # Clone plugin with @latest
     _pulse_clone_plugin '${MOCK_PLUGINS_DIR}/plugin-a' 'plugin-a' ''
-    
+
     # Verify it's on a branch, not a detached HEAD at a tag
     cd '${PULSE_DIR}/plugins/plugin-a'
     git branch --show-current
   "
-  
+
   [ "$status" -eq 0 ]
   # Should show 'main' or 'master', not empty (detached HEAD)
   [[ -n "$output" ]]
@@ -80,7 +80,7 @@ EOF
   "
   [ "$status" -eq 0 ]
   local commit_with_latest="$output"
-  
+
   # Install without version
   run zsh -c "
     export PULSE_DIR='${TEST_TMPDIR}/without-version'
@@ -92,7 +92,7 @@ EOF
   "
   [ "$status" -eq 0 ]
   local commit_without_version="$output"
-  
+
   # Both should be on the same commit
   [[ "$commit_with_latest" == "$commit_without_version" ]]
 }
@@ -107,7 +107,7 @@ EOF
     cd '${PULSE_DIR}/plugins/plugin-a'
     git describe --tags --exact-match
   "
-  
+
   [ "$status" -eq 0 ]
   [[ "$output" =~ "v1.0.0" ]]
 }

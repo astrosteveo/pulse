@@ -24,29 +24,29 @@ pulse_main() {
       echo "pulse list - Show installed plugins" >&2
       return 1
       ;;
-    
+
     update)
       # TODO: Implement update command
       echo "pulse update - Update plugins" >&2
       return 1
       ;;
-    
+
     doctor|check)
       # TODO: Implement doctor command
       echo "pulse doctor - Check installation health" >&2
       return 1
       ;;
-    
+
     version|-v|--version)
       echo "pulse version ${PULSE_VERSION}"
       return 0
       ;;
-    
+
     help|-h|--help)
       pulse_show_help
       return 0
       ;;
-    
+
     *)
       echo "pulse: unknown command '${cmd}'" >&2
       echo "Run 'pulse help' for usage." >&2

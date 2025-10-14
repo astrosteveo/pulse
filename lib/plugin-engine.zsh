@@ -119,7 +119,7 @@ _pulse_parse_plugin_spec() {
     fi
     plugin_ref="${source_spec##*@}"
     source_spec="${source_spec%@*}"
-    
+
     # Treat @latest as empty ref (clone default branch)
     # This provides explicit self-documenting syntax for default branch
     if [[ "$plugin_ref" == "latest" ]]; then
