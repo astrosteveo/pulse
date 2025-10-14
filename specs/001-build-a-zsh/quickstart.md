@@ -104,6 +104,8 @@ Pulse supports multiple ways to specify plugins:
 - **GitHub shorthand**: `owner/repo` → `https://github.com/owner/repo.git`
 - **Full Git URL**: `https://github.com/owner/repo.git` or `https://gitlab.com/...`
 - **Local path**: `/absolute/path/to/plugin`
+- **Oh-My-Zsh plugin**: `ohmyzsh/ohmyzsh/plugins/kubectl`
+- **Prezto module**: `sorin-ionescu/prezto/modules/git`
 
 ### Updating Plugins
 
@@ -336,15 +338,17 @@ Pulse installs and loads it automatically.
 
 ### Migrating from Oh-My-Zsh
 
+Pulse has **native support** for Oh-My-Zsh plugins! Simply add the path to your favorite plugins:
+
 1. Copy your plugin list from Oh-My-Zsh's `plugins=()` array
 
-2. Convert to Pulse format:
+2. Convert to Pulse format by adding the full path:
 
    ```zsh
    # Oh-My-Zsh
    plugins=(git docker kubectl)
 
-   # Pulse (specify sources)
+   # Pulse (native Oh-My-Zsh support)
    plugins=(
      ohmyzsh/ohmyzsh/plugins/git
      ohmyzsh/ohmyzsh/plugins/docker
@@ -352,14 +356,46 @@ Pulse installs and loads it automatically.
    )
    ```
 
-3. Or find equivalent community plugins:
+3. That's it! Pulse will:
+   - Automatically clone the oh-my-zsh repository (if not already present)
+   - Set up all required environment variables (`$ZSH`, `$ZSH_CACHE_DIR`)
+   - Load your plugins with full compatibility
+
+4. **Or** find equivalent community plugins if you prefer:
 
    ```zsh
    plugins=(
-     peterhurford/git-it-on.zsh  # Modern git plugin
-     # docker/kubectl available as standalone plugins
+     peterhurford/git-it-on.zsh  # Modern git plugin alternative
+     # Many plugins have standalone versions
    )
    ```
+
+**Note:** Oh-My-Zsh plugins work out of the box - no configuration needed!
+
+### Migrating from Prezto
+
+Pulse also has **native support** for Prezto modules:
+
+```zsh
+# Prezto modules in .zpreztorc
+zstyle ':prezto:load' pmodule \
+  'environment' \
+  'terminal' \
+  'git'
+
+# Pulse (native Prezto support)
+plugins=(
+  sorin-ionescu/prezto/modules/environment
+  sorin-ionescu/prezto/modules/terminal
+  sorin-ionescu/prezto/modules/git
+)
+```
+
+Pulse will:
+- Automatically clone the prezto repository (if not already present)
+- Set up required environment variables (`$ZPREZTODIR`)
+- Provide the `pmodload` function for compatibility
+- Load your modules with full compatibility
 
 ---
 
