@@ -359,7 +359,8 @@ _pulse_setup_framework_env() {
   # Check if this is an oh-my-zsh plugin
   if [[ "$plugin_path" == */ohmyzsh/plugins/* ]]; then
     # Set up Oh-My-Zsh environment variables
-    local omz_root="${plugin_path%%/plugins/*}"
+    # Extract the path up to and including /ohmyzsh
+    local omz_root="${plugin_path%/plugins/*}"
     export ZSH="$omz_root"
     export ZSH_CACHE_DIR="${PULSE_CACHE_DIR}/ohmyzsh"
     export ZSH_CUSTOM="${ZSH}/custom"
@@ -379,7 +380,8 @@ _pulse_setup_framework_env() {
   # Check if this is a prezto module
   if [[ "$plugin_path" == */prezto/modules/* ]]; then
     # Set up Prezto environment variables
-    local prezto_root="${plugin_path%%/modules/*}"
+    # Extract the path up to and including /prezto
+    local prezto_root="${plugin_path%/modules/*}"
     export ZPREZTODIR="$prezto_root"
     
     # Define pmodload function if not already defined
