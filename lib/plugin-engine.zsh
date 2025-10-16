@@ -582,7 +582,12 @@ _pulse_init_engine() {
 
         # Scan installed plugins and recreate entries
         if [[ -d "${PULSE_DIR}/plugins" ]]; then
-          for plugin_dir in "${PULSE_DIR}/plugins"/*(/N); do
+          # Use setopt to enable NULL_GLOB for this section
+          setopt local_options null_glob
+          for plugin_dir in "${PULSE_DIR}/plugins"/*; do
+            # Skip if not a directory
+            [[ ! -d "$plugin_dir" ]] && continue
+
             local plugin_name="${plugin_dir:t}"
 
             # Skip if not a git repository
