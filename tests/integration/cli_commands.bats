@@ -192,3 +192,44 @@ EOF
   [[ "$output" =~ "checks passed" ]]
   [[ "$output" =~ "✓" ]] || [[ "$output" =~ "✔" ]] || [[ "$output" =~ "[OK]" ]]
 }
+
+#
+# CLI exit code tests
+#
+
+# Test: CLI returns 0 on success
+@test "CLI returns 0 on successful list command" {
+  # Setup: Valid lock file with plugin
+  cat > "${PULSE_LOCK_FILE}" <<'EOF'
+[plugin-a]
+url = https://github.com/user/plugin-a
+ref = main
+commit = abc123
+timestamp = 2024-01-01T00:00:00Z
+stage = normal
+EOF
+
+  run ${PULSE_ROOT}/bin/pulse list
+
+  [ "$status" -eq 0 ]  # Success exit code
+}
+
+# Test: CLI returns 2 on usage error
+@test "CLI returns 2 on invalid command" {
+  run ${PULSE_ROOT}/bin/pulse invalid-command-xyz
+
+  [ "$status" -eq 2 ]  # Usage error
+  [[ "$output" =~ "unknown command" ]]
+  [[ "$output" =~ "pulse help" ]]
+}
+
+# Test: CLI returns proper code on missing lock file
+@test "CLI returns 2 when no lock file exists" {
+  # Ensure lock file doesn't exist
+  rm -f "${PULSE_LOCK_FILE}"
+
+  run ${PULSE_ROOT}/bin/pulse list
+
+  [ "$status" -eq 2 ]  # No plugins installed
+  [[ "$output" =~ "No lock file" ]] || [[ "$output" =~ "No plugins" ]]
+}
