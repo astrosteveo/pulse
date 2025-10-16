@@ -20,18 +20,33 @@ pulse_main() {
 
   case "${cmd}" in
     list|ls)
+      # Check for --help flag
+      if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
+        pulse_show_list_help
+        return 0
+      fi
       source "${PULSE_LIB_DIR}/cli/commands/list.zsh"
       _pulse_cmd_list "$@"
       return $?
       ;;
 
     update)
+      # Check for --help flag
+      if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
+        pulse_show_update_help
+        return 0
+      fi
       source "${PULSE_LIB_DIR}/cli/commands/update.zsh"
       _pulse_cmd_update "$@"
       return $?
       ;;
 
     doctor|check)
+      # Check for --help flag
+      if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
+        pulse_show_doctor_help
+        return 0
+      fi
       source "${PULSE_LIB_DIR}/cli/commands/doctor.zsh"
       _pulse_cmd_doctor "$@"
       return $?
@@ -50,7 +65,7 @@ pulse_main() {
     *)
       echo "pulse: unknown command '${cmd}'" >&2
       echo "Run 'pulse help' for usage." >&2
-      return 1
+      return 2  # Usage error
       ;;
   esac
 }
@@ -76,7 +91,120 @@ EXAMPLES:
     pulse update user/repo        # Update specific plugin
     pulse doctor                  # Check for issues
 
-For more information, see: https://github.com/yourusername/pulse
+For command-specific help:
+    pulse <command> --help
+
+For more information, see: https://github.com/astrosteveo/pulse
+HELP
+}
+
+# Command-specific help functions
+pulse_show_list_help() {
+  cat <<'HELP'
+pulse list - Show installed plugins and their status
+
+USAGE:
+    pulse list
+    pulse ls
+
+DESCRIPTION:
+    Displays a table of all installed plugins with their name, version/ref,
+    and installation status. Information is read from the lock file.
+
+OUTPUT FORMAT:
+    Table with columns: Plugin Name | Version/Ref | Status
+
+EXAMPLES:
+    pulse list              # Show all plugins
+    pulse ls                # Alias for 'pulse list'
+
+EXIT CODES:
+    0    Success
+    2    No lock file found (no plugins installed)
+
+SEE ALSO:
+    pulse update --help
+HELP
+}
+
+pulse_show_update_help() {
+  cat <<'HELP'
+pulse update - Update installed plugins
+
+USAGE:
+    pulse update [plugin-name] [--force] [--check-only]
+
+DESCRIPTION:
+    Updates plugins by pulling the latest commits from their remote
+    repositories. By default, updates all plugins. Can target a specific
+    plugin or check for updates without applying them.
+
+OPTIONS:
+    plugin-name      Update only the specified plugin
+    --force          Update even if local changes detected
+    --check-only     Check for updates without applying them
+
+BEHAVIOR:
+    - Skips local plugins (no URL in lock file)
+    - Skips plugins with uncommitted local changes (unless --force)
+    - Updates lock file with new commit SHAs after successful pull
+    - Uses file locking to prevent concurrent updates
+
+EXAMPLES:
+    pulse update                        # Update all plugins
+    pulse update zsh-users/zsh-syntax-highlighting  # Update specific plugin
+    pulse update --force                # Force update (ignore local changes)
+    pulse update --check-only           # Check without updating
+
+EXIT CODES:
+    0    Success (no errors)
+    1    One or more plugins failed to update
+    2    No lock file found
+
+SEE ALSO:
+    pulse list --help
+    pulse doctor --help
+HELP
+}
+
+pulse_show_doctor_help() {
+  cat <<'HELP'
+pulse doctor - Verify installation health
+
+USAGE:
+    pulse doctor
+    pulse check
+
+DESCRIPTION:
+    Runs diagnostic checks on your Pulse installation to identify potential
+    issues. Checks include git availability, network connectivity, plugin
+    integrity, and configuration validity.
+
+DIAGNOSTIC CHECKS:
+    1. Git availability and version
+    2. Network connectivity (github.com)
+    3. Plugin directory existence
+    4. Lock file validity
+    5. Plugin integrity (git directories)
+    6. CLI installation
+    7. PATH configuration
+    8. Framework installation
+
+OUTPUT:
+    [✓] Check passed
+    [✗] Check failed (with fix suggestion)
+    [~] Check skipped or optional
+
+EXAMPLES:
+    pulse doctor            # Run all diagnostic checks
+    pulse check             # Alias for 'pulse doctor'
+
+EXIT CODES:
+    0    All critical checks passed
+    1    One or more critical checks failed
+
+SEE ALSO:
+    pulse update --help
 HELP
 }
 
