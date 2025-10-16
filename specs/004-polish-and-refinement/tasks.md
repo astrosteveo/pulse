@@ -569,7 +569,7 @@ These tasks must complete before ANY user story can be implemented.
 
 ---
 
-### T018: [US2] [IMPL] Implement pulse list command
+### T018: [US2] [IMPL] Implement pulse list command ✅
 
 **File**: `lib/cli/commands/list.zsh`
 **Story**: US2
