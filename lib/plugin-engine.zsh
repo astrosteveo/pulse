@@ -6,6 +6,13 @@
 # If KSH_ARRAYS is set, array indexing will be 0-based and break this code.
 # This is intentional - Pulse requires standard zsh behavior.
 
+# Source lock file library for reproducible installs
+# Only source if lock-file.zsh exists and hasn't been sourced yet
+if [[ -f "${0:A:h}/cli/lib/lock-file.zsh" ]] && [[ ! -v PULSE_LOCK_FILE_SOURCED ]]; then
+  source "${0:A:h}/cli/lib/lock-file.zsh"
+  typeset -g PULSE_LOCK_FILE_SOURCED=1
+fi
+
 # Initialize plugin state tracking associative arrays
 typeset -gA pulse_plugins          # name -> path
 typeset -gA pulse_plugin_types     # name -> type
@@ -512,6 +519,29 @@ _pulse_discover_plugins() {
     # Assign load stage
     local plugin_stage=$(_pulse_assign_stage "$plugin_name" "$plugin_type")
 
+    # Update lock file with plugin installation (if library is available)
+    if [[ -n "$PULSE_LOCK_FILE_SOURCED" ]] && [[ -d "$plugin_path/.git" ]]; then
+      # Extract exact commit SHA
+      local commit_sha=""
+      commit_sha=$(git -C "$plugin_path" rev-parse HEAD 2>/dev/null)
+
+      if [[ -n "$commit_sha" ]]; then
+        # Get current timestamp in ISO8601 format
+        local timestamp=""
+        if command -v date >/dev/null 2>&1; then
+          timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null)
+        fi
+
+        # Write lock entry (create lock file if it doesn't exist)
+        if [[ ! -f "${PULSE_LOCK_FILE:-${PULSE_DIR}/plugins.lock}" ]]; then
+          pulse_init_lock_file
+        fi
+
+        pulse_write_lock_entry "$plugin_name" "$plugin_url" "${plugin_ref:-}" "$commit_sha" "$timestamp" "$plugin_stage"
+        [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Lock file updated for $plugin_name (commit: ${commit_sha:0:7})" >&2
+      fi
+    fi
+
     # Register plugin
     pulse_plugins[$plugin_name]="$plugin_path"
     pulse_plugin_types[$plugin_name]="$plugin_type"
@@ -534,6 +564,56 @@ _pulse_init_engine() {
 
   # Initialize disabled plugins array if not set
   typeset -ga pulse_disabled_plugins 2>/dev/null
+
+  # Validate lock file and regenerate if corrupted (if lock library available)
+  if [[ -n "$PULSE_LOCK_FILE_SOURCED" ]]; then
+    local lock_file="${PULSE_LOCK_FILE:-${PULSE_DIR}/plugins.lock}"
+
+    # Only validate if lock file exists
+    if [[ -f "$lock_file" ]]; then
+      if ! pulse_validate_lock_file 2>/dev/null; then
+        [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Lock file invalid, regenerating..." >&2
+
+        # Backup corrupted lock file
+        mv "$lock_file" "${lock_file}.corrupted.$(date +%s)" 2>/dev/null
+
+        # Regenerate lock file from installed plugins
+        pulse_init_lock_file
+
+        # Scan installed plugins and recreate entries
+        if [[ -d "${PULSE_DIR}/plugins" ]]; then
+          for plugin_dir in "${PULSE_DIR}/plugins"/*(/N); do
+            local plugin_name="${plugin_dir:t}"
+
+            # Skip if not a git repository
+            [[ ! -d "$plugin_dir/.git" ]] && continue
+
+            # Extract git information
+            local commit_sha=$(git -C "$plugin_dir" rev-parse HEAD 2>/dev/null)
+            local remote_url=$(git -C "$plugin_dir" config --get remote.origin.url 2>/dev/null)
+
+            # Get current branch or tag
+            local ref=$(git -C "$plugin_dir" symbolic-ref --short HEAD 2>/dev/null)
+            [[ -z "$ref" ]] && ref=$(git -C "$plugin_dir" describe --tags --exact-match 2>/dev/null)
+
+            # Get timestamp from last commit
+            local timestamp=$(git -C "$plugin_dir" log -1 --format=%cI 2>/dev/null)
+
+            # Detect type and stage
+            local plugin_type=$(_pulse_detect_plugin_type "$plugin_dir")
+            local plugin_stage=$(_pulse_assign_stage "$plugin_name" "$plugin_type")
+
+            # Write lock entry
+            if [[ -n "$commit_sha" ]] && [[ -n "$remote_url" ]]; then
+              pulse_write_lock_entry "$plugin_name" "$remote_url" "$ref" "$commit_sha" "$timestamp" "$plugin_stage"
+            fi
+          done
+        fi
+
+        [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Lock file regenerated from installed plugins" >&2
+      fi
+    fi
+  fi
 
   [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Engine initialized (PULSE_DIR=$PULSE_DIR)" >&2
 }
