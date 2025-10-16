@@ -32,9 +32,9 @@ pulse_main() {
       ;;
 
     doctor|check)
-      # TODO: Implement doctor command
-      echo "pulse doctor - Check installation health" >&2
-      return 1
+      source "${PULSE_LIB_DIR}/cli/commands/doctor.zsh"
+      _pulse_cmd_doctor "$@"
+      return $?
       ;;
 
     version|-v|--version)
