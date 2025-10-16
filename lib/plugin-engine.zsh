@@ -75,13 +75,20 @@ _pulse_detect_plugin_type() {
 
 # Parse plugin specification into components
 # Usage: _pulse_parse_plugin_spec <source_spec>
-# Returns: plugin_url plugin_name plugin_ref (space-separated)
-# Supports: user/repo, user/repo@tag, URLs, local paths
+# Returns: plugin_url plugin_name plugin_ref plugin_subpath plugin_kind (space-separated)
+# Supports: 
+#   - user/repo, user/repo@tag
+#   - user/repo path:subdir - Load specific subdirectory
+#   - omz:plugins/kubectl - Oh-My-Zsh plugin shorthand
+#   - prezto:modules/git - Prezto module shorthand
+#   - URLs, local paths
 _pulse_parse_plugin_spec() {
   local source_spec="$1"
   local plugin_url=""
   local plugin_name=""
   local plugin_ref=""
+  local plugin_subpath=""
+  local plugin_kind=""
 
   # Trim leading/trailing whitespace
   source_spec="${source_spec##[[:space:]]}"
@@ -89,13 +96,66 @@ _pulse_parse_plugin_spec() {
 
   # Skip empty specs
   if [[ -z "$source_spec" ]]; then
-    echo "" "" ""
+    echo "-" "-" "-" "-" "-"
+    return 0
+  fi
+
+  # Extract annotations (path:, kind:, stage:, etc.)
+  # Format: "repo path:subdir kind:defer"
+  local annotations=""
+  if [[ "$source_spec" == *\ *:* ]]; then
+    # Split on first space to separate repo from annotations
+    local repo_part="${source_spec%% *}"
+    annotations="${source_spec#* }"
+    source_spec="$repo_part"
+    
+    # Parse each annotation
+    for annotation in ${(s: :)annotations}; do
+      if [[ "$annotation" == path:* ]]; then
+        plugin_subpath="${annotation#path:}"
+      elif [[ "$annotation" == kind:* ]]; then
+        plugin_kind="${annotation#kind:}"
+      fi
+      # Future: stage:, etc.
+    done
+  fi
+
+  # Handle framework shorthands
+  if [[ "$source_spec" == omz:* ]]; then
+    # Oh-My-Zsh shorthand: omz:plugins/kubectl or omz:lib/git
+    local omz_path="${source_spec#omz:}"
+    plugin_url="https://github.com/ohmyzsh/ohmyzsh.git"
+    plugin_name="ohmyzsh"
+    plugin_subpath="$omz_path"
+    # Derive kind from path if not specified
+    if [[ -z "$plugin_kind" ]] && [[ "$omz_path" == plugins/* ]]; then
+      plugin_kind="path"
+    elif [[ -z "$plugin_kind" ]] && [[ "$omz_path" == lib/* ]]; then
+      plugin_kind="path"
+    elif [[ -z "$plugin_kind" ]] && [[ "$omz_path" == themes/* ]]; then
+      plugin_kind="fpath"
+    fi
+    # Always output exactly 5 values (use "-" for empty fields)
+    echo "$plugin_url" "$plugin_name" "${plugin_ref:--}" "$plugin_subpath" "${plugin_kind:-path}"
+    return 0
+  fi
+
+  if [[ "$source_spec" == prezto:* ]]; then
+    # Prezto shorthand: prezto:modules/git
+    local prezto_path="${source_spec#prezto:}"
+    plugin_url="https://github.com/sorin-ionescu/prezto.git"
+    plugin_name="prezto"
+    plugin_subpath="$prezto_path"
+    plugin_kind="${plugin_kind:-path}"
+    # Always output exactly 5 values (use "-" for empty fields)
+    echo "$plugin_url" "$plugin_name" "${plugin_ref:--}" "$plugin_subpath" "$plugin_kind"
     return 0
   fi
 
   # Case 1: Local absolute or relative path
   if [[ "$source_spec" == /* ]] || [[ "$source_spec" == ./* ]] || [[ "$source_spec" == ../* ]]; then
-    echo "" "" ""  # No URL for local paths
+    # For local paths, use the full path as the name and return early
+    echo "-" "$source_spec" "-" "${plugin_subpath:--}" "${plugin_kind:--}"
     return 0
   fi
 
@@ -112,12 +172,11 @@ _pulse_parse_plugin_spec() {
     plugin_url="$source_spec"
     plugin_name="${source_spec##*/}"
     plugin_name="${plugin_name%.git}"
-    # Only output ref if non-empty (for accurate word count)
-    if [[ -n "$plugin_ref" ]]; then
-      echo "$plugin_url" "$plugin_name" "$plugin_ref"
-    else
-      echo "$plugin_url" "$plugin_name"
+    # Add subpath to name if present
+    if [[ -n "$plugin_subpath" ]]; then
+      plugin_name="${plugin_name}_${plugin_subpath//\//_}"
     fi
+    echo "$plugin_url" "$plugin_name" "${plugin_ref:--}" "${plugin_subpath:--}" "${plugin_kind:--}"
     return 0
   fi
 
@@ -145,12 +204,11 @@ _pulse_parse_plugin_spec() {
   if [[ "$source_spec" =~ ^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$ ]]; then
     plugin_url="https://github.com/${source_spec}.git"
     plugin_name="${source_spec##*/}"
-    # Only output ref if non-empty (for accurate word count)
-    if [[ -n "$plugin_ref" ]]; then
-      echo "$plugin_url" "$plugin_name" "$plugin_ref"
-    else
-      echo "$plugin_url" "$plugin_name"
+    # Add subpath to name if present
+    if [[ -n "$plugin_subpath" ]]; then
+      plugin_name="${plugin_name}_${plugin_subpath//\//_}"
     fi
+    echo "$plugin_url" "$plugin_name" "${plugin_ref:--}" "${plugin_subpath:--}" "${plugin_kind:--}"
     return 0
   fi
 
@@ -159,27 +217,62 @@ _pulse_parse_plugin_spec() {
     plugin_url="$source_spec"
     plugin_name="${source_spec##*/}"
     plugin_name="${plugin_name%.git}"
-    # Only output ref if non-empty (for accurate word count)
-    if [[ -n "$plugin_ref" ]]; then
-      echo "$plugin_url" "$plugin_name" "$plugin_ref"
-    else
-      echo "$plugin_url" "$plugin_name"
+    # Add subpath to name if present
+    if [[ -n "$plugin_subpath" ]]; then
+      plugin_name="${plugin_name}_${plugin_subpath//\//_}"
     fi
+    echo "$plugin_url" "$plugin_name" "${plugin_ref:--}" "${plugin_subpath:--}" "${plugin_kind:--}"
     return 0
   fi
 
   # Default: treat as plugin name only
-  echo "" "$source_spec" ""
+  echo "-" "$source_spec" "-" "${plugin_subpath:--}" "${plugin_kind:--}"
   return 0
 }
 
 # Resolve plugin source specification to a full path
 # Usage: _pulse_resolve_plugin_source <source_spec>
-# Supports: GitHub user/repo, full URLs, local paths
-# Returns: Full path to plugin directory
+# Supports: GitHub user/repo, full URLs, local paths, with optional subpaths
+# Returns: Full path to plugin directory (including subpath if specified)
 _pulse_resolve_plugin_source() {
   local source_spec="$1"
   local plugin_dir=""
+  local plugin_subpath=""
+
+  # Extract subpath annotation if present
+  if [[ "$source_spec" == *\ path:* ]]; then
+    local repo_part="${source_spec%% *}"
+    local annotations="${source_spec#* }"
+    source_spec="$repo_part"
+    
+    for annotation in ${(s: :)annotations}; do
+      if [[ "$annotation" == path:* ]]; then
+        plugin_subpath="${annotation#path:}"
+        break
+      fi
+    done
+  fi
+
+  # Handle framework shorthands
+  if [[ "$source_spec" == omz:* ]]; then
+    local omz_path="${source_spec#omz:}"
+    plugin_dir="${PULSE_DIR}/plugins/ohmyzsh"
+    if [[ -n "$omz_path" ]]; then
+      plugin_dir="${plugin_dir}/${omz_path}"
+    fi
+    echo "$plugin_dir"
+    return 0
+  fi
+
+  if [[ "$source_spec" == prezto:* ]]; then
+    local prezto_path="${source_spec#prezto:}"
+    plugin_dir="${PULSE_DIR}/plugins/prezto"
+    if [[ -n "$prezto_path" ]]; then
+      plugin_dir="${plugin_dir}/${prezto_path}"
+    fi
+    echo "$plugin_dir"
+    return 0
+  fi
 
   # Strip version spec if present (but not for SSH URLs where @ is part of the URL)
   # SSH URLs: git@host:path - don't strip the @ that's part of the SSH format
@@ -189,13 +282,22 @@ _pulse_resolve_plugin_source() {
 
   # Case 1: Local absolute path
   if [[ "$source_spec" == /* ]]; then
-    echo "$source_spec"
+    if [[ -n "$plugin_subpath" ]]; then
+      echo "${source_spec}/${plugin_subpath}"
+    else
+      echo "$source_spec"
+    fi
     return 0
   fi
 
   # Case 2: Local relative path (starts with ./ or ../)
   if [[ "$source_spec" == ./* ]] || [[ "$source_spec" == ../* ]]; then
-    echo "$(cd "$source_spec" 2>/dev/null && pwd)"
+    local resolved_path="$(cd "$source_spec" 2>/dev/null && pwd)"
+    if [[ -n "$plugin_subpath" ]]; then
+      echo "${resolved_path}/${plugin_subpath}"
+    else
+      echo "$resolved_path"
+    fi
     return 0
   fi
 
@@ -203,6 +305,9 @@ _pulse_resolve_plugin_source() {
   if [[ "$source_spec" =~ ^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$ ]]; then
     local plugin_name="${source_spec##*/}"
     plugin_dir="${PULSE_DIR}/plugins/${plugin_name}"
+    if [[ -n "$plugin_subpath" ]]; then
+      plugin_dir="${plugin_dir}/${plugin_subpath}"
+    fi
     echo "$plugin_dir"
     return 0
   fi
@@ -213,12 +318,19 @@ _pulse_resolve_plugin_source() {
     local plugin_name="${source_spec##*/}"
     plugin_name="${plugin_name%.git}"
     plugin_dir="${PULSE_DIR}/plugins/${plugin_name}"
+    if [[ -n "$plugin_subpath" ]]; then
+      plugin_dir="${plugin_dir}/${plugin_subpath}"
+    fi
     echo "$plugin_dir"
     return 0
   fi
 
   # Default: assume it's a plugin name in PULSE_DIR
-  echo "${PULSE_DIR}/plugins/${source_spec}"
+  plugin_dir="${PULSE_DIR}/plugins/${source_spec}"
+  if [[ -n "$plugin_subpath" ]]; then
+    plugin_dir="${plugin_dir}/${plugin_subpath}"
+  fi
+  echo "$plugin_dir"
   return 0
 }
 
@@ -360,13 +472,19 @@ _pulse_load_plugin() {
 
   # Find and source the main plugin file
   local plugin_file=""
+  
+  # Extract the actual directory name for file matching (in case of subpaths)
+  local dir_name="${plugin_path:t}"
 
   # Common plugin file patterns (in order of preference)
   local patterns=(
     "${plugin_path}/${plugin_name}.plugin.zsh"
     "${plugin_path}/${plugin_name}.zsh"
+    "${plugin_path}/${dir_name}.plugin.zsh"
+    "${plugin_path}/${dir_name}.zsh"
     "${plugin_path}/init.zsh"
     "${plugin_path}/${plugin_name}.sh"
+    "${plugin_path}/${dir_name}.sh"
   )
 
   for pattern in "${patterns[@]}"; do
@@ -469,17 +587,28 @@ _pulse_discover_plugins() {
       continue
     fi
 
-    # Parse plugin specification
+    # Parse plugin specification (now returns 5 values: url, name, ref, subpath, kind)
     local parsed=($(_pulse_parse_plugin_spec "$plugin_spec"))
     local plugin_url="${parsed[1]}"
     local plugin_name="${parsed[2]}"
     local plugin_ref="${parsed[3]}"
+    local plugin_subpath="${parsed[4]}"
+    local plugin_kind="${parsed[5]}"
+    
+    # Convert "-" placeholders back to empty strings
+    [[ "$plugin_url" == "-" ]] && plugin_url=""
+    [[ "$plugin_name" == "-" ]] && plugin_name=""
+    [[ "$plugin_ref" == "-" ]] && plugin_ref=""
+    [[ "$plugin_subpath" == "-" ]] && plugin_subpath=""
+    [[ "$plugin_kind" == "-" ]] && plugin_kind=""
 
     # Fallback: extract plugin name from spec if parsing failed
     if [[ -z "$plugin_name" ]]; then
       plugin_name="${plugin_spec##*/}"
       plugin_name="${plugin_name%.git}"
       plugin_name="${plugin_name%@*}"
+      # Strip annotations
+      plugin_name="${plugin_name%% *}"
     fi
 
     # Validate plugin name is not empty and doesn't contain path traversal
@@ -491,15 +620,38 @@ _pulse_discover_plugins() {
     # Resolve to full path
     local plugin_path=$(_pulse_resolve_plugin_source "$plugin_spec")
 
+    # For framework plugins with subpaths, clone the parent repo but use the subpath
+    local clone_path=""
+    if [[ -n "$plugin_subpath" ]]; then
+      # Extract parent repo path for cloning
+      if [[ "$plugin_spec" == omz:* ]]; then
+        clone_path="${PULSE_DIR}/plugins/ohmyzsh"
+      elif [[ "$plugin_spec" == prezto:* ]]; then
+        clone_path="${PULSE_DIR}/plugins/prezto"
+      elif [[ -n "$plugin_url" ]]; then
+        # For repos with path: annotation, clone to repo name
+        local repo_name="${plugin_url##*/}"
+        repo_name="${repo_name%.git}"
+        clone_path="${PULSE_DIR}/plugins/${repo_name}"
+      fi
+    fi
+
     # Auto-install if missing and we have a URL
-    if [[ ! -d "$plugin_path" ]] && [[ -n "$plugin_url" ]]; then
+    local check_path="${clone_path:-$plugin_path}"
+    if [[ ! -d "$check_path" ]] && [[ -n "$plugin_url" ]]; then
       [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Plugin '$plugin_name' not found, attempting to install..." >&2
 
       # Ensure plugins directory exists before creating lock
       mkdir -p "${PULSE_DIR}/plugins"
 
+      # Use repo name for lock if we have a clone_path
+      local lock_name="${plugin_name}"
+      if [[ -n "$clone_path" ]]; then
+        lock_name="${clone_path##*/}"
+      fi
+
       # Create lock file to prevent race conditions
-      local lock_file="${PULSE_DIR}/plugins/.${plugin_name}.lock"
+      local lock_file="${PULSE_DIR}/plugins/.${lock_name}.lock"
       local lock_acquired=0
 
       # Try to acquire lock with timeout
@@ -508,37 +660,52 @@ _pulse_discover_plugins() {
           lock_acquired=1
           break
         fi
-        [[ -n "$PULSE_DEBUG" ]] && [[ $i -eq 1 ]] && echo "[Pulse] Waiting for lock on $plugin_name..." >&2
+        [[ -n "$PULSE_DEBUG" ]] && [[ $i -eq 1 ]] && echo "[Pulse] Waiting for lock on $lock_name..." >&2
         sleep 0.1
       done
 
       if [[ $lock_acquired -eq 1 ]]; then
         # Check again if directory exists (another shell may have created it)
-        if [[ ! -d "$plugin_path" ]]; then
-          if _pulse_clone_plugin "$plugin_url" "$plugin_name" "$plugin_ref"; then
-            [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully installed $plugin_name" >&2
+        if [[ ! -d "$check_path" ]]; then
+          if _pulse_clone_plugin "$plugin_url" "$lock_name" "$plugin_ref"; then
+            [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully installed $lock_name" >&2
           else
-            [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Warning: Failed to install $plugin_name" >&2
+            [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Warning: Failed to install $lock_name" >&2
           fi
         fi
         # Release lock
         rmdir "$lock_file" 2>/dev/null
       else
-        [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Warning: Could not acquire lock for $plugin_name" >&2
+        [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Warning: Could not acquire lock for $lock_name" >&2
       fi
     fi
 
     # Detect plugin type
     local plugin_type=$(_pulse_detect_plugin_type "$plugin_path")
 
-    # Assign load stage
-    local plugin_stage=$(_pulse_assign_stage "$plugin_name" "$plugin_type")
+    # Assign load stage (use kind annotation if provided)
+    local plugin_stage=""
+    if [[ "$plugin_kind" == "path" ]]; then
+      plugin_stage="normal"
+    elif [[ "$plugin_kind" == "fpath" ]]; then
+      plugin_stage="early"
+    elif [[ "$plugin_kind" == "defer" ]]; then
+      plugin_stage="late"
+    else
+      plugin_stage=$(_pulse_assign_stage "$plugin_name" "$plugin_type")
+    fi
 
     # Update lock file with plugin installation (if library is available)
-    if [[ -n "$PULSE_LOCK_FILE_SOURCED" ]] && [[ -d "$plugin_path/.git" ]]; then
+    # For subpath plugins, check the parent repo for .git
+    local git_check_path="${clone_path:-$plugin_path}"
+    if [[ -n "$plugin_subpath" ]] && [[ -n "$clone_path" ]]; then
+      git_check_path="$clone_path"
+    fi
+    
+    if [[ -n "$PULSE_LOCK_FILE_SOURCED" ]] && [[ -d "$git_check_path/.git" ]]; then
       # Extract exact commit SHA
       local commit_sha=""
-      commit_sha=$(git -C "$plugin_path" rev-parse HEAD 2>/dev/null)
+      commit_sha=$(git -C "$git_check_path" rev-parse HEAD 2>/dev/null)
 
       if [[ -n "$commit_sha" ]]; then
         # Get current timestamp in ISO8601 format
