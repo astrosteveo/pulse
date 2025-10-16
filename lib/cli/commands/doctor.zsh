@@ -37,10 +37,18 @@ _pulse_cmd_doctor() {
 
   # Check 2: Network connectivity (GitHub) - non-fatal, just informational
   : $((checks_total++))
-  if curl -Is --connect-timeout 5 https://github.com 2>/dev/null | head -n1 | grep -q "200\|301\|302"; then
-    echo "[✓] Network: GitHub accessible"
-    : $((checks_passed++))
-  elif wget --spider --timeout=5 https://github.com 2>&1 | grep -q "200\|301\|302"; then
+  local network_ok=0
+  if command -v curl >/dev/null 2>&1; then
+    if curl -fsSL --connect-timeout 5 --max-time 10 https://github.com >/dev/null 2>&1; then
+      network_ok=1
+    fi
+  elif command -v wget >/dev/null 2>&1; then
+    if wget --spider --quiet --timeout=5 --tries=1 https://github.com 2>&1; then
+      network_ok=1
+    fi
+  fi
+
+  if [[ $network_ok -eq 1 ]]; then
     echo "[✓] Network: GitHub accessible"
     : $((checks_passed++))
   else
@@ -84,11 +92,12 @@ _pulse_cmd_doctor() {
 
     for plugin_name in ${plugins_list[@]}; do
       local lock_data=$(pulse_read_lock_entry "$plugin_name" 2>/dev/null)
-      local url ref commit timestamp stage
-      IFS='|' read -r url ref commit timestamp stage <<< "$lock_data"
+      # Use space as delimiter since pulse_read_lock_entry returns space-separated values
+      local url=$(echo "$lock_data" | awk '{print $1}')
+      local commit=$(echo "$lock_data" | awk '{print $3}')
 
       # Only check git-cloned plugins (have URL)
-      if [[ -n "$url" ]]; then
+      if [[ -n "$url" ]] && [[ "$url" != "-" ]]; then
         local plugin_path="${PULSE_DIR}/plugins/${plugin_name}"
         if [[ ! -d "$plugin_path/.git" ]]; then
           : $((broken++))
@@ -111,7 +120,12 @@ _pulse_cmd_doctor() {
 
   # Check 6: CLI installation
   : $((checks_total++))
-  local cli_path="${0:A}"  # Absolute path of current script
+  # Use PULSE_CLI_DIR if set (from main pulse script), otherwise try to resolve from $0
+  local cli_path="${PULSE_CLI_DIR:+${PULSE_CLI_DIR}/pulse}"
+  if [[ -z "$cli_path" ]]; then
+    cli_path="${0:A}"
+  fi
+  
   if [[ -f "$cli_path" ]] && [[ -r "$cli_path" ]]; then
     echo "[✓] CLI: Installed at $cli_path"
     : $((checks_passed++))
@@ -121,15 +135,15 @@ _pulse_cmd_doctor() {
     has_errors=1
   fi
 
-  # Check 7: PATH configuration (only warn, don't fail)
+  # Check 7: PATH configuration (check if pulse command is accessible)
   : $((checks_total++))
-  local cli_dir="${0:A:h}"  # Directory containing the pulse script
-  if [[ ":$PATH:" == *":$cli_dir:"* ]]; then
-    echo "[✓] PATH: CLI directory in PATH"
+  if command -v pulse >/dev/null 2>&1; then
+    local pulse_which=$(command -v pulse)
+    echo "[✓] PATH: pulse command accessible ($pulse_which)"
     : $((checks_passed++))
   else
-    echo "[~] PATH: CLI directory not in PATH (optional)"
-    echo "    → Add to .zshrc: export PATH=\"$cli_dir:\$PATH\""
+    echo "[~] PATH: pulse command not in PATH (optional)"
+    echo "    → Add to .zshrc: export PATH=\"\${HOME}/.local/bin:\${PATH}\""
     : $((checks_passed++))  # Don't fail on this
   fi
 
