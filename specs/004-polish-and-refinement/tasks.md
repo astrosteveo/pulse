@@ -256,7 +256,7 @@ These tasks must complete before ANY user story can be implemented.
 
 **Tasks**: 7 (T008-T014)
 
-### T008: [US3] [TEST] Write failing test for lock file write
+### T008: [US3] [TEST] Write failing test for lock file write ✅
 
 **File**: `tests/unit/lock_file_format.bats`
 **Story**: US3
@@ -286,7 +286,7 @@ These tasks must complete before ANY user story can be implemented.
 
 ---
 
-### T009: [US3] [IMPL] Create lock file write functions
+### T009: [US3] [IMPL] Create lock file write functions ✅
 
 **File**: `lib/cli/lib/lock-file.zsh`
 **Story**: US3
