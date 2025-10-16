@@ -174,7 +174,7 @@ pulse_validate_lock_file() {
     local error_count=$(echo "$validation_errors" | wc -l | tr -d ' ')
     errors=$((errors + error_count))
   fi
-  
+
   if [[ $errors -gt 0 ]]; then
     echo "Lock file validation failed with $errors error(s)" >&2
     return 1
