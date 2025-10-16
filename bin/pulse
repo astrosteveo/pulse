@@ -26,9 +26,9 @@ pulse_main() {
       ;;
 
     update)
-      # TODO: Implement update command
-      echo "pulse update - Update plugins" >&2
-      return 1
+      source "${PULSE_LIB_DIR}/cli/commands/update.zsh"
+      _pulse_cmd_update "$@"
+      return $?
       ;;
 
     doctor|check)

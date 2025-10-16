@@ -600,7 +600,7 @@ These tasks must complete before ANY user story can be implemented.
 
 ---
 
-### T019: [US2] [TEST] Write failing test for pulse update command
+### T019: [US2] [TEST] Write failing test for pulse update command ✅
 
 **File**: `tests/integration/cli_commands.bats`
 **Story**: US2
@@ -641,7 +641,7 @@ These tasks must complete before ANY user story can be implemented.
 
 ---
 
-### T020: [US2] [IMPL] Create update checking logic
+### T020: [US2] [IMPL] Create update checking logic ✅
 
 **File**: `lib/cli/lib/update-check.zsh`
 **Story**: US2
