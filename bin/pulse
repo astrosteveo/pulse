@@ -20,9 +20,9 @@ pulse_main() {
 
   case "${cmd}" in
     list|ls)
-      # TODO: Implement list command
-      echo "pulse list - Show installed plugins" >&2
-      return 1
+      source "${PULSE_LIB_DIR}/cli/commands/list.zsh"
+      _pulse_cmd_list "$@"
+      return $?
       ;;
 
     update)

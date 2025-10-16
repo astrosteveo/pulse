@@ -535,7 +535,7 @@ These tasks must complete before ANY user story can be implemented.
 
 **Tasks**: 10 (T017-T026)
 
-### T017: [US2] [TEST] Write failing test for pulse list command
+### T017: [US2] [TEST] Write failing test for pulse list command ✅
 
 **File**: `tests/integration/cli_commands.bats`
 **Story**: US2
