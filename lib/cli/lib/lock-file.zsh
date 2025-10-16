@@ -107,8 +107,8 @@ pulse_read_lock_entry() {
   fi
 
   # Find the plugin section and extract values
-  # Returns space-separated fields
-  # Empty fields are preserved as single spaces to maintain field positions
+  # Returns pipe-separated fields (url|ref|commit|timestamp|stage)
+  # Empty fields are preserved as single dashes to maintain field positions
   awk -v plugin="$plugin_name" '
     /^\[/ { in_section = 0 }
     $0 == "[" plugin "]" { in_section = 1; found = 1; next }
@@ -118,7 +118,7 @@ pulse_read_lock_entry() {
     in_section && /^timestamp = / { timestamp = substr($0, 13); if (timestamp == "") timestamp = "-" }
     in_section && /^stage = / { stage = substr($0, 9); if (stage == "") stage = "-" }
     END {
-      if (found) print url " " ref " " commit " " timestamp " " stage
+      if (found) print url "|" ref "|" commit "|" timestamp "|" stage
     }
   ' "$lock_file"
 

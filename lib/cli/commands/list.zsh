@@ -16,7 +16,9 @@ _pulse_cmd_list() {
   else
     echo "Error: Lock file library not found at $lock_lib" >&2
     return 1
-  fi  # Check if lock file exists
+  fi
+  
+  # Check if lock file exists
   if [[ ! -f "$PULSE_LOCK_FILE" ]]; then
     echo "No plugins installed." >&2
     echo "Add plugins to your .zshrc and restart your shell." >&2
@@ -43,11 +45,18 @@ _pulse_cmd_list() {
     local lock_data=$(pulse_read_lock_entry "$plugin_name")
 
     if [[ -n "$lock_data" ]]; then
-      # Parse lock data: url|ref|commit|timestamp|stage
+      # Parse lock data: url|ref|commit|timestamp|stage (pipe-separated)
       local url ref commit timestamp stage
       {
         IFS='|' read -r url ref commit timestamp stage
       } <<< "$lock_data"
+
+      # Convert "-" placeholders back to empty strings
+      [[ "$url" == "-" ]] && url=""
+      [[ "$ref" == "-" ]] && ref=""
+      [[ "$commit" == "-" ]] && commit=""
+      [[ "$timestamp" == "-" ]] && timestamp=""
+      [[ "$stage" == "-" ]] && stage=""
 
       # Security check for SSH URLs (if _pulse_check_ssh_security is available)
       if typeset -f _pulse_check_ssh_security >/dev/null 2>&1 && [[ -n "$url" ]]; then

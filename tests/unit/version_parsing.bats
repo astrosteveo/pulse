@@ -25,13 +25,15 @@ teardown() {
 
   [ "$status" -eq 0 ]
 
-  # Function returns: "plugin_url plugin_name plugin_ref" (space-separated)
-  # When ref is empty, only 2 values are printed
+  # Function returns: "plugin_url plugin_name plugin_ref plugin_subpath plugin_kind" (5 values)
+  # When ref is empty (@latest), ref field should be "-" (placeholder for empty)
   [[ "$output" =~ "zsh-users/zsh-syntax-highlighting" ]]
   [[ "$output" =~ "zsh-syntax-highlighting" ]]
-  # Count words - should be 2 (url + name, no ref)
+  # Count words - should be 5 (url, name, ref, subpath, kind) with "-" for empty fields
   local word_count=$(echo "$output" | wc -w)
-  [[ "$word_count" -eq 2 ]]
+  [[ "$word_count" -eq 5 ]]
+  # Check that ref is "-" (empty/latest)
+  [[ "$output" =~ " - " ]]
 }
 
 # Test: @latest should behave identically to omitted version
@@ -58,9 +60,9 @@ teardown() {
   # Should preserve the explicit version tag
   [[ "$output" =~ "zsh-completions" ]]
   [[ "$output" =~ "v0.34.0" ]]
-  # Should have 3 words (url, name, ref)
+  # Should have 5 words (url, name, ref, subpath, kind)
   local word_count=$(echo "$output" | wc -w)
-  [[ "$word_count" -eq 3 ]]
+  [[ "$word_count" -eq 5 ]]
 }
 
 # Test: @latest is case-sensitive
@@ -71,7 +73,7 @@ teardown() {
   # Should NOT treat LATEST as special keyword - it should be preserved as a tag
   [[ "$output" =~ "plugin" ]]
   [[ "$output" =~ "LATEST" ]]
-  # Should have 3 words (url, name, ref) because LATEST is preserved
+  # Should have 5 words (url, name, ref, subpath, kind) with LATEST as the ref
   local word_count=$(echo "$output" | wc -w)
-  [[ "$word_count" -eq 3 ]]
+  [[ "$word_count" -eq 5 ]]
 }

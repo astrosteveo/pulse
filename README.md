@@ -74,11 +74,13 @@ source ~/.local/share/pulse/pulse.zsh  # Done!
 - **5-Stage Pipeline** - Optimal load order
 - **Auto-Detection** - Completion/syntax/theme
 - **GitHub Shorthand** - `user/repo` format
+- **Oh-My-Zsh Support** - `omz:plugins/git` syntax
+- **Annotations** - `path:`, `kind:` modifiers
 - **Declarative Config** - Just list plugins
 - **Graceful Errors** - Never breaks your shell
 - **Debug Mode** - See what's happening
 
-*Supports any GitHub plugin*
+*Supports any GitHub plugin + Oh-My-Zsh/Prezto*
 
 </td>
 </tr>
@@ -181,7 +183,18 @@ source ~/.local/share/pulse/pulse.zsh
 plugins=(
   # GitHub shorthand (most common)
   zsh-users/zsh-autosuggestions
-
+  
+  # Oh-My-Zsh plugins (NEW!)
+  omz:plugins/git
+  omz:plugins/kubectl
+  omz:lib/git
+  
+  # Prezto modules
+  prezto:modules/editor
+  
+  # Path annotations for framework subdirectories
+  ohmyzsh/ohmyzsh path:plugins/docker
+  
   # Full Git URLs
   https://github.com/zsh-users/zsh-syntax-highlighting.git
 
@@ -190,6 +203,8 @@ plugins=(
   /usr/share/zsh/plugins/work-plugin
 )
 ```
+
+**New in 0.3.0**: Oh-My-Zsh support with convenient `omz:` shorthand! See [Oh-My-Zsh Support Guide](docs/OMZ_SUPPORT.md) for details.
 
 ### Version Management
 
