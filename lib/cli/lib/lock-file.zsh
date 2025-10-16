@@ -40,6 +40,8 @@ EOF
     true
   rm -f "${lock_file}.bak" 2>/dev/null
 
+  [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Lock file created at $lock_file" >&2
+
   return 0
 }
 

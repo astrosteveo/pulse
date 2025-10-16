@@ -62,7 +62,7 @@ teardown() {
     source ${PULSE_ROOT}/lib/cli/lib/lock-file.zsh
     pulse_validate_lock_file
   "
-  
+
   [ "$status" -eq 0 ]
 }
 
@@ -208,7 +208,7 @@ teardown() {
     source ${PULSE_ROOT}/lib/cli/lib/lock-file.zsh
     pulse_read_lock_entry 'plugin-a' | awk '{print \$3}'
   "
-  
+
   [ "$status" -eq 0 ]
   [[ "$output" == "$expected_commit" ]]
 }
@@ -235,7 +235,7 @@ teardown() {
     source ${PULSE_ROOT}/lib/cli/lib/lock-file.zsh
     pulse_read_lock_entry 'plugin-a' | awk '{print \$5}'
   "
-  
+
   [ "$status" -eq 0 ]
   # Should be one of the valid stages
   [[ "$output" =~ ^(early|normal|late|deferred)$ ]]
