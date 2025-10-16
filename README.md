@@ -4,9 +4,9 @@
 
 **The intelligent Zsh framework that just works**
 
-[![Version](https://img.shields.io/badge/version-0.1.0--beta-blue.svg)](https://github.com/astrosteveo/pulse/releases)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/astrosteveo/pulse/releases)
 [![License](https://img.shields.io/badge/license-Unlicense-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-91%25-brightgreen.svg)](TEST_RESULTS.md)
+[![Tests](https://img.shields.io/badge/tests-97%25-brightgreen.svg)](TEST_RESULTS.md)
 [![Zsh](https://img.shields.io/badge/zsh-%3E%3D5.0-orange.svg)](https://www.zsh.org/)
 
 *Your shell should be alive, responsive, and reliable—the heartbeat of your workflow.*
@@ -186,6 +186,82 @@ plugins=(
   ~/.local/share/my-plugin
   /usr/share/zsh/plugins/work-plugin
 )
+```
+
+### Version Management
+
+Pulse supports version pinning to ensure reproducible shell environments:
+
+```zsh
+plugins=(
+  # Always use latest (default)
+  zsh-users/zsh-autosuggestions@latest
+  
+  # Pin to specific version tag
+  zsh-users/zsh-syntax-highlighting@v0.8.0
+  
+  # Pin to branch
+  romkatv/powerlevel10k@main
+  
+  # Without version (same as @latest)
+  zsh-users/zsh-completions
+)
+```
+
+**Benefits:**
+- 🔒 **Reproducible** - Lock to specific versions
+- 🆕 **Up-to-date** - Use `@latest` for auto-updates
+- 🔄 **Flexible** - Mix versioned and latest plugins
+
+**Lock File (`plugins.lock`):**
+Pulse automatically tracks installed plugin versions:
+
+```ini
+[zsh-autosuggestions]
+url=https://github.com/zsh-users/zsh-autosuggestions.git
+ref=
+commit=a411ef3e0992d4839f0732ebeb9823024afaaaa8
+timestamp=2025-01-15T10:30:00Z
+stage=normal
+```
+
+Use CLI commands to manage versions (see below).
+
+### CLI Commands
+
+Pulse includes a command-line interface for plugin management:
+
+```bash
+# List installed plugins
+pulse list
+
+# Update plugins
+pulse update                    # Update all plugins
+pulse update zsh-autosuggestions  # Update specific plugin
+pulse update --force            # Force update (discard local changes)
+pulse update --check-only       # Check for updates without applying
+
+# System diagnostics
+pulse doctor                    # Run health checks
+
+# Help
+pulse --help                    # Show all commands
+pulse list --help               # Command-specific help
+```
+
+**Example output:**
+
+```
+$ pulse list
+┌──────────────────────────┬─────────┬──────────┐
+│ PLUGIN                   │ VERSION │ COMMIT   │
+├──────────────────────────┼─────────┼──────────┤
+│ zsh-autosuggestions      │ latest  │ a411ef3  │
+│ zsh-syntax-highlighting  │ v0.8.0  │ 754cefe  │
+│ powerlevel10k            │ main    │ 5ce6aef  │
+└──────────────────────────┴─────────┴──────────┘
+
+3 plugins installed
 ```
 
 ### Configuration
@@ -487,17 +563,20 @@ Every feature must justify its existence. **Deletion is considered before additi
 
 ## 🔮 Roadmap
 
-**v0.1.0 (Current Beta)**
+**v0.2.0 (Current)**
 - ✅ Core framework (7 modules)
 - ✅ 5-stage plugin pipeline
 - ✅ Auto-detection
 - ✅ One-command installer
+- ✅ CLI commands (`pulse list/update/doctor`)
+- ✅ Plugin version management (`@latest`, `@tag`, `@branch`)
+- ✅ Lock file for reproducibility
 
 **v1.0.0 (Stable Release)**
-- [ ] CLI commands (`pulse install/update/remove/list`)
-- [ ] Plugin version management
-- [ ] `pulse doctor` diagnostic tool
+- [ ] `pulse install/remove` commands
+- [ ] Update notifications
 - [ ] Advanced lazy loading
+- [ ] Extended cross-platform testing
 
 ---
 
