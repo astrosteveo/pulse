@@ -13,6 +13,25 @@ typeset -g PULSE_CLI_LIB_DIR="${PULSE_LIB_DIR}/cli/lib"
 # Version info
 typeset -gr PULSE_VERSION="0.2.0"
 
+# Security helper: Check for SSH URLs and warn if needed
+_pulse_check_ssh_security() {
+  local url="$1"
+  local plugin_name="$2"
+
+  # Check if URL uses SSH (git@github.com: format)
+  if [[ "$url" =~ ^git@.*: ]]; then
+    # Check if SSH known_hosts exists and has github.com
+    if [[ ! -f ~/.ssh/known_hosts ]] || ! grep -q "github.com" ~/.ssh/known_hosts 2>/dev/null; then
+      echo "⚠️  Security Warning: Plugin '$plugin_name' uses SSH URL without known_hosts" >&2
+      echo "   URL: $url" >&2
+      echo "   Recommendation: Use HTTPS URL instead: ${url/git@github.com:/https://github.com/}" >&2
+      echo "   Or add GitHub to known_hosts: ssh-keyscan github.com >> ~/.ssh/known_hosts" >&2
+      return 1
+    fi
+  fi
+  return 0
+}
+
 # Command dispatcher
 pulse_main() {
   local cmd="${1:-help}"

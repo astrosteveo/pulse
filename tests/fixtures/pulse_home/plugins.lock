@@ -1,6 +1,6 @@
-[plugin-a]
-url = https://github.com/user/plugin-a
+[test-plugin]
+url = git@github.com:user/test-plugin
 ref = main
-commit = abc123
+commit = abc1234
 timestamp = 2024-01-01T00:00:00Z
 stage = normal

@@ -37,6 +37,7 @@ _pulse_cmd_list() {
   printf "%-30s %-20s %-10s\n" "$(printf '%.0s-' {1..30})" "$(printf '%.0s-' {1..20})" "$(printf '%.0s-' {1..10})"
 
   # Sort plugins alphabetically and print each one
+  local has_security_warnings=0
   for plugin_name in ${(o)plugins_list}; do
     # Read lock entry for this plugin
     local lock_data=$(pulse_read_lock_entry "$plugin_name")
@@ -48,6 +49,13 @@ _pulse_cmd_list() {
         IFS='|' read -r url ref commit timestamp stage
       } <<< "$lock_data"
 
+      # Security check for SSH URLs (if _pulse_check_ssh_security is available)
+      if typeset -f _pulse_check_ssh_security >/dev/null 2>&1 && [[ -n "$url" ]]; then
+        if ! _pulse_check_ssh_security "$url" "$plugin_name"; then
+          : $((has_security_warnings++))
+        fi
+      fi
+
       # Truncate commit to 7 characters
       local short_commit="${commit:0:7}"
 
@@ -58,6 +66,12 @@ _pulse_cmd_list() {
       printf "%-30s %-20s %-10s\n" "$plugin_name" "$version" "$short_commit"
     fi
   done
+
+  # Print security summary if warnings were found
+  if [[ $has_security_warnings -gt 0 ]]; then
+    echo "" >&2
+    echo "💡 Tip: Use 'pulse doctor' to check your installation health" >&2
+  fi
 
   return 0
 }

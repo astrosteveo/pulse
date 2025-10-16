@@ -826,7 +826,7 @@ These tasks must complete before ANY user story can be implemented.
 
 ---
 
-### T025: [US2] [TEST] Write test for CLI exit codes
+### T025: [US2] [TEST] Write test for CLI exit codes ✅
 
 **File**: `tests/integration/cli_commands.bats`
 **Story**: US2
