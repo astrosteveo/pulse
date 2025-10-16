@@ -137,7 +137,7 @@ teardown() {
     export PULSE_DIR='${PULSE_DIR}'
     export PULSE_LOCK_FILE='${PULSE_LOCK_FILE}'
     source lib/cli/lib/lock-file.zsh
-
+    
     # Write entry with special chars (dots, hyphens)
     pulse_write_lock_entry 'zsh-users/plugin.v2' \
       'https://github.com/user/repo.git' \
@@ -145,12 +145,107 @@ teardown() {
       'abc123' \
       '2025-10-14T03:00:00Z' \
       'fpath'
-
+    
     cat '${PULSE_LOCK_FILE}'
   "
-
+  
   [ "$status" -eq 0 ]
-
+  
   # Verify section name is properly formatted
   [[ "$output" =~ "[zsh-users/plugin.v2]" ]]
+}
+
+# Test: Reads all plugin sections from lock file
+@test "reads all plugin sections from lock file" {
+  run zsh -c "
+    export PULSE_DIR='${PULSE_DIR}'
+    export PULSE_LOCK_FILE='${PULSE_LOCK_FILE}'
+    source lib/cli/lib/lock-file.zsh
+    
+    # Write 3 plugin entries
+    pulse_write_lock_entry 'plugin-a' 'https://github.com/user/plugin-a.git' '' 'abc123' '2025-10-14T03:00:00Z' 'early'
+    pulse_write_lock_entry 'plugin-b' 'https://github.com/user/plugin-b.git' 'v1.0.0' 'def456' '2025-10-14T03:01:00Z' 'path'
+    pulse_write_lock_entry 'plugin-c' 'https://github.com/user/plugin-c.git' 'main' 'ghi789' '2025-10-14T03:02:00Z' 'defer'
+    
+    # Read all plugins
+    pulse_read_lock_file
+  "
+  
+  [ "$status" -eq 0 ]
+  
+  # Verify all 3 plugins are returned
+  [[ "$output" =~ "plugin-a" ]]
+  [[ "$output" =~ "plugin-b" ]]
+  [[ "$output" =~ "plugin-c" ]]
+  
+  # Count number of plugins (should be 3)
+  local plugin_count=$(echo "$output" | wc -l | tr -d ' ')
+  [[ "$plugin_count" -eq 3 ]]
+}
+
+# Test: Reads specific plugin entry data
+@test "reads specific plugin entry from lock file" {
+  run zsh -c "
+    export PULSE_DIR='${PULSE_DIR}'
+    export PULSE_LOCK_FILE='${PULSE_LOCK_FILE}'
+    source lib/cli/lib/lock-file.zsh
+    
+    # Write test entry
+    pulse_write_lock_entry 'test-plugin' \
+      'https://github.com/test/plugin.git' \
+      'v2.1.0' \
+      'sha256abc123def' \
+      '2025-10-14T03:00:00Z' \
+      'completions'
+    
+    # Read the entry
+    pulse_read_lock_entry 'test-plugin'
+  "
+  
+  [ "$status" -eq 0 ]
+  
+  # Verify the output contains all expected fields
+  [[ "$output" =~ "https://github.com/test/plugin.git" ]]
+  [[ "$output" =~ "v2.1.0" ]]
+  [[ "$output" =~ "sha256abc123def" ]]
+  [[ "$output" =~ "2025-10-14T03:00:00Z" ]]
+  [[ "$output" =~ "completions" ]]
+  
+  # Verify output is space-separated with 5 fields
+  local field_count=$(echo "$output" | wc -w | tr -d ' ')
+  [[ "$field_count" -eq 5 ]]
+}
+
+# Test: Returns empty/error for non-existent plugin
+@test "returns error for non-existent plugin in lock file" {
+  run zsh -c "
+    export PULSE_DIR='${PULSE_DIR}'
+    export PULSE_LOCK_FILE='${PULSE_LOCK_FILE}'
+    source lib/cli/lib/lock-file.zsh
+    
+    # Create lock file with one plugin
+    pulse_write_lock_entry 'plugin-a' 'https://github.com/user/plugin-a.git' '' 'abc123' '2025-10-14T03:00:00Z' 'early'
+    
+    # Try to read non-existent plugin
+    pulse_read_lock_entry 'plugin-does-not-exist'
+  "
+  
+  # Should exit with success but return empty output
+  [ "$status" -eq 0 ]
+  [[ -z "$output" ]]
+}
+
+# Test: Returns error when lock file doesn't exist
+@test "returns error when lock file does not exist" {
+  run zsh -c "
+    export PULSE_DIR='${PULSE_DIR}'
+    export PULSE_LOCK_FILE='${PULSE_LOCK_FILE}'
+    source lib/cli/lib/lock-file.zsh
+    
+    # Try to read from non-existent lock file
+    pulse_read_lock_file
+  "
+  
+  # Should fail with non-zero exit code
+  [ "$status" -ne 0 ]
 }
