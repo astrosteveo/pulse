@@ -162,10 +162,10 @@ teardown() {
     export PULSE_LOCK_FILE='${PULSE_LOCK_FILE}'
     source lib/cli/lib/lock-file.zsh
 
-    # Write 3 plugin entries
-    pulse_write_lock_entry 'plugin-a' 'https://github.com/user/plugin-a.git' '' 'abc123' '2025-10-14T03:00:00Z' 'early'
-    pulse_write_lock_entry 'plugin-b' 'https://github.com/user/plugin-b.git' 'v1.0.0' 'def456' '2025-10-14T03:01:00Z' 'path'
-    pulse_write_lock_entry 'plugin-c' 'https://github.com/user/plugin-c.git' 'main' 'ghi789' '2025-10-14T03:02:00Z' 'defer'
+    # Write 3 plugin entries (suppress debug output)
+    pulse_write_lock_entry 'plugin-a' 'https://github.com/user/plugin-a.git' '' 'abc123' '2025-10-14T03:00:00Z' 'early' 2>/dev/null
+    pulse_write_lock_entry 'plugin-b' 'https://github.com/user/plugin-b.git' 'v1.0.0' 'def456' '2025-10-14T03:01:00Z' 'path' 2>/dev/null
+    pulse_write_lock_entry 'plugin-c' 'https://github.com/user/plugin-c.git' 'main' 'ghi789' '2025-10-14T03:02:00Z' 'defer' 2>/dev/null
 
     # Read all plugins
     pulse_read_lock_file
@@ -190,13 +190,13 @@ teardown() {
     export PULSE_LOCK_FILE='${PULSE_LOCK_FILE}'
     source lib/cli/lib/lock-file.zsh
 
-    # Write test entry
+    # Write test entry (suppress debug output)
     pulse_write_lock_entry 'test-plugin' \
       'https://github.com/test/plugin.git' \
       'v2.1.0' \
       'sha256abc123def' \
       '2025-10-14T03:00:00Z' \
-      'completions'
+      'completions' 2>/dev/null
 
     # Read the entry
     pulse_read_lock_entry 'test-plugin'
@@ -223,8 +223,8 @@ teardown() {
     export PULSE_LOCK_FILE='${PULSE_LOCK_FILE}'
     source lib/cli/lib/lock-file.zsh
 
-    # Create lock file with one plugin
-    pulse_write_lock_entry 'plugin-a' 'https://github.com/user/plugin-a.git' '' 'abc123' '2025-10-14T03:00:00Z' 'early'
+    # Create lock file with one plugin (suppress debug output)
+    pulse_write_lock_entry 'plugin-a' 'https://github.com/user/plugin-a.git' '' 'abc123' '2025-10-14T03:00:00Z' 'early' 2>/dev/null
 
     # Try to read non-existent plugin
     pulse_read_lock_entry 'plugin-does-not-exist'

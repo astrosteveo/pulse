@@ -25,6 +25,7 @@ pulse [command] [options]
 ```
 
 **Available Commands:**
+
 - `list` - Show installed plugins
 - `update` - Update plugins to latest versions
 - `doctor` - Run system diagnostics
@@ -65,11 +66,13 @@ pulse --version
 Display all installed plugins in a formatted table.
 
 **Usage:**
+
 ```bash
 pulse list
 ```
 
 **Output Format:**
+
 ```
 ┌──────────────────────────┬─────────┬──────────┐
 │ PLUGIN                   │ VERSION │ COMMIT   │
@@ -83,15 +86,18 @@ pulse list
 ```
 
 **Exit Codes:**
+
 - `0` - Success (plugins listed)
 - `2` - No lock file found (no plugins installed)
 
 **Notes:**
+
 - Local plugins (no URL) are shown without version information
 - Short commit SHA (7 chars) displayed for clarity
 - Empty ref shown as "latest" for readability
 
 **Example:**
+
 ```bash
 $ pulse list
 # Shows all installed plugins with version info
@@ -107,23 +113,27 @@ $ pulse list --help
 Update plugins to their latest versions.
 
 **Usage:**
+
 ```bash
 pulse update [plugin-name] [options]
 ```
 
 **Options:**
+
 - (none) - Update all plugins
 - `plugin-name` - Update specific plugin only
 - `--force` - Force update, discarding local changes
 - `--check-only` - Check for updates without applying
 
 **Behavior:**
+
 - Skips local plugins (no URL)
 - Skips plugins with uncommitted changes (unless `--force`)
 - Updates lock file with new commit SHAs
 - Shows summary: updated/up-to-date/skipped/errors
 
 **Exit Codes:**
+
 - `0` - Success (updates applied or no updates needed)
 - `2` - No lock file found (no plugins to update)
 - `1` - Update errors occurred (see output)
@@ -166,7 +176,7 @@ If a plugin uses SSH URL (`git@github.com:...`) and `github.com` is not in your 
 ⚠ Security Warning: SSH URL without known_hosts entry
   Plugin: zsh-autosuggestions
   URL: git@github.com:zsh-users/zsh-autosuggestions.git
-  
+
   Consider using HTTPS instead: https://github.com/zsh-users/zsh-autosuggestions.git
   Or add to known_hosts: ssh-keyscan github.com >> ~/.ssh/known_hosts
 ```
@@ -178,6 +188,7 @@ If a plugin uses SSH URL (`git@github.com:...`) and `github.com` is not in your 
 Run system health checks to diagnose common issues.
 
 **Usage:**
+
 ```bash
 pulse doctor
 ```
@@ -220,6 +231,7 @@ pulse doctor
    - **Fix:** Verify installation path
 
 **Output Format:**
+
 ```
 Pulse System Diagnostics
 ========================
@@ -238,11 +250,13 @@ Some optional features unavailable - see [~] items above
 ```
 
 **Symbols:**
+
 - `[✓]` - Check passed
 - `[✗]` - Check failed (with suggested fix)
 - `[~]` - Optional feature unavailable
 
 **Exit Codes:**
+
 - `0` - All critical checks passed
 - `1` - One or more critical checks failed
 
@@ -359,6 +373,7 @@ git commit -m "Lock Pulse plugin versions"
 **Cause:** CLI not in PATH
 
 **Fix:**
+
 ```bash
 # Option 1: Add to PATH
 export PATH="${HOME}/.local/share/pulse/bin:${PATH}"
@@ -375,6 +390,7 @@ export PATH="${HOME}/.local/share/pulse/bin:${PATH}"
 **Cause:** No plugins have been loaded yet
 
 **Fix:**
+
 ```bash
 # Load plugins first (in .zshrc)
 plugins=(zsh-users/zsh-autosuggestions)
@@ -389,6 +405,7 @@ pulse list
 **Cause:** Plugin directory has uncommitted Git changes
 
 **Fix:**
+
 ```bash
 # Option 1: Review and commit changes
 cd ~/.local/share/pulse/plugins/plugin-name
@@ -407,6 +424,7 @@ pulse update other-plugin
 **Cause:** No internet or GitHub unreachable
 
 **Fix:**
+
 ```bash
 # Check connection
 ping github.com
@@ -423,6 +441,7 @@ curl -I https://github.com
 **Cause:** Corrupted `plugins.lock`
 
 **Fix:**
+
 ```bash
 # Doctor auto-fixes this
 pulse doctor
@@ -490,6 +509,7 @@ done
    - Test updates in non-production first
 
 5. **Backup Before Major Updates**
+
    ```bash
    cp ~/.local/share/pulse/plugins.lock ~/.local/share/pulse/plugins.lock.backup
    pulse update

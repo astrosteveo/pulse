@@ -6,7 +6,7 @@
 
 [![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/astrosteveo/pulse/releases)
 [![License](https://img.shields.io/badge/license-Unlicense-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-97%25-brightgreen.svg)](TEST_RESULTS.md)
+[![Tests](https://img.shields.io/badge/tests-100%25-brightgreen.svg)](TEST_RESULTS.md)
 [![Zsh](https://img.shields.io/badge/zsh-%3E%3D5.0-orange.svg)](https://www.zsh.org/)
 
 *Your shell should be alive, responsive, and reliable—the heartbeat of your workflow.*
@@ -95,6 +95,7 @@ curl -fsSL https://raw.githubusercontent.com/astrosteveo/pulse/main/scripts/puls
 ```
 
 **That's it!** The installer:
+
 - ✅ Validates prerequisites (Zsh ≥5.0, Git)
 - ✅ Clones to `~/.local/share/pulse`
 - ✅ Backs up your `.zshrc`
@@ -141,6 +142,7 @@ PULSE_VERSION=v0.1.0 bash scripts/pulse-install.sh
 ```
 
 **Environment Variables:**
+
 - `PULSE_INSTALL_DIR` - Install location (default: `~/.local/share/pulse`)
 - `PULSE_ZSHRC` - Config file (default: `~/.zshrc`)
 - `PULSE_VERSION` - Git ref (default: `main`)
@@ -166,6 +168,7 @@ source ~/.local/share/pulse/pulse.zsh
 ```
 
 **Even without plugins**, you get:
+
 - ✅ Intelligent completions with caching
 - ✅ Enhanced keybindings (Ctrl+R, Alt+B/F, etc.)
 - ✅ Smart directory navigation
@@ -178,10 +181,10 @@ source ~/.local/share/pulse/pulse.zsh
 plugins=(
   # GitHub shorthand (most common)
   zsh-users/zsh-autosuggestions
-  
+
   # Full Git URLs
   https://github.com/zsh-users/zsh-syntax-highlighting.git
-  
+
   # Local paths
   ~/.local/share/my-plugin
   /usr/share/zsh/plugins/work-plugin
@@ -196,19 +199,20 @@ Pulse supports version pinning to ensure reproducible shell environments:
 plugins=(
   # Always use latest (default)
   zsh-users/zsh-autosuggestions@latest
-  
+
   # Pin to specific version tag
   zsh-users/zsh-syntax-highlighting@v0.8.0
-  
+
   # Pin to branch
   romkatv/powerlevel10k@main
-  
+
   # Without version (same as @latest)
   zsh-users/zsh-completions
 )
 ```
 
 **Benefits:**
+
 - 🔒 **Reproducible** - Lock to specific versions
 - 🆕 **Up-to-date** - Use `@latest` for auto-updates
 - 🔄 **Flexible** - Mix versioned and latest plugins
@@ -346,10 +350,10 @@ plugins=(
   zsh-users/zsh-autosuggestions
   zsh-users/zsh-syntax-highlighting
   zsh-users/zsh-completions
-  
+
   # Navigation
   agkozak/zsh-z
-  
+
   # Git tools
   wfxr/forgit
 )
@@ -378,8 +382,9 @@ Pulse automatically sorts plugins into optimal load stages:
 ```
 
 **Auto-Detection:**
+
 - **Completion plugins** (has `_*` files) → Early
-- **Syntax plugins** (name matches pattern) → Late  
+- **Syntax plugins** (name matches pattern) → Late
 - **Theme plugins** (has `.zsh-theme`) → Late
 - **Everything else** → Normal
 
@@ -529,8 +534,9 @@ tests/bats-core/bin/bats tests/unit/plugin_type_detection.bats
 ```
 
 **Test Coverage:**
-- 📊 201 tests total
-- ✅ 183 passing (91%)
+
+- 📊 273 tests total
+- ✅ 273 passing (100%)
 - 🎯 100% core functionality
 - ⚡ Performance validated
 
@@ -565,6 +571,7 @@ Every feature must justify its existence. **Deletion is considered before additi
 ## 🔮 Roadmap
 
 **v0.2.0 (Current)**
+
 - ✅ Core framework (7 modules)
 - ✅ 5-stage plugin pipeline
 - ✅ Auto-detection
@@ -574,6 +581,7 @@ Every feature must justify its existence. **Deletion is considered before additi
 - ✅ Lock file for reproducibility
 
 **v1.0.0 (Stable Release)**
+
 - [ ] `pulse install/remove` commands
 - [ ] Update notifications
 - [ ] Advanced lazy loading
@@ -592,6 +600,7 @@ Every feature must justify its existence. **Deletion is considered before additi
 ## 🙏 Credits
 
 Pulse is inspired by:
+
 - [mattmc3/zsh_unplugged](https://github.com/mattmc3/zsh_unplugged)
 - [mattmc3/zephyr](https://github.com/mattmc3/zephyr)
 
@@ -614,6 +623,7 @@ This is free and unencumbered software released into the public domain. See [LIC
 Contributions welcome! Pulse follows strict principles—see our [Constitution](.specify/memory/constitution.md) for development guidelines.
 
 **Development:**
+
 - 🧪 Tests required (TDD)
 - 📖 Documentation required
 - ⚡ Performance measured

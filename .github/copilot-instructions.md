@@ -1,6 +1,6 @@
 # pulse Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2025-10-12
+Auto-generated from all feature plans. Last updated: 2025-10-16
 
 ## Constitution
 
@@ -80,27 +80,46 @@ lib/                   # Framework modules
   prompt.zsh           # Prompt setup
   utilities.zsh        # Helper functions
   plugin-engine.zsh    # Plugin loading system
-tests/                 # Test suite (201 tests, 91% passing)
-  integration/         # Integration tests (121 tests, 100% passing)
-  unit/                # Unit tests (80 tests)
+bin/                   # CLI commands
+  pulse                # Plugin management CLI
+tests/                 # Test suite (273 tests, 100% passing)
+  integration/         # Integration tests
+  unit/                # Unit tests
   fixtures/            # Test fixtures
   test_helper.bash     # Test utilities
 docs/                  # Documentation
+  CLI_REFERENCE.md     # Complete CLI documentation
   PERFORMANCE.md       # Performance benchmarks
   PLATFORM_COMPATIBILITY.md  # Cross-platform guide
 specs/                 # Feature specifications
   001-build-a-zsh/     # Plugin engine spec
   002-create-the-zsh/  # Framework modules spec
+  003-implement-an-install/  # Installer spec
+  004-polish-and-refinement/  # Version management & CLI spec
 ```
 
 ## Commands
-# Framework functions (all prefixed with pulse_):
+
+### CLI Commands (bin/pulse)
+- pulse list - Display installed plugins with versions
+- pulse update [plugin] [--force] [--check-only] - Update plugins
+- pulse doctor - Run system diagnostics
+- pulse --help - Show help
+- pulse --version - Show version
+
+### Framework Functions (all prefixed with pulse_)
 - pulse_load_modules() - Load framework modules
 - pulse_clone_plugin() - Clone plugin from GitHub
 - pulse_load_plugin() - Load plugin based on type
 - pulse_cmd_exists() - Check if command exists
 - pulse_os() - Detect operating system
 - pulse_extract() - Extract archives
+
+### Lock File Functions (lib/cli/lib/lock-file.zsh)
+- pulse_init_lock_file() - Initialize plugins.lock
+- pulse_write_lock_entry() - Write/update plugin entry
+- pulse_read_lock_entry() - Read plugin entry
+- pulse_validate_lock_file() - Validate lock file format
 
 ## Code Style
 - **Zsh conventions (MANDATORY)**: Use Zsh-specific features (arrays, parameter expansion, builtins), prefer `zstyle` over environment variables for configuration, require Zsh ≥5.0

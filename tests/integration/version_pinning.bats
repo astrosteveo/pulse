@@ -23,11 +23,11 @@ teardown() {
 
 # Test: Plugin with @latest should clone from default branch
 @test "installs plugin with @latest" {
-  # Create a temporary .zshrc with @latest plugin
-  cat > "${HOME}/.zshrc" <<'EOF'
+  # Create a temporary .zshrc with @latest plugin using file:// URL
+  cat > "${HOME}/.zshrc" <<EOF
 # Mock plugin using @latest
 plugins=(
-  ${MOCK_PLUGINS_DIR}/plugin-a@latest
+  file://${MOCK_PLUGINS_DIR}/plugin-a@latest
 )
 EOF
 
@@ -54,8 +54,8 @@ EOF
     export PULSE_DIR='${PULSE_DIR}'
     source ${PULSE_ROOT}/lib/plugin-engine.zsh
 
-    # Clone plugin with @latest
-    _pulse_clone_plugin '${MOCK_PLUGINS_DIR}/plugin-a' 'plugin-a' ''
+    # Clone plugin with @latest using file:// URL
+    _pulse_clone_plugin 'file://${MOCK_PLUGINS_DIR}/plugin-a' 'plugin-a' ''
 
     # Verify it's on a branch, not a detached HEAD at a tag
     cd '${PULSE_DIR}/plugins/plugin-a'

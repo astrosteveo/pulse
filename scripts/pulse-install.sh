@@ -85,6 +85,12 @@ Usage: $(basename "$0") [OPTIONS]
 
 Pulse Framework Installer - Zero-configuration Zsh framework installation
 
+Installs Pulse framework with:
+  • Core modules (completions, keybindings, directory navigation, etc.)
+  • Plugin management system with auto-detection
+  • CLI commands for plugin management (pulse list/update/doctor)
+  • Lock file for reproducible environments
+
 OPTIONS:
   -v, --verbose      Enable verbose logging output
   --skip-backup      Skip .zshrc backup creation
@@ -548,6 +554,59 @@ validate_config_order() {
 }
 
 #
+# CLI Setup (T032)
+#
+
+# Set up Pulse CLI in user's PATH
+# Usage: setup_cli INSTALL_DIR
+setup_cli() {
+  local install_dir="$1"
+  local cli_bin="${install_dir}/bin/pulse"
+  local local_bin="${HOME}/.local/bin"
+
+  # Check if CLI exists
+  if [ ! -f "$cli_bin" ]; then
+    print_verbose "CLI not found at $cli_bin (this is normal for older versions)"
+    return "$EXIT_SUCCESS"
+  fi
+
+  print_step "Setting up Pulse CLI..."
+
+  # Make CLI executable
+  chmod +x "$cli_bin" 2>/dev/null || true
+
+  # Create ~/.local/bin if it doesn't exist
+  if [ ! -d "$local_bin" ]; then
+    mkdir -p "$local_bin" 2>/dev/null || {
+      print_verbose "Could not create $local_bin (non-critical)"
+      return "$EXIT_SUCCESS"
+    }
+  fi
+
+  # Create symlink if it doesn't exist
+  if [ ! -e "${local_bin}/pulse" ]; then
+    ln -sf "$cli_bin" "${local_bin}/pulse" 2>/dev/null || {
+      print_verbose "Could not create symlink (non-critical)"
+      return "$EXIT_SUCCESS"
+    }
+    print_step "CLI installed to ${local_bin}/pulse ✓"
+  else
+    print_verbose "CLI symlink already exists"
+  fi
+
+  # Check if ~/.local/bin is in PATH
+  if ! echo "$PATH" | grep -q "${local_bin}"; then
+    printf "\n"
+    printf "%bNote:%b ~/.local/bin is not in your PATH\n" "${COLOR_BOLD}" "${COLOR_RESET}"
+    printf "Add this to your %b~/.zshrc%b or %b~/.zprofile%b:\n" "${COLOR_BOLD}" "${COLOR_RESET}" "${COLOR_BOLD}" "${COLOR_RESET}"
+    printf "  %bexport PATH=\"\${HOME}/.local/bin:\${PATH}\"%b\n" "${COLOR_BOLD}" "${COLOR_RESET}"
+    printf "\n"
+  fi
+
+  return "$EXIT_SUCCESS"
+}
+
+#
 # Post-Install Verification (T017)
 #
 
@@ -638,6 +697,9 @@ main() {
     error_exit "Installation verification failed" "$EXIT_VERIFY_FAILED"
   fi
 
+  # Phase 6: Set up CLI (optional)
+  setup_cli "$INSTALL_DIR"
+
   # Success!
   print_success
 
@@ -645,6 +707,12 @@ main() {
   printf "Next steps:\n"
   printf "  1. Restart your shell: %b\n" "${COLOR_BOLD}exec zsh${COLOR_RESET}"
   printf "  2. Verify Pulse is loaded: %b\n" "${COLOR_BOLD}echo \$PULSE_VERSION${COLOR_RESET}"
+  printf "  3. Try CLI commands: %b\n" "${COLOR_BOLD}pulse list${COLOR_RESET}"
+  printf "\n"
+  printf "CLI Management:\n"
+  printf "  • List plugins: %bpulse list%b\n" "${COLOR_BOLD}" "${COLOR_RESET}"
+  printf "  • Update plugins: %bpulse update%b\n" "${COLOR_BOLD}" "${COLOR_RESET}"
+  printf "  • System health: %bpulse doctor%b\n" "${COLOR_BOLD}" "${COLOR_RESET}"
   printf "\n"
   printf "For documentation: https://github.com/astrosteveo/pulse\n"
 
