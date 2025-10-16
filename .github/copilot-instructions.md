@@ -2,6 +2,26 @@
 
 Auto-generated from all feature plans. Last updated: 2025-10-16
 
+## Quick Reference
+
+**Essential Commands**:
+```bash
+# Setup
+git submodule update --init tests/bats-core
+
+# Test
+tests/bats-core/bin/bats tests/integration/*.bats
+
+# Debug
+export PULSE_DEBUG=1 && zsh -c 'source pulse.zsh'
+```
+
+**Key Principles**: TDD mandatory, <50ms performance target, Zsh ≥5.0, prefix functions with `pulse_`
+
+**See**: [Build and Test](#build-and-test) | [Development Workflow](#development-workflow) | [Constitution](#constitution)
+
+---
+
 ## Constitution
 
 All development MUST adhere to the project constitution at `.specify/memory/constitution.md`.
