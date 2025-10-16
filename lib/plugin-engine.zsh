@@ -181,8 +181,11 @@ _pulse_resolve_plugin_source() {
   local source_spec="$1"
   local plugin_dir=""
 
-  # Strip version spec if present
-  source_spec="${source_spec%@*}"
+  # Strip version spec if present (but not for SSH URLs where @ is part of the URL)
+  # SSH URLs: git@host:path - don't strip the @ that's part of the SSH format
+  if [[ ! "$source_spec" =~ ^git@ ]]; then
+    source_spec="${source_spec%@*}"
+  fi
 
   # Case 1: Local absolute path
   if [[ "$source_spec" == /* ]]; then
