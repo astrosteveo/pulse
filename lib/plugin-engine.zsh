@@ -109,8 +109,9 @@ _pulse_parse_plugin_spec() {
     annotations="${source_spec#* }"
     source_spec="$repo_part"
     
-    # Parse each annotation
-    for annotation in ${(s: :)annotations}; do
+    # Parse each annotation (space-separated)
+    local IFS=' '
+    for annotation in $annotations; do
       if [[ "$annotation" == path:* ]]; then
         plugin_subpath="${annotation#path:}"
       elif [[ "$annotation" == kind:* ]]; then
@@ -245,7 +246,8 @@ _pulse_resolve_plugin_source() {
     local annotations="${source_spec#* }"
     source_spec="$repo_part"
     
-    for annotation in ${(s: :)annotations}; do
+    local IFS=' '
+    for annotation in $annotations; do
       if [[ "$annotation" == path:* ]]; then
         plugin_subpath="${annotation#path:}"
         break
