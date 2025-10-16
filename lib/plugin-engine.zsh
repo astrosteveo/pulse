@@ -384,8 +384,7 @@ _pulse_clone_plugin() {
 
   if [[ -n "$plugin_ref" ]]; then
     # Clone specific branch/tag
-    local clone_error=""
-    if git clone --quiet --depth 1 --branch "$plugin_ref" "$plugin_url" "$plugin_dir" 2>&1 | read -r clone_error; then
+    if git clone --quiet --depth 1 --branch "$plugin_ref" "$plugin_url" "$plugin_dir" 2>/dev/null; then
       if [[ $show_feedback -eq 1 ]]; then
         pulse_stop_spinner success "Installed ${display_name}"
       else
@@ -395,8 +394,7 @@ _pulse_clone_plugin() {
       return 0
     else
       # Fallback: clone without branch and checkout ref
-      local fallback_error=""
-      if git clone --quiet --depth 1 "$plugin_url" "$plugin_dir" 2>&1 | read -r fallback_error; then
+      if git clone --quiet --depth 1 "$plugin_url" "$plugin_dir" 2>/dev/null; then
         # Use command grouping instead of subshell to preserve return code
         local checkout_failed=0
         if ! cd "$plugin_dir" 2>/dev/null; then
@@ -439,8 +437,7 @@ _pulse_clone_plugin() {
     return 1
   else
     # Clone default branch
-    local clone_error=""
-    if git clone --quiet --depth 1 "$plugin_url" "$plugin_dir" 2>&1 | read -r clone_error; then
+    if git clone --quiet --depth 1 "$plugin_url" "$plugin_dir" 2>/dev/null; then
       # Verify clone succeeded by checking .git directory
       if [[ -d "$plugin_dir/.git" ]]; then
         if [[ $show_feedback -eq 1 ]]; then

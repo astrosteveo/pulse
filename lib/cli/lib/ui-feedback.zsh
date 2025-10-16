@@ -64,7 +64,7 @@ pulse_start_spinner() {
 # Stop the spinner and show a result
 # Usage: pulse_stop_spinner [success|error|info] "Message"
 pulse_stop_spinner() {
-  local status="${1:-success}"
+  local result_status="${1:-success}"
   local message="${2:-}"
   
   # Kill spinner background job if running
@@ -82,7 +82,7 @@ pulse_stop_spinner() {
   fi
   
   # Show result with appropriate symbol and color
-  case "$status" in
+  case "$result_status" in
     success)
       printf '%s%s%s %s\n' "$PULSE_COLOR_GREEN" "$PULSE_CHECK_MARK" "$PULSE_COLOR_RESET" "${message:-$PULSE_SPINNER_MESSAGE}"
       ;;
