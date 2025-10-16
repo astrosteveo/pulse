@@ -6,6 +6,13 @@
 # If KSH_ARRAYS is set, array indexing will be 0-based and break this code.
 # This is intentional - Pulse requires standard zsh behavior.
 
+# Source UI feedback library for visual installation feedback
+# Only source if ui-feedback.zsh exists and hasn't been sourced yet
+if [[ -f "${0:A:h}/cli/lib/ui-feedback.zsh" ]] && [[ ! -v PULSE_UI_FEEDBACK_SOURCED ]]; then
+  source "${0:A:h}/cli/lib/ui-feedback.zsh"
+  typeset -g PULSE_UI_FEEDBACK_SOURCED=1
+fi
+
 # Source lock file library for reproducible installs
 # Only source if lock-file.zsh exists and hasn't been sourced yet
 if [[ -f "${0:A:h}/cli/lib/lock-file.zsh" ]] && [[ ! -v PULSE_LOCK_FILE_SOURCED ]]; then
@@ -351,20 +358,39 @@ _pulse_clone_plugin() {
 
   # Check if git is available
   if ! command -v git >/dev/null 2>&1; then
-    [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: git not found, cannot clone plugins" >&2
+    if command -v pulse_error >/dev/null 2>&1; then
+      pulse_error "Git not found - cannot install plugins"
+    else
+      echo "[Pulse] Error: git not found, cannot clone plugins" >&2
+    fi
     return 1
   fi
 
   # Create plugins directory if it doesn't exist
   mkdir -p "${PULSE_DIR}/plugins"
 
-  # Clone the plugin
-  [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Cloning $plugin_name from $plugin_url..." >&2
+  # Show user feedback with spinner (if available)
+  local show_feedback=0
+  local display_name="${plugin_name}"
+  [[ -n "$plugin_ref" ]] && display_name="${plugin_name}@${plugin_ref}"
+  
+  if command -v pulse_start_spinner >/dev/null 2>&1; then
+    pulse_start_spinner "Installing ${display_name}..."
+    show_feedback=1
+  else
+    # Fallback to simple message
+    echo "Installing ${display_name}..."
+  fi
 
   if [[ -n "$plugin_ref" ]]; then
     # Clone specific branch/tag
     local clone_error=""
     if git clone --quiet --depth 1 --branch "$plugin_ref" "$plugin_url" "$plugin_dir" 2>&1 | read -r clone_error; then
+      if [[ $show_feedback -eq 1 ]]; then
+        pulse_stop_spinner success "Installed ${display_name}"
+      else
+        echo "✓ Installed ${display_name}"
+      fi
       [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully cloned $plugin_name@$plugin_ref" >&2
       return 0
     else
@@ -386,13 +412,28 @@ _pulse_clone_plugin() {
         cd - >/dev/null
 
         if [[ $checkout_failed -eq 0 ]]; then
+          if [[ $show_feedback -eq 1 ]]; then
+            pulse_stop_spinner success "Installed ${display_name}"
+          else
+            echo "✓ Installed ${display_name}"
+          fi
           [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully cloned $plugin_name and checked out $plugin_ref" >&2
           return 0
         else
+          if [[ $show_feedback -eq 1 ]]; then
+            pulse_stop_spinner error "Failed to install ${display_name} (checkout failed)"
+          else
+            echo "✗ Failed to install ${display_name} (checkout failed)" >&2
+          fi
           [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Checkout failed for $plugin_name@$plugin_ref" >&2
           return 1
         fi
       fi
+    fi
+    if [[ $show_feedback -eq 1 ]]; then
+      pulse_stop_spinner error "Failed to install ${display_name}"
+    else
+      echo "✗ Failed to install ${display_name}" >&2
     fi
     [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Failed to clone $plugin_name@$plugin_ref" >&2
     return 1
@@ -402,14 +443,29 @@ _pulse_clone_plugin() {
     if git clone --quiet --depth 1 "$plugin_url" "$plugin_dir" 2>&1 | read -r clone_error; then
       # Verify clone succeeded by checking .git directory
       if [[ -d "$plugin_dir/.git" ]]; then
+        if [[ $show_feedback -eq 1 ]]; then
+          pulse_stop_spinner success "Installed ${display_name}"
+        else
+          echo "✓ Installed ${display_name}"
+        fi
         [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully cloned $plugin_name" >&2
         return 0
       else
+        if [[ $show_feedback -eq 1 ]]; then
+          pulse_stop_spinner error "Failed to install ${display_name} (incomplete)"
+        else
+          echo "✗ Failed to install ${display_name} (incomplete)" >&2
+        fi
         [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Clone incomplete for $plugin_name (no .git directory)" >&2
         rm -rf "$plugin_dir" 2>/dev/null
         return 1
       fi
     else
+      if [[ $show_feedback -eq 1 ]]; then
+        pulse_stop_spinner error "Failed to install ${display_name}"
+      else
+        echo "✗ Failed to install ${display_name}" >&2
+      fi
       [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Failed to clone $plugin_name" >&2
       return 1
     fi
@@ -641,8 +697,6 @@ _pulse_discover_plugins() {
     # Auto-install if missing and we have a URL
     local check_path="${clone_path:-$plugin_path}"
     if [[ ! -d "$check_path" ]] && [[ -n "$plugin_url" ]]; then
-      [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Plugin '$plugin_name' not found, attempting to install..." >&2
-
       # Ensure plugins directory exists before creating lock
       mkdir -p "${PULSE_DIR}/plugins"
 
@@ -662,6 +716,7 @@ _pulse_discover_plugins() {
           lock_acquired=1
           break
         fi
+        # Only show waiting message once and in debug mode
         [[ -n "$PULSE_DEBUG" ]] && [[ $i -eq 1 ]] && echo "[Pulse] Waiting for lock on $lock_name..." >&2
         sleep 0.1
       done
@@ -669,6 +724,7 @@ _pulse_discover_plugins() {
       if [[ $lock_acquired -eq 1 ]]; then
         # Check again if directory exists (another shell may have created it)
         if [[ ! -d "$check_path" ]]; then
+          # Install the plugin (feedback is shown by _pulse_clone_plugin)
           if _pulse_clone_plugin "$plugin_url" "$lock_name" "$plugin_ref"; then
             [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully installed $lock_name" >&2
           else
