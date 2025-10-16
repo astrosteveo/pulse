@@ -112,7 +112,12 @@ _pulse_parse_plugin_spec() {
     plugin_url="$source_spec"
     plugin_name="${source_spec##*/}"
     plugin_name="${plugin_name%.git}"
-    echo "$plugin_url" "$plugin_name" "$plugin_ref"
+    # Only output ref if non-empty (for accurate word count)
+    if [[ -n "$plugin_ref" ]]; then
+      echo "$plugin_url" "$plugin_name" "$plugin_ref"
+    else
+      echo "$plugin_url" "$plugin_name"
+    fi
     return 0
   fi
 
@@ -120,21 +125,18 @@ _pulse_parse_plugin_spec() {
   # Only for non-SSH URLs
   if [[ "$source_spec" == *@* ]]; then
     # Check for multiple @ symbols (excluding SSH URL case already handled)
-    local at_count=$(echo "$source_spec" | grep -o '@' | wc -l)
-    if [[ $at_count -gt 1 ]]; then
-      [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Warning: Multiple @ symbols in spec: $source_spec" >&2
-    fi
+    # Silently handle - caller can validate if needed
     plugin_ref="${source_spec##*@}"
     source_spec="${source_spec%@*}"
 
     # Treat @latest as empty ref (clone default branch)
     # This provides explicit self-documenting syntax for default branch
     if [[ "$plugin_ref" == "latest" ]]; then
-      [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Plugin using @latest (default branch): $source_spec" >&2
       plugin_ref=""
-    fi    # Validate ref is not empty (handles trailing @)
+    fi
+
+    # Clear empty ref (handles trailing @)
     if [[ -z "$plugin_ref" ]]; then
-      [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Warning: Empty version ref in spec (trailing @): $1" >&2
       plugin_ref=""
     fi
   fi
@@ -143,7 +145,12 @@ _pulse_parse_plugin_spec() {
   if [[ "$source_spec" =~ ^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$ ]]; then
     plugin_url="https://github.com/${source_spec}.git"
     plugin_name="${source_spec##*/}"
-    echo "$plugin_url" "$plugin_name" "$plugin_ref"
+    # Only output ref if non-empty (for accurate word count)
+    if [[ -n "$plugin_ref" ]]; then
+      echo "$plugin_url" "$plugin_name" "$plugin_ref"
+    else
+      echo "$plugin_url" "$plugin_name"
+    fi
     return 0
   fi
 
@@ -152,7 +159,12 @@ _pulse_parse_plugin_spec() {
     plugin_url="$source_spec"
     plugin_name="${source_spec##*/}"
     plugin_name="${plugin_name%.git}"
-    echo "$plugin_url" "$plugin_name" "$plugin_ref"
+    # Only output ref if non-empty (for accurate word count)
+    if [[ -n "$plugin_ref" ]]; then
+      echo "$plugin_url" "$plugin_name" "$plugin_ref"
+    else
+      echo "$plugin_url" "$plugin_name"
+    fi
     return 0
   fi
 
