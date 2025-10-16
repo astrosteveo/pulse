@@ -675,7 +675,7 @@ These tasks must complete before ANY user story can be implemented.
 
 ---
 
-### T021: [US2] [IMPL] Implement pulse update command
+### T021: [US2] [IMPL] Implement pulse update command ✅
 
 **File**: `lib/cli/commands/update.zsh`
 **Story**: US2
