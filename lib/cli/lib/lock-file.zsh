@@ -140,62 +140,41 @@ pulse_validate_lock_file() {
     ((errors++))
   fi
 
-  # Validate each plugin section has required fields
-  local in_section=0
-  local current_plugin=""
-  local has_url=0
-  local has_commit=0
-  local has_stage=0
-
-  while IFS= read -r line; do
-    # New section
-    if [[ "$line" =~ ^\[(.+)\]$ ]]; then
+  # Validate each plugin section has required fields using awk
+  # This is more reliable than shell-based section extraction
+  local validation_errors=$(awk '
+    /^\[.+\]$/ {
       # Validate previous section
-      if [[ -n "$current_plugin" ]]; then
-        if [[ $has_url -eq 0 ]]; then
-          echo "Error: Plugin '$current_plugin' missing 'url' field" >&2
-          ((errors++))
-        fi
-        if [[ $has_commit -eq 0 ]]; then
-          echo "Error: Plugin '$current_plugin' missing 'commit' field" >&2
-          ((errors++))
-        fi
-        if [[ $has_stage -eq 0 ]]; then
-          echo "Error: Plugin '$current_plugin' missing 'stage' field" >&2
-          ((errors++))
-        fi
-      fi
-
+      if (plugin) {
+        if (!has_url) print "Error: Plugin '\''" plugin "'\'' missing '\''url'\'' field"
+        if (!has_commit) print "Error: Plugin '\''" plugin "'\'' missing '\''commit'\'' field"
+        if (!has_stage) print "Error: Plugin '\''" plugin "'\'' missing '\''stage'\'' field"
+      }
       # Start new section
-      current_plugin="${match[1]}"
-      has_url=0
-      has_commit=0
-      has_stage=0
-      in_section=1
-    elif [[ $in_section -eq 1 ]]; then
-      # Check for required fields
-      [[ "$line" =~ ^url ]] && has_url=1
-      [[ "$line" =~ ^commit ]] && has_commit=1
-      [[ "$line" =~ ^stage ]] && has_stage=1
-    fi
-  done < "$lock_file"
+      plugin = substr($0, 2, length($0) - 2)
+      has_url = 0
+      has_commit = 0
+      has_stage = 0
+    }
+    /^url[[:space:]]*=/ { has_url = 1 }
+    /^commit[[:space:]]*=/ { has_commit = 1 }
+    /^stage[[:space:]]*=/ { has_stage = 1 }
+    END {
+      # Validate last section
+      if (plugin) {
+        if (!has_url) print "Error: Plugin '\''" plugin "'\'' missing '\''url'\'' field"
+        if (!has_commit) print "Error: Plugin '\''" plugin "'\'' missing '\''commit'\'' field"
+        if (!has_stage) print "Error: Plugin '\''" plugin "'\'' missing '\''stage'\'' field"
+      }
+    }
+  ' "$lock_file")
 
-  # Validate last section
-  if [[ -n "$current_plugin" ]]; then
-    if [[ $has_url -eq 0 ]]; then
-      echo "Error: Plugin '$current_plugin' missing 'url' field" >&2
-      ((errors++))
-    fi
-    if [[ $has_commit -eq 0 ]]; then
-      echo "Error: Plugin '$current_plugin' missing 'commit' field" >&2
-      ((errors++))
-    fi
-    if [[ $has_stage -eq 0 ]]; then
-      echo "Error: Plugin '$current_plugin' missing 'stage' field" >&2
-      ((errors++))
-    fi
+  if [[ -n "$validation_errors" ]]; then
+    echo "$validation_errors" >&2
+    local error_count=$(echo "$validation_errors" | wc -l | tr -d ' ')
+    errors=$((errors + error_count))
   fi
-
+  
   if [[ $errors -gt 0 ]]; then
     echo "Lock file validation failed with $errors error(s)" >&2
     return 1

@@ -372,7 +372,7 @@ These tasks must complete before ANY user story can be implemented.
 
 ---
 
-### T012: [US3] [TEST] Write failing test for lock file validation
+### T012: [US3] [TEST] Write failing test for lock file validation ✅
 
 **File**: `tests/unit/lock_file_format.bats`
 **Story**: US3
@@ -404,7 +404,7 @@ These tasks must complete before ANY user story can be implemented.
 
 ---
 
-### T013: [US3] [IMPL] Implement lock file validation
+### T013: [US3] [IMPL] Implement lock file validation ✅
 
 **File**: `lib/cli/lib/lock-file.zsh`
 **Story**: US3
