@@ -539,7 +539,8 @@ tests/bats-core/bin/bats tests/unit/plugin_type_detection.bats
 ## 📚 Documentation
 
 - 📖 [Installation Guide](docs/install/QUICKSTART.md)
-- 🔧 [Configuration Reference](specs/001-build-a-zsh/quickstart.md)
+- � [CLI Reference](docs/CLI_REFERENCE.md) - Complete command documentation
+- �🔧 [Configuration Reference](specs/001-build-a-zsh/quickstart.md)
 - 🐛 [Troubleshooting](TROUBLESHOOTING.md)
 - ⚡ [Performance Guide](docs/PERFORMANCE.md)
 - 🏗️ [Architecture](specs/001-build-a-zsh/spec.md)
