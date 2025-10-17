@@ -7,14 +7,26 @@ _pulse_cmd_list() {
   : ${PULSE_DIR:=${XDG_DATA_HOME:-$HOME/.local/share}/pulse}
   : ${PULSE_LOCK_FILE:=${PULSE_DIR}/plugins.lock}
 
-  # Source lock file library
-  # Use PULSE_CLI_LIB_DIR if set (from bin/pulse), otherwise calculate relative path
-  local lock_lib="${PULSE_CLI_LIB_DIR:-${0:A:h}/../lib}/lock-file.zsh"
+  # Source required libraries
+  # Compute base library directories from a common root
+  # bin/pulse sets these; fallback resolves relative to this file using ${(%):-%x}
+  local root_lib_dir="${PULSE_LIB_DIR:-${${(%):-%x}:A:h:h:h:h}/lib}"
+  local cli_lib_dir="${PULSE_CLI_LIB_DIR:-${root_lib_dir}/cli/lib}"
+  
+  local lock_lib="${cli_lib_dir}/lock-file.zsh"
+  local utilities_lib="${root_lib_dir}/utilities.zsh"
 
   if [[ -f "$lock_lib" ]]; then
     source "$lock_lib"
   else
     echo "Error: Lock file library not found at $lock_lib" >&2
+    return 1
+  fi
+  
+  if [[ -f "$utilities_lib" ]]; then
+    source "$utilities_lib"
+  else
+    echo "Error: Utilities library not found at $utilities_lib" >&2
     return 1
   fi
   
@@ -59,7 +71,7 @@ _pulse_cmd_list() {
       [[ "$stage" == "-" ]] && stage=""
 
       # Security check for SSH URLs (if _pulse_check_ssh_security is available)
-      if typeset -f _pulse_check_ssh_security >/dev/null 2>&1 && [[ -n "$url" ]]; then
+      if pulse_has_function _pulse_check_ssh_security && [[ -n "$url" ]]; then
         if ! _pulse_check_ssh_security "$url" "$plugin_name"; then
           : $((has_security_warnings++))
         fi
