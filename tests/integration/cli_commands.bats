@@ -67,6 +67,59 @@ teardown() {
   [[ "$output" =~ "No plugins installed" ]]
 }
 
+# Test: pulse list does not show verbose debug output (regression test)
+@test "pulse list shows clean output without verbose debug info" {
+  # Create lock file with multiple plugins
+  cat > "${PULSE_LOCK_FILE}" <<'EOF'
+[plugin-a]
+url = https://github.com/user/plugin-a
+ref = main
+commit = abc123def456
+timestamp = 2024-01-01T00:00:00Z
+stage = normal
+
+[plugin-b]
+url = https://github.com/user/plugin-b
+ref = 
+commit = 111222333444
+timestamp = 2024-01-01T00:00:00Z
+stage = defer
+
+[plugin-c]
+url = https://github.com/user/plugin-c
+ref = v1.0.0
+commit = fedcba987654
+timestamp = 2024-01-01T00:00:00Z
+stage = early
+EOF
+
+  run ${PULSE_ROOT}/bin/pulse list
+
+  [ "$status" -eq 0 ]
+  
+  # Verify header is present with proper formatting
+  [[ "$output" =~ ^PLUGIN[[:space:]]+VERSION[[:space:]]+COMMIT ]]
+  
+  # Should NOT contain verbose field output like "url=..." or "ref=..." or "commit=..."
+  [[ ! "$output" =~ "url=" ]]
+  [[ ! "$output" =~ "ref=" ]]
+  [[ ! "$output" =~ "commit=" ]]
+  [[ ! "$output" =~ "timestamp=" ]]
+  [[ ! "$output" =~ "stage=" ]]
+  
+  # Should contain the plugin names in clean table format
+  [[ "$output" =~ "plugin-a" ]]
+  [[ "$output" =~ "plugin-b" ]]
+  [[ "$output" =~ "plugin-c" ]]
+  
+  # Verify specific ref values: plugin-b with empty ref shows "(default)"
+  [[ "$output" =~ plugin-b[[:space:]]+\(default\) ]]
+  # plugin-a should show "main"
+  [[ "$output" =~ plugin-a[[:space:]]+main ]]
+  # plugin-c should show "v1.0.0"
+  [[ "$output" =~ plugin-c[[:space:]]+v1\.0\.0 ]]
+}
+
 # ============================================================================
 # pulse update command tests (T019)
 # ============================================================================

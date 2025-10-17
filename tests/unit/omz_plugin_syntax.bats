@@ -26,7 +26,7 @@ teardown() {
   # Should return: url name ref subpath kind
   # Arrays are 0-indexed in bash/bats
   [[ "${result[0]}" == "https://github.com/ohmyzsh/ohmyzsh.git" ]]
-  [[ "${result[1]}" == "ohmyzsh" ]]
+  [[ "${result[1]}" == "git" ]]
   [[ "${result[2]}" == "-" ]]
   [[ "${result[3]}" == "plugins/git" ]]
   [[ "${result[4]}" == "path" ]]
@@ -39,7 +39,7 @@ teardown() {
   result=($(_pulse_parse_plugin_spec "omz:lib/git"))
   
   [[ "${result[0]}" == "https://github.com/ohmyzsh/ohmyzsh.git" ]]
-  [[ "${result[1]}" == "ohmyzsh" ]]
+  [[ "${result[1]}" == "git" ]]
   [[ "${result[3]}" == "lib/git" ]]
   [[ "${result[4]}" == "path" ]]
 }
@@ -130,16 +130,19 @@ teardown() {
   [[ "${result2[1]}" == "ohmyzsh_plugins_kubectl" ]]
 }
 
-# Test: omz: shorthand all use same repo name
-@test "omz: shorthand plugins use same base name" {
+# Test: omz: shorthand plugins use unique names based on subpath
+@test "omz: shorthand plugins use unique names from subpath" {
   source "${PULSE_ROOT}/lib/plugin-engine.zsh"
   
   result1=($(_pulse_parse_plugin_spec "omz:plugins/git"))
-  result2=($(_pulse_parse_plugin_spec "omz:lib/git"))
+  result2=($(_pulse_parse_plugin_spec "omz:plugins/kubectl"))
   
-  # Both should use "ohmyzsh" as the name since they're from same repo
-  [[ "${result1[1]}" == "ohmyzsh" ]]
-  [[ "${result2[1]}" == "ohmyzsh" ]]
+  # Each should have its own unique name from the subpath
+  [[ "${result1[1]}" == "git" ]]
+  [[ "${result2[1]}" == "kubectl" ]]
+  
+  # But both should share the same URL (ohmyzsh repo)
+  [[ "${result1[0]}" == "${result2[0]}" ]]
 }
 
 # Test: Empty values use "-" placeholder
