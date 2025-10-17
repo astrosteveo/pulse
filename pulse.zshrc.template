@@ -9,6 +9,20 @@
 # Pulse will automatically install and load your plugins!
 
 # ============================================================================
+# PATH CONFIGURATION (Modern Zsh Best Practice)
+# ============================================================================
+
+# Sync PATH and path array, ensure uniqueness, and export
+# This uses modern Zsh features for clean, deduplicated PATH management
+typeset -TUx PATH path
+
+# Add user binaries to PATH
+path=(
+  $HOME/.local/bin  # User-local binaries (Pulse CLI installed here)
+  $path[@]          # Preserve existing PATH entries
+)
+
+# ============================================================================
 # PLUGIN CONFIGURATION
 # ============================================================================
 

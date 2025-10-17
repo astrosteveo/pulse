@@ -384,10 +384,37 @@ source $install_dir/pulse.zsh
 
   # Check if .zshrc exists
   if [ ! -f "$zshrc_path" ]; then
-    print_verbose "Creating new .zshrc file"
-    # Create new .zshrc with Pulse configuration
-    echo "$config_block" > "$zshrc_path"
-    print_step "Created $zshrc_path with Pulse configuration"
+    print_verbose "Creating new .zshrc file from template"
+    
+    # Try to use template if available
+    local template_file="${install_dir}/pulse.zshrc.template"
+    if [ -f "$template_file" ]; then
+      print_verbose "Using template: $template_file"
+      # Copy template and update the source path
+      sed "s|source \"\${HOME}/.local/share/pulse/pulse.zsh\"|source $install_dir/pulse.zsh|g" "$template_file" > "$zshrc_path"
+      print_step "Created $zshrc_path from template with PATH management"
+    else
+      print_verbose "Template not found, using basic configuration"
+      # Fallback: Create with PATH management and Pulse config
+      cat > "$zshrc_path" << EOF
+# ============================================================================
+# PATH CONFIGURATION (Modern Zsh Best Practice)
+# ============================================================================
+
+# Sync PATH and path array, ensure uniqueness, and export
+# This uses modern Zsh features for clean, deduplicated PATH management
+typeset -TUx PATH path
+
+# Add user binaries to PATH
+path=(
+  \$HOME/.local/bin
+  \$path[@]
+)
+
+$config_block
+EOF
+      print_step "Created $zshrc_path with Pulse configuration and PATH management"
+    fi
     return "$EXIT_SUCCESS"
   fi
 
@@ -597,9 +624,13 @@ setup_cli() {
   # Check if ~/.local/bin is in PATH
   if ! echo "$PATH" | grep -q "${local_bin}"; then
     printf "\n"
-    printf "%bNote:%b ~/.local/bin is not in your PATH\n" "${COLOR_BOLD}" "${COLOR_RESET}"
-    printf "Add this to your %b~/.zshrc%b or %b~/.zprofile%b:\n" "${COLOR_BOLD}" "${COLOR_RESET}" "${COLOR_BOLD}" "${COLOR_RESET}"
-    printf "  %bexport PATH=\"\${HOME}/.local/bin:\${PATH}\"%b\n" "${COLOR_BOLD}" "${COLOR_RESET}"
+    printf "%bNote:%b Your .zshrc should already include ~/.local/bin in PATH\n" "${COLOR_BOLD}" "${COLOR_RESET}"
+    printf "If 'pulse' command is not available after restarting your shell,\n"
+    printf "ensure your .zshrc has the PATH configuration section.\n"
+    printf "\n"
+    printf "Modern Zsh PATH management (recommended, already in template):\n"
+    printf "  %btypeset -TUx PATH path%b\n" "${COLOR_BOLD}" "${COLOR_RESET}"
+    printf "  %bpath=(\$HOME/.local/bin \$path[@])%b\n" "${COLOR_BOLD}" "${COLOR_RESET}"
     printf "\n"
   fi
 
