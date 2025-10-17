@@ -574,8 +574,24 @@ _pulse_clone_plugin() {
     git -C "$plugin_dir" remote set-url origin "$plugin_url" >/dev/null 2>&1
 
     if (( use_sparse )); then
+      # Read existing sparse paths BEFORE modifying them
+      local -a existing_sparse=()
+      existing_sparse=("${(@f)$(git -C "$plugin_dir" sparse-checkout list 2>/dev/null)}")
+      
+      # Merge existing paths with new paths to preserve previously checked out plugins
+      local -A seen_paths
+      local -a combined_paths=()
+      for path in "${existing_sparse[@]}" "${sparse_paths[@]}"; do
+        if [[ -n "$path" ]] && [[ -z "${seen_paths[$path]}" ]]; then
+          seen_paths[$path]=1
+          combined_paths+=("$path")
+        fi
+      done
+      
       git -C "$plugin_dir" sparse-checkout init --no-cone >/dev/null 2>&1
-      git -C "$plugin_dir" sparse-checkout set "${sparse_paths[@]}" >/dev/null 2>&1 || clone_or_update_failed=1
+      git -C "$plugin_dir" sparse-checkout set "${combined_paths[@]}" >/dev/null 2>&1 || clone_or_update_failed=1
+      # Update sparse_paths to reflect what was actually set
+      sparse_paths=("${combined_paths[@]}")
     else
       git -C "$plugin_dir" sparse-checkout disable >/dev/null 2>&1
     fi
@@ -1029,16 +1045,36 @@ _pulse_init_engine() {
   # Set up environment variables for Oh-My-Zsh compatibility
   # These are required by many omz plugins
   if [[ -z "$ZSH" ]]; then
+    # Validate that PULSE_DIR doesn't contain path traversal
+    if [[ "$PULSE_DIR" == *..* ]]; then
+      echo "[Pulse] Error: PULSE_DIR contains invalid path traversal" >&2
+      return 1
+    fi
     export ZSH="${PULSE_DIR}/plugins/ohmyzsh"
   fi
   if [[ -z "$ZSH_CACHE_DIR" ]]; then
+    # Validate that PULSE_CACHE_DIR doesn't contain path traversal
+    if [[ "$PULSE_CACHE_DIR" == *..* ]]; then
+      echo "[Pulse] Error: PULSE_CACHE_DIR contains invalid path traversal" >&2
+      return 1
+    fi
     export ZSH_CACHE_DIR="${PULSE_CACHE_DIR}/ohmyzsh"
   fi
   # Always ensure completions directory exists (even if ZSH_CACHE_DIR was custom)
+  # Validate the path before creating directory
+  if [[ "$ZSH_CACHE_DIR" == *..* ]]; then
+    echo "[Pulse] Error: ZSH_CACHE_DIR contains invalid path traversal" >&2
+    return 1
+  fi
   mkdir -p "$ZSH_CACHE_DIR/completions"
   
   # Set up environment variables for Prezto compatibility
   if [[ -z "$ZPREZTODIR" ]]; then
+    # Validate that PULSE_DIR doesn't contain path traversal
+    if [[ "$PULSE_DIR" == *..* ]]; then
+      echo "[Pulse] Error: PULSE_DIR contains invalid path traversal" >&2
+      return 1
+    fi
     export ZPREZTODIR="${PULSE_DIR}/plugins/prezto"
   fi
 

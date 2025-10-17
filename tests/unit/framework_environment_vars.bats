@@ -88,3 +88,25 @@ teardown() {
   # Should still create the completions directory in the custom location
   [[ -d "${TEST_TMPDIR}/custom/cache/dir/completions" ]]
 }
+
+@test "rejects PULSE_DIR with path traversal" {
+  export PULSE_DIR="/tmp/../etc/passwd"
+  
+  source "${PULSE_ROOT}/lib/plugin-engine.zsh"
+  
+  run _pulse_init_engine
+  
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"path traversal"* ]]
+}
+
+@test "rejects PULSE_CACHE_DIR with path traversal" {
+  export PULSE_CACHE_DIR="/tmp/../etc/passwd"
+  
+  source "${PULSE_ROOT}/lib/plugin-engine.zsh"
+  
+  run _pulse_init_engine
+  
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"path traversal"* ]]
+}
