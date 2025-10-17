@@ -68,11 +68,11 @@ pulse_stop_spinner() {
   local message="${2:-}"
   
   # Kill spinner background job if running
-  if [[ -n "$PULSE_SPINNER_PID" ]] && kill -0 "$PULSE_SPINNER_PID" 2>/dev/null; then
+  if [[ -n "$PULSE_SPINNER_PID" ]]; then
     kill "$PULSE_SPINNER_PID" 2>/dev/null
     wait "$PULSE_SPINNER_PID" 2>/dev/null
+    PULSE_SPINNER_PID=""
   fi
-  PULSE_SPINNER_PID=""
   
   # Only manipulate cursor if stdout is a terminal
   if [[ -t 1 ]]; then
