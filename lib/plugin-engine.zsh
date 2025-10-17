@@ -861,7 +861,7 @@ _pulse_discover_plugins() {
     local sparse_refresh_needed=0
     if (( ${#sparse_paths[@]} > 0 )) && [[ -n "$clone_path" ]] && [[ -d "$clone_path/.git" ]]; then
       local -a current_sparse=()
-      IFS=$'\n' read -r -A current_sparse < <(git -C "$clone_path" sparse-checkout list 2>/dev/null)
+      current_sparse=("${(@f)$(git -C "$clone_path" sparse-checkout list 2>/dev/null)}")
       for sparse_path in "${sparse_paths[@]}"; do
         if [[ -z "${current_sparse[(r)$sparse_path]}" ]]; then
           sparse_refresh_needed=1
