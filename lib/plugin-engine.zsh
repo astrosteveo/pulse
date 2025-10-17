@@ -423,6 +423,7 @@ _pulse_collect_omz_dependencies() {
     dependencies=("${reply[@]}")
   fi
   _pulse_unique_paths "${dependencies[@]}"
+}
 
 _pulse_collect_prezto_dependencies() {
   local repo_path="$1"
