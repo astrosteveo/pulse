@@ -52,6 +52,12 @@ for _pulse_module in ${_pulse_framework_modules[@]}; do
     [[ -n "${PULSE_DEBUG}" ]] && echo "Pulse: Skipping disabled module: ${_pulse_module}" >&2
     continue
   fi
+  
+  # Skip compinit module if PULSE_NO_COMPINIT is set (for testing/compatibility)
+  if [[ "${_pulse_module}" == "compinit" ]] && [[ -n "${PULSE_NO_COMPINIT}" ]]; then
+    [[ -n "${PULSE_DEBUG}" ]] && echo "Pulse: Skipping compinit module (PULSE_NO_COMPINIT set)" >&2
+    continue
+  fi
 
   # Module file path
   _pulse_module_file="${PULSE_SCRIPT_DIR}/lib/${_pulse_module}.zsh"
