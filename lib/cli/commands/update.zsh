@@ -172,7 +172,7 @@ _pulse_cmd_update() {
       [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] $plugin_name was already up-to-date" >&2 || true
       : $((up_to_date++))
       continue
-    elif (( ${pipestatus[1]} != 0 )); then
+    elif (( ${pipestatus[0]} != 0 )); then
       echo "  Error: Failed to update $plugin_name" >&2
       : $((errors++))
       continue
