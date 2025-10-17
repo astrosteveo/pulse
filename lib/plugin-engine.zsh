@@ -395,7 +395,7 @@ _pulse_extract_framework_sources() {
   fi
 
   local -a extracted
-  IFS=$'\n' read -r -A extracted < <("$python_cmd" -c "$script" "$source_file" 2>/dev/null)
+  extracted=("${(@f)$( "$python_cmd" -c "$script" "$source_file" 2>/dev/null )}")
 
   reply=("${extracted[@]}")
 }
@@ -408,14 +408,20 @@ _pulse_collect_omz_dependencies() {
 
   [[ -z "$repo_path" ]] && return 0
 
-  local plugin_name="${plugin_subpath#plugins/}"
-  local plugin_file="${repo_path}/${plugin_subpath}/${plugin_name}.plugin.zsh"
-  if [[ ! -f "$plugin_file" ]]; then
-    plugin_file="${repo_path}/${plugin_subpath}/${plugin_name}.zsh"
+  local -a dependencies=()
+  if [[ "$plugin_subpath" == lib/* ]]; then
+    local lib_file="${repo_path}/${plugin_subpath}.zsh"
+    _pulse_extract_framework_sources "$lib_file" "omz"
+    dependencies=("${reply[@]}")
+  else
+    local plugin_name="${plugin_subpath#plugins/}"
+    local plugin_file="${repo_path}/${plugin_subpath}/${plugin_name}.plugin.zsh"
+    if [[ ! -f "$plugin_file" ]]; then
+      plugin_file="${repo_path}/${plugin_subpath}/${plugin_name}.zsh"
+    fi
+    _pulse_extract_framework_sources "$plugin_file" "omz"
+    dependencies=("${reply[@]}")
   fi
-
-  _pulse_extract_framework_sources "$plugin_file" "omz"
-  local -a dependencies=("${reply[@]}")
 
   _pulse_unique_paths "${dependencies[@]}"
 }
@@ -535,7 +541,9 @@ _pulse_clone_plugin() {
   fi
 
   local use_sparse=0
-  (( ${#sparse_paths[@]} > 0 && -n "$plugin_subpath" )) && use_sparse=1
+  if (( ${#sparse_paths[@]} > 0 )) && [[ -n "$plugin_subpath" ]]; then
+    use_sparse=1
+  fi
 
   local clone_or_update_failed=0
 
@@ -859,7 +867,7 @@ _pulse_discover_plugins() {
     local sparse_refresh_needed=0
     if (( ${#sparse_paths[@]} > 0 )) && [[ -n "$clone_path" ]] && [[ -d "$clone_path/.git" ]]; then
       local -a current_sparse=()
-      IFS=$'\n' read -r -A current_sparse < <(git -C "$clone_path" sparse-checkout list 2>/dev/null)
+      current_sparse=("${(@f)$(git -C "$clone_path" sparse-checkout list 2>/dev/null)}")
       for sparse_path in "${sparse_paths[@]}"; do
         if [[ -z "${current_sparse[(r)$sparse_path]}" ]]; then
           sparse_refresh_needed=1
@@ -894,9 +902,15 @@ _pulse_discover_plugins() {
       done
 
       if [[ $lock_acquired -eq 1 ]]; then
-        # Check again if directory exists (another shell may have created it)
+        local reinstall_needed=0
         if [[ ! -d "$check_path" ]]; then
-          # Install the plugin (feedback is shown by _pulse_clone_plugin)
+          reinstall_needed=1
+        elif [[ $sparse_refresh_needed -eq 1 ]]; then
+          reinstall_needed=1
+        fi
+
+        if (( reinstall_needed )); then
+          # Install or refresh the plugin (feedback is shown by _pulse_clone_plugin)
           if _pulse_clone_plugin "$plugin_url" "$lock_name" "$plugin_ref" "$plugin_spec" "$plugin_subpath" "${sparse_paths[@]}"; then
             [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully installed $lock_name" >&2
           else
