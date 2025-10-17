@@ -125,7 +125,7 @@ EOF
   run zsh -c "source '${PULSE_DIR}/test.zshrc'"
   assert_success
   # Should NOT show "Installing" since plugin already exists
-  [[ ! "$output" =~ "Installing test-plugin" ]] || false
+  refute_output --partial "Installing test-plugin"
 }
 
 # =============================================================================
