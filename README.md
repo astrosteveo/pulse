@@ -77,6 +77,7 @@ source ~/.local/share/pulse/pulse.zsh  # Done!
 - **Oh-My-Zsh Support** - `omz:plugins/git` syntax
 - **Annotations** - `path:`, `kind:` modifiers
 - **Declarative Config** - Just list plugins
+- **Visual Feedback** - Spinners and status during install
 - **Graceful Errors** - Never breaks your shell
 - **Debug Mode** - See what's happening
 
@@ -562,6 +563,7 @@ tests/bats-core/bin/bats tests/unit/plugin_type_detection.bats
 - 📖 [Installation Guide](docs/install/QUICKSTART.md)
 - � [CLI Reference](docs/CLI_REFERENCE.md) - Complete command documentation
 - �🔧 [Configuration Reference](specs/001-build-a-zsh/quickstart.md)
+- 🎨 [User Feedback System](docs/USER_FEEDBACK.md) - Visual installation feedback
 - 🐛 [Troubleshooting](TROUBLESHOOTING.md)
 - ⚡ [Performance Guide](docs/PERFORMANCE.md)
 - 🏗️ [Architecture](specs/001-build-a-zsh/spec.md)
