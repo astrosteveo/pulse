@@ -395,7 +395,7 @@ _pulse_extract_framework_sources() {
   fi
 
   local -a extracted
-  IFS=$'\n' read -r -A extracted < <("$python_cmd" -c "$script" "$source_file" 2>/dev/null)
+  extracted=("${(@f)$( "$python_cmd" -c "$script" "$source_file" 2>/dev/null )}")
 
   reply=("${extracted[@]}")
 }
