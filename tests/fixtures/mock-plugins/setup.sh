@@ -15,7 +15,19 @@ init_repo() {
   mkdir -p "${plugin_dir}"
 
   # Remove any previous git repository contents to ensure deterministic state
+  if [[ ! -d "${plugin_dir}" ]]; then
+    echo "Error: Plugin directory '${plugin_dir}' does not exist." >&2
+    exit 1
+  fi
+  if [[ ! -w "${plugin_dir}" ]]; then
+    echo "Error: Plugin directory '${plugin_dir}' is not writable." >&2
+    exit 1
+  fi
   find "${plugin_dir}" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+  if [[ $? -ne 0 ]]; then
+    echo "Error: Failed to clean plugin directory '${plugin_dir}'." >&2
+    exit 1
+  fi
 
   git -C "${plugin_dir}" init -q
   git -C "${plugin_dir}" config user.email "${GIT_USER_EMAIL}"
