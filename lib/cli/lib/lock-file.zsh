@@ -62,6 +62,9 @@ pulse_write_lock_entry() {
     pulse_init_lock_file
   fi
 
+  # Remove existing entry to prevent duplicates
+  pulse_remove_lock_entry "$plugin_name"
+
   # Append plugin section in INI format
   cat >> "$lock_file" <<EOF
 
