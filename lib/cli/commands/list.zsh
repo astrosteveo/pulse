@@ -8,9 +8,13 @@ _pulse_cmd_list() {
   : ${PULSE_LOCK_FILE:=${PULSE_DIR}/plugins.lock}
 
   # Source required libraries
-  # Use PULSE_CLI_LIB_DIR if set (from bin/pulse), otherwise calculate relative path  
-  local lock_lib="${PULSE_CLI_LIB_DIR:-${0:A:h}/../lib}/lock-file.zsh"
-  local utilities_lib="${PULSE_LIB_DIR:-${0:A:h}/../../lib}/utilities.zsh"
+  # Compute base library directories from a common root
+  # bin/pulse sets these; fallback resolves relative to this file using ${(%):-%x}
+  local root_lib_dir="${PULSE_LIB_DIR:-${${(%):-%x}:A:h:h:h:h}/lib}"
+  local cli_lib_dir="${PULSE_CLI_LIB_DIR:-${root_lib_dir}/cli/lib}"
+  
+  local lock_lib="${cli_lib_dir}/lock-file.zsh"
+  local utilities_lib="${root_lib_dir}/utilities.zsh"
 
   if [[ -f "$lock_lib" ]]; then
     source "$lock_lib"
