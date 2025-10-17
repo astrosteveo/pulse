@@ -35,7 +35,7 @@ teardown() {
     export PULSE_DIR='${PULSE_DIR}'
     export PULSE_CACHE_DIR='${PULSE_CACHE_DIR}'
     source '${PULSE_ROOT}/lib/plugin-engine.zsh'
-    _pulse_clone_plugin 'file://${MOCK_REPO_DIR}' 'test-plugin'
+    _pulse_clone_plugin 'file://${MOCK_REPO_DIR}' 'test-plugin' '' '' ''
   "
   assert_success
   assert_output --partial "Installing test-plugin"
@@ -48,7 +48,7 @@ teardown() {
     export PULSE_CACHE_DIR='${PULSE_CACHE_DIR}'
     export PATH='/nonexistent'
     source '${PULSE_ROOT}/lib/plugin-engine.zsh'
-    _pulse_clone_plugin 'https://github.com/user/repo' 'test-plugin'
+    _pulse_clone_plugin 'https://github.com/user/repo' 'test-plugin' '' '' ''
   "
   assert_failure
   assert_output --partial "Git not found"
@@ -59,7 +59,7 @@ teardown() {
     export PULSE_DIR='${PULSE_DIR}'
     export PULSE_CACHE_DIR='${PULSE_CACHE_DIR}'
     source '${PULSE_ROOT}/lib/plugin-engine.zsh'
-    _pulse_clone_plugin 'https://github.com/nonexistent/nonexistent-repo-12345' 'test-plugin'
+    _pulse_clone_plugin 'https://github.com/nonexistent/nonexistent-repo-12345' 'test-plugin' '' '' ''
   "
   assert_failure
   assert_output --partial "Installing test-plugin"
@@ -71,7 +71,7 @@ teardown() {
     export PULSE_DIR='${PULSE_DIR}'
     export PULSE_CACHE_DIR='${PULSE_CACHE_DIR}'
     source '${PULSE_ROOT}/lib/plugin-engine.zsh'
-    _pulse_clone_plugin 'file://${MOCK_REPO_DIR}' 'test-plugin' 'main'
+    _pulse_clone_plugin 'file://${MOCK_REPO_DIR}' 'test-plugin' 'main' '' ''
   "
   assert_success
   assert_output --partial "test-plugin@main"
@@ -106,7 +106,7 @@ EOF
     export PULSE_DIR='${PULSE_DIR}'
     export PULSE_CACHE_DIR='${PULSE_CACHE_DIR}'
     source '${PULSE_ROOT}/lib/plugin-engine.zsh'
-    _pulse_clone_plugin 'file://${MOCK_REPO_DIR}' 'test-plugin'
+    _pulse_clone_plugin 'file://${MOCK_REPO_DIR}' 'test-plugin' '' '' ''
   "
   assert_success
 

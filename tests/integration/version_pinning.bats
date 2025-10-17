@@ -55,7 +55,7 @@ EOF
     source ${PULSE_ROOT}/lib/plugin-engine.zsh
 
     # Clone plugin with @latest using file:// URL
-    _pulse_clone_plugin 'file://${MOCK_PLUGINS_DIR}/plugin-a' 'plugin-a' ''
+    _pulse_clone_plugin 'file://${MOCK_PLUGINS_DIR}/plugin-a' 'plugin-a' '' '' ''
 
     # Verify it's on a branch, not a detached HEAD at a tag
     cd '${PULSE_DIR}/plugins/plugin-a'
@@ -74,7 +74,7 @@ EOF
     export PULSE_DIR='${TEST_TMPDIR}/with-latest'
     mkdir -p '${PULSE_DIR}/plugins'
     source ${PULSE_ROOT}/lib/plugin-engine.zsh
-    _pulse_clone_plugin '${MOCK_PLUGINS_DIR}/plugin-b' 'plugin-b' ''
+    _pulse_clone_plugin '${MOCK_PLUGINS_DIR}/plugin-b' 'plugin-b' '' '' ''
     cd '${PULSE_DIR}/plugins/plugin-b'
     git rev-parse HEAD
   "
@@ -86,7 +86,7 @@ EOF
     export PULSE_DIR='${TEST_TMPDIR}/without-version'
     mkdir -p '${PULSE_DIR}/plugins'
     source ${PULSE_ROOT}/lib/plugin-engine.zsh
-    _pulse_clone_plugin '${MOCK_PLUGINS_DIR}/plugin-b' 'plugin-b' ''
+    _pulse_clone_plugin '${MOCK_PLUGINS_DIR}/plugin-b' 'plugin-b' '' '' ''
     cd '${PULSE_DIR}/plugins/plugin-b'
     git rev-parse HEAD
   "
@@ -103,7 +103,7 @@ EOF
   run zsh -c "
     export PULSE_DIR='${PULSE_DIR}'
     source ${PULSE_ROOT}/lib/plugin-engine.zsh
-    _pulse_clone_plugin '${MOCK_PLUGINS_DIR}/plugin-a' 'plugin-a' 'v1.0.0'
+    _pulse_clone_plugin '${MOCK_PLUGINS_DIR}/plugin-a' 'plugin-a' 'v1.0.0' '' ''
     cd '${PULSE_DIR}/plugins/plugin-a'
     git describe --tags --exact-match
   "
