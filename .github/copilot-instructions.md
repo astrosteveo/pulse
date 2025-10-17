@@ -1,5 +1,9 @@
 # pulse Development Guidelines
 
+> **Custom instructions for GitHub Copilot coding agent**
+> 
+> This file provides context to help GitHub Copilot understand the pulse project's architecture, conventions, and development workflow. These instructions apply to all Copilot features including coding agent, chat, and code review.
+
 Auto-generated from all feature plans. Last updated: 2025-10-16
 
 ## Quick Reference
@@ -41,19 +45,29 @@ All development MUST adhere to the project constitution at `.specify/memory/cons
 - Shell startup: <500ms with 15 plugins
 
 ## Active Technologies
-- **Zsh**: Version 5.0+ (tested on 5.9)
+
+### Core Runtime
+- **Zsh**: Version 5.0+ (tested on 5.9) - primary shell environment
 - **Zsh Builtins**: compinit, bindkey, setopt, zstyle, autoload, zle
 - **POSIX Utilities**: ls, less, grep, find, stat
+
+### Dependencies
 - **Git**: For plugin management (clone, update)
-- **Test Framework**: bats-core v1.12.0
-- **Caching**: zcompdump in $PULSE_CACHE_DIR (~/.cache/pulse)
+- **curl/wget**: For installer script download
+- **coreutils**: Standard file operations (cp, mv, chmod)
+- **sha256sum/shasum**: Checksum verification for installer
+
+### Development & Testing
+- **Test Framework**: bats-core v1.12.0 (included as submodule)
+- **POSIX shell (sh)**: For installer script portability
+- **Test Fixtures**: Mock plugins in `tests/fixtures/`
+
+### Data Storage
+- **Cache**: zcompdump in $PULSE_CACHE_DIR (~/.cache/pulse)
 - **History**: HISTFILE for shell history management
-- POSIX shell (sh) with Zsh-specific verification (Zsh ≥ 5.0) + Git (for clone/update), curl (fallback wget), coreutils (cp, mv, chmod), bats-core for automated tests (003-implement-an-install)
-- N/A (installs into file system under `~/.local/share/pulse`) (003-implement-an-install)
-- POSIX shell (sh) with Zsh-specific verification (requires Zsh ≥5.0 on target system) + Git (for repository cloning), curl or wget (for script download), coreutils (cp, mv, chmod), sha256sum or shasum (for checksum verification) (003-implement-an-install)
-- File system operations only - writes to `~/.local/share/pulse`, `~/.zshrc`, marker file `.pulse-installed` (003-implement-an-install)
-- Zsh ≥5.0 (primary), POSIX shell for CLI portability + Git (for plugin operations), existing plugin-engine.zsh infrastructure (004-polish-and-refinement)
-- File-based (lock file in `$PULSE_DIR`, typically `~/.local/share/pulse/plugins.lock`) (004-polish-and-refinement)
+- **Plugin Directory**: `$PULSE_DIR` (default: ~/.local/share/pulse)
+- **Lock File**: `$PULSE_DIR/plugins.lock` for version tracking
+- **Installation Marker**: `.pulse-installed` in PULSE_DIR
 
 ## Framework Modules
 
@@ -150,9 +164,13 @@ specs/                 # Feature specifications
 - **Testing (ABSOLUTE REQUIREMENT)**: TDD MANDATORY—tests written FIRST and MUST FAIL before implementation, Red-Green-Refactor cycle STRICTLY enforced, 100% core functionality coverage target, pull requests without tests REJECTED without review
 
 ## Recent Changes
-- 004-polish-and-refinement: Added Zsh ≥5.0 (primary), POSIX shell for CLI portability + Git (for plugin operations), existing plugin-engine.zsh infrastructure
-- 004-polish-and-refinement: Added Zsh ≥5.0 (primary), POSIX shell for CLI portability + Git (for plugin operations), existing plugin-engine.zsh infrastructure
-- 003-implement-an-install: Added POSIX shell (sh) with Zsh-specific verification (requires Zsh ≥5.0 on target system) + Git (for repository cloning), curl or wget (for script download), coreutils (cp, mv, chmod), sha256sum or shasum (for checksum verification)
+
+### v0.2.0 (2025-10)
+- **Version Management**: Added plugin version pinning with `@latest`, `@tag`, `@branch` syntax
+- **CLI Commands**: Implemented `pulse list`, `pulse update`, `pulse doctor`
+- **Lock File**: Plugin version tracking in `plugins.lock`
+- **Installer**: One-command install script with checksums and validation
+- **Cross-platform**: Enhanced POSIX shell portability for CLI tools
 
 ## Build and Test
 
