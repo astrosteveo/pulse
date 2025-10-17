@@ -54,6 +54,9 @@ _pulse_cmd_list() {
   local has_security_warnings=0
   local url ref commit timestamp stage lock_data
   for plugin_name in ${(o)plugins_list}; do
+    # Reset variables to prevent stale values from previous iteration
+    url='' ref='' commit='' timestamp='' stage=''
+    
     # Read lock entry for this plugin
     lock_data=$(pulse_read_lock_entry "$plugin_name")
 

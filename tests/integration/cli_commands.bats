@@ -96,18 +96,28 @@ EOF
   run ${PULSE_ROOT}/bin/pulse list
 
   [ "$status" -eq 0 ]
+  
+  # Verify header is present with proper formatting
+  [[ "$output" =~ ^PLUGIN[[:space:]]+VERSION[[:space:]]+COMMIT ]]
+  
   # Should NOT contain verbose field output like "url=..." or "ref=..." or "commit=..."
   [[ ! "$output" =~ "url=" ]]
   [[ ! "$output" =~ "ref=" ]]
   [[ ! "$output" =~ "commit=" ]]
   [[ ! "$output" =~ "timestamp=" ]]
   [[ ! "$output" =~ "stage=" ]]
+  
   # Should contain the plugin names in clean table format
   [[ "$output" =~ "plugin-a" ]]
   [[ "$output" =~ "plugin-b" ]]
   [[ "$output" =~ "plugin-c" ]]
-  # Should show "(default)" for empty ref
-  [[ "$output" =~ "(default)" ]]
+  
+  # Verify specific ref values: plugin-b with empty ref shows "(default)"
+  [[ "$output" =~ plugin-b[[:space:]]+\(default\) ]]
+  # plugin-a should show "main"
+  [[ "$output" =~ plugin-a[[:space:]]+main ]]
+  # plugin-c should show "v1.0.0"
+  [[ "$output" =~ plugin-c[[:space:]]+v1\.0\.0 ]]
 }
 
 # ============================================================================
