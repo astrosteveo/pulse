@@ -133,7 +133,9 @@ _pulse_parse_plugin_spec() {
     # Oh-My-Zsh shorthand: omz:plugins/kubectl or omz:lib/git
     local omz_path="${source_spec#omz:}"
     plugin_url="${PULSE_OMZ_REPO:-https://github.com/ohmyzsh/ohmyzsh.git}"
-    plugin_name="ohmyzsh"
+    # Use the plugin name from the path (e.g., "git" from "plugins/git")
+    # This makes each omz plugin unique while sharing the repo
+    plugin_name="${omz_path##*/}"
     plugin_subpath="$omz_path"
     # Derive kind from path if not specified
     if [[ -z "$plugin_kind" ]] && [[ "$omz_path" == plugins/* ]]; then
@@ -996,6 +998,8 @@ _pulse_discover_plugins() {
 
     [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Registered: $plugin_name (type=$plugin_type, stage=$plugin_stage)" >&2
   done
+  
+  return 0
 }
 
 # Initialize the plugin engine
