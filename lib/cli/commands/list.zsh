@@ -10,7 +10,7 @@ _pulse_cmd_list() {
   # Source required libraries
   # Use PULSE_CLI_LIB_DIR if set (from bin/pulse), otherwise calculate relative path  
   local lock_lib="${PULSE_CLI_LIB_DIR:-${0:A:h}/../lib}/lock-file.zsh"
-  local utilities_lib="${PULSE_LIB_DIR:-${0:A:h:h:h}/lib}/utilities.zsh"
+  local utilities_lib="${PULSE_LIB_DIR:-${0:A:h}/../../lib}/utilities.zsh"
 
   if [[ -f "$lock_lib" ]]; then
     source "$lock_lib"
