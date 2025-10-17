@@ -1,6 +1,6 @@
 # User Feedback System
 
-**Version**: 0.2.0+  
+**Version**: 0.3.0+  
 **Status**: Active
 
 ## Overview
@@ -208,7 +208,7 @@ curl -fsSL https://raw.githubusercontent.com/astrosteveo/pulse/main/scripts/puls
 
 # The installer shows:
 ⠋ Downloading Pulse framework...
-✓ Downloaded Pulse v0.2.0
+✓ Downloaded Pulse v0.3.0
 ⠋ Installing to ~/.local/share/pulse...
 ✓ Installed successfully
 ℹ Add this to your .zshrc:

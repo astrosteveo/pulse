@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # pulse - CLI for Pulse framework plugin management
-# Version: 0.2.0
+# Version: 0.3.0
 # Usage: pulse <command> [options]
 
 setopt LOCAL_OPTIONS ERR_RETURN PIPE_FAIL
@@ -11,7 +11,7 @@ typeset -g PULSE_LIB_DIR="${PULSE_CLI_DIR:h}/lib"
 typeset -g PULSE_CLI_LIB_DIR="${PULSE_LIB_DIR}/cli/lib"
 
 # Version info
-typeset -gr PULSE_VERSION="0.2.0"
+typeset -gr PULSE_VERSION="0.3.0"
 
 # Security helper: Check for SSH URLs and warn if needed
 _pulse_check_ssh_security() {
