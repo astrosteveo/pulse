@@ -52,7 +52,7 @@ pulse_start_spinner() {
   # Start spinner in background
   {
     while true; do
-      local frame="${PULSE_SPINNER_FRAMES[$(( (PULSE_SPINNER_FRAME % ${#PULSE_SPINNER_FRAMES[@]}) + 1 ))]}"
+      local frame="${PULSE_SPINNER_FRAMES[$(( PULSE_SPINNER_FRAME % ${#PULSE_SPINNER_FRAMES[@]} + 1 ))]}"
       printf '\r%s%s%s %s' "$PULSE_COLOR_BLUE" "$frame" "$PULSE_COLOR_RESET" "$PULSE_SPINNER_MESSAGE"
       PULSE_SPINNER_FRAME=$((PULSE_SPINNER_FRAME + 1))
       sleep 0.1
