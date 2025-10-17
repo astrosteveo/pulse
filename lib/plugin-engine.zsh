@@ -27,6 +27,9 @@ typeset -gA pulse_plugin_stages    # name -> stage
 typeset -gA pulse_plugin_status    # name -> status
 typeset -ga pulse_load_order       # ordered list of plugins to load
 
+# Track plugins checked for installation in this session to avoid redundant checks
+typeset -gA _pulse_installation_checked
+
 # Define load stages
 typeset -gA PULSE_STAGES
 PULSE_STAGES=(
@@ -904,75 +907,92 @@ _pulse_discover_plugins() {
 
     # Auto-install if missing and we have a URL
     local check_path="${clone_path:-$plugin_path}"
-    local sparse_refresh_needed=0
-    if (( ${#sparse_paths[@]} > 0 )) && [[ -n "$clone_path" ]] && [[ -d "$clone_path/.git" ]]; then
-      local -a current_sparse=()
-      current_sparse=("${(@f)$(git -C "$clone_path" sparse-checkout list 2>/dev/null)}")
-      for sparse_path in "${sparse_paths[@]}"; do
-        if [[ -z "${current_sparse[(r)$sparse_path]}" ]]; then
-          sparse_refresh_needed=1
-          break
-        fi
-      done
+    
+    # Use repo name for tracking if we have a clone_path
+    local install_name="${plugin_name}"
+    if [[ -n "$clone_path" ]]; then
+      install_name="${clone_path##*/}"
     fi
-
-    if { [[ ! -d "$check_path" ]] || [[ $sparse_refresh_needed -eq 1 ]] ; } && [[ -n "$plugin_url" ]]; then
-      # Ensure plugins directory exists before creating lock
-      mkdir -p "${PULSE_DIR}/plugins"
-
-      # Use repo name for lock if we have a clone_path
-      local lock_name="${plugin_name}"
-      if [[ -n "$clone_path" ]]; then
-        lock_name="${clone_path##*/}"
-      fi
-
-      # Create lock file to prevent race conditions
-      local lock_file="${PULSE_DIR}/plugins/.${lock_name}.lock"
-      local lock_acquired=0
+    
+    # Skip installation check if already verified in this session
+    if [[ -n "${_pulse_installation_checked[$install_name]}" ]]; then
+      [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Skipping installation check for $install_name (already checked)" >&2
+    else
+      # Mark as checked for this session
+      _pulse_installation_checked[$install_name]=1
       
-      # Check if repo already exists (for omz/prezto multi-plugin scenarios)
-      local repo_exists=0
-      if [[ -d "${PULSE_DIR}/plugins/${lock_name}/.git" ]]; then
-        repo_exists=1
+      local sparse_refresh_needed=0
+      if (( ${#sparse_paths[@]} > 0 )) && [[ -n "$clone_path" ]] && [[ -d "$clone_path/.git" ]]; then
+        local -a current_sparse=()
+        current_sparse=("${(@f)$(git -C "$clone_path" sparse-checkout list 2>/dev/null)}")
+        for sparse_path in "${sparse_paths[@]}"; do
+          if [[ -z "${current_sparse[(r)$sparse_path]}" ]]; then
+            sparse_refresh_needed=1
+            break
+          fi
+        done
       fi
 
-      # Try to acquire lock with timeout
-      for i in {1..30}; do
-        if mkdir "$lock_file" 2>/dev/null; then
-          lock_acquired=1
-          break
-        fi
-        # Only show waiting message once and in debug mode
-        [[ -n "$PULSE_DEBUG" ]] && [[ $i -eq 1 ]] && echo "[Pulse] Waiting for lock on $lock_name..." >&2
-        sleep 0.1
-      done
+      if { [[ ! -d "$check_path" ]] || [[ $sparse_refresh_needed -eq 1 ]] ; } && [[ -n "$plugin_url" ]]; then
+        # Ensure plugins directory exists before creating lock
+        mkdir -p "${PULSE_DIR}/plugins"
 
-      if [[ $lock_acquired -eq 1 ]]; then
-        local reinstall_needed=0
-        if [[ ! -d "$check_path" ]]; then
-          reinstall_needed=1
-        elif [[ $sparse_refresh_needed -eq 1 ]]; then
-          reinstall_needed=1
+        # Use repo name for lock if we have a clone_path
+        local lock_name="${plugin_name}"
+        if [[ -n "$clone_path" ]]; then
+          lock_name="${clone_path##*/}"
         fi
 
-        if (( reinstall_needed )); then
-          # Install or refresh the plugin (feedback is shown by _pulse_clone_plugin)
-          # Skip showing feedback if this is just a sparse checkout update for an existing repo
-          local skip_feedback=0
-          if [[ $repo_exists -eq 1 ]] && [[ $sparse_refresh_needed -eq 1 ]]; then
-            skip_feedback=1
-          fi
-          
-          if _pulse_clone_plugin "$plugin_url" "$lock_name" "$plugin_ref" "$plugin_spec" "$plugin_subpath" "$skip_feedback" "${sparse_paths[@]}"; then
-            [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully installed $lock_name" >&2
-          else
-            [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Warning: Failed to install $lock_name" >&2
-          fi
+        # Create lock file to prevent race conditions
+        local lock_file="${PULSE_DIR}/plugins/.${lock_name}.lock"
+        local lock_acquired=0
+        
+        # Check if repo already exists (for omz/prezto multi-plugin scenarios)
+        local repo_exists=0
+        if [[ -d "${PULSE_DIR}/plugins/${lock_name}/.git" ]]; then
+          repo_exists=1
         fi
-        # Release lock
-        rmdir "$lock_file" 2>/dev/null
-      else
-        [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Warning: Could not acquire lock for $lock_name" >&2
+
+        # Try to acquire lock with timeout
+        for i in {1..30}; do
+          if mkdir "$lock_file" 2>/dev/null; then
+            lock_acquired=1
+            break
+          fi
+          # Only show waiting message once and in debug mode
+          [[ -n "$PULSE_DEBUG" ]] && [[ $i -eq 1 ]] && echo "[Pulse] Waiting for lock on $lock_name..." >&2
+          sleep 0.1
+        done
+
+        if [[ $lock_acquired -eq 1 ]]; then
+          local reinstall_needed=0
+          if [[ ! -d "$check_path" ]]; then
+            reinstall_needed=1
+          elif [[ $sparse_refresh_needed -eq 1 ]]; then
+            reinstall_needed=1
+          fi
+
+          if (( reinstall_needed )); then
+            # Install or refresh the plugin (feedback is shown by _pulse_clone_plugin)
+            # Skip showing feedback if this is just a sparse checkout update for an existing repo
+            local skip_feedback=0
+            if [[ $repo_exists -eq 1 ]] && [[ $sparse_refresh_needed -eq 1 ]]; then
+              skip_feedback=1
+            fi
+            
+            if _pulse_clone_plugin "$plugin_url" "$lock_name" "$plugin_ref" "$plugin_spec" "$plugin_subpath" "$skip_feedback" "${sparse_paths[@]}"; then
+              [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully installed $lock_name" >&2
+              # Create installation marker file
+              touch "${PULSE_DIR}/plugins/${lock_name}/.pulse-installed" 2>/dev/null
+            else
+              [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Warning: Failed to install $lock_name" >&2
+            fi
+          fi
+          # Release lock
+          rmdir "$lock_file" 2>/dev/null
+        else
+          [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Warning: Could not acquire lock for $lock_name" >&2
+        fi
       fi
     fi
 
