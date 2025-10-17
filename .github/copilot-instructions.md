@@ -303,12 +303,14 @@ time zsh -c 'source pulse.zsh; exit'
 ## CI/CD
 
 The repository uses GitHub Actions for CI:
-- `.github/workflows/install.yml` - Runs installer tests on push/PR
+- `.github/workflows/install.yml` - Runs installer tests
 
 Tests run automatically on:
-- Pushes to main branch
-- Pull requests
-- Changes to installer or test files
+- Pushes to `main` or `**-implement-an-install` branches that modify:
+  - `scripts/pulse-install.sh`
+  - `tests/install/**`
+  - `.github/workflows/install.yml`
+- Pull requests that modify the same paths listed above
 
 ## Additional Resources
 
