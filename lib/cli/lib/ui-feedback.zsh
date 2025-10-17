@@ -25,7 +25,7 @@ if [[ -t 1 ]] && [[ -n "${terminfo[colors]}" ]] && [[ "${terminfo[colors]}" -ge 
 fi
 
 # Spinner frames for animation
-typeset -ga PULSE_SPINNER_FRAMES
+typeset -g PULSE_SPINNER_FRAMES
 PULSE_SPINNER_FRAMES=(⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏)
 
 # Current spinner state
