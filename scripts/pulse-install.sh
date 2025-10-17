@@ -625,9 +625,13 @@ setup_cli() {
   # Check if ~/.local/bin is in PATH
   if ! echo "$PATH" | grep -q "${local_bin}"; then
     printf "\n"
-    printf "%bNote:%b ~/.local/bin is not in your PATH\n" "${COLOR_BOLD}" "${COLOR_RESET}"
-    printf "Add this to your %b~/.zshrc%b or %b~/.zprofile%b:\n" "${COLOR_BOLD}" "${COLOR_RESET}" "${COLOR_BOLD}" "${COLOR_RESET}"
-    printf "  %bexport PATH=\"\${HOME}/.local/bin:\${PATH}\"%b\n" "${COLOR_BOLD}" "${COLOR_RESET}"
+    printf "%bNote:%b Your .zshrc should already include ~/.local/bin in PATH\n" "${COLOR_BOLD}" "${COLOR_RESET}"
+    printf "If 'pulse' command is not available after restarting your shell,\n"
+    printf "ensure your .zshrc has the PATH configuration section.\n"
+    printf "\n"
+    printf "Modern Zsh PATH management (recommended, already in template):\n"
+    printf "  %btypeset -TUx PATH path%b\n" "${COLOR_BOLD}" "${COLOR_RESET}"
+    printf "  %bpath=(\$HOME/.local/bin \$path[@])%b\n" "${COLOR_BOLD}" "${COLOR_RESET}"
     printf "\n"
   fi
 

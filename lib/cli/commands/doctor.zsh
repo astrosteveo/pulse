@@ -143,7 +143,12 @@ _pulse_cmd_doctor() {
     : $((checks_passed++))
   else
     echo "[~] PATH: pulse command not in PATH (optional)"
-    echo "    → Add to .zshrc: export PATH=\"\${HOME}/.local/bin:\${PATH}\""
+    echo "    → Modern Zsh best practice - add to your ~/.zshrc:"
+    echo "       typeset -TUx PATH path"
+    echo "       path=(\$HOME/.local/bin \$path[@])"
+    echo ""
+    echo "    → Or traditional method:"
+    echo "       export PATH=\"\${HOME}/.local/bin:\${PATH}\""
     : $((checks_passed++))  # Don't fail on this
   fi
 
