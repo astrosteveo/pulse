@@ -2,6 +2,26 @@
 
 Auto-generated from all feature plans. Last updated: 2025-10-16
 
+## Quick Reference
+
+**Essential Commands**:
+```bash
+# Setup
+git submodule update --init tests/bats-core
+
+# Test
+tests/bats-core/bin/bats tests/integration/*.bats
+
+# Debug
+export PULSE_DEBUG=1 && zsh -c 'source pulse.zsh'
+```
+
+**Key Principles**: TDD mandatory, <50ms performance target, Zsh ≥5.0, prefix functions with `pulse_`
+
+**See**: [Build and Test](#build-and-test) | [Development Workflow](#development-workflow) | [Constitution](#constitution)
+
+---
+
 ## Constitution
 
 All development MUST adhere to the project constitution at `.specify/memory/constitution.md`.
@@ -133,6 +153,172 @@ specs/                 # Feature specifications
 - 004-polish-and-refinement: Added Zsh ≥5.0 (primary), POSIX shell for CLI portability + Git (for plugin operations), existing plugin-engine.zsh infrastructure
 - 004-polish-and-refinement: Added Zsh ≥5.0 (primary), POSIX shell for CLI portability + Git (for plugin operations), existing plugin-engine.zsh infrastructure
 - 003-implement-an-install: Added POSIX shell (sh) with Zsh-specific verification (requires Zsh ≥5.0 on target system) + Git (for repository cloning), curl or wget (for script download), coreutils (cp, mv, chmod), sha256sum or shasum (for checksum verification)
+
+## Build and Test
+
+### Prerequisites
+- Zsh ≥5.0 installed
+- Git (for submodule management)
+- bats-core (included as submodule in `tests/bats-core`)
+
+### Setup Test Environment
+```bash
+# Initialize bats-core submodule
+git submodule update --init tests/bats-core
+
+# Verify bats is working
+tests/bats-core/bin/bats --version  # Should output: Bats 1.12.0
+```
+
+### Running Tests
+```bash
+# Run all integration tests
+tests/bats-core/bin/bats tests/integration/*.bats
+
+# Run specific test file
+tests/bats-core/bin/bats tests/integration/module_loading.bats
+
+# Run specific test suite
+tests/bats-core/bin/bats tests/install/*.bats  # Installer tests
+```
+
+### Test Organization
+- `tests/integration/` - Integration tests for framework features
+- `tests/install/` - Installer script tests
+- `tests/fixtures/` - Test fixtures and mock data
+- `tests/test_helper.bash` - Shared test utilities
+
+### Debug Mode
+Enable verbose logging during development:
+```bash
+export PULSE_DEBUG=1
+exec zsh
+```
+
+## Development Workflow
+
+### Making Changes
+
+1. **Identify the component**:
+   - Framework modules: `lib/*.zsh`
+   - Plugin engine: `lib/plugin-engine.zsh`
+   - CLI commands: `bin/pulse`, `lib/cli/`
+   - Installer: `scripts/pulse-install.sh`
+
+2. **Follow TDD workflow** (MANDATORY):
+   - Write tests first (must fail initially)
+   - Implement minimal code to pass tests
+   - Refactor while keeping tests green
+
+3. **Test your changes**:
+   ```bash
+   # Run relevant test suite
+   tests/bats-core/bin/bats tests/integration/module_loading.bats
+   
+   # Test in live shell
+   export PULSE_DEBUG=1
+   zsh -c 'source pulse.zsh'
+   ```
+
+4. **Verify performance** (if touching loading pipeline):
+   ```bash
+   # Check module load times
+   export PULSE_DEBUG=1
+   zsh -c 'source pulse.zsh' 2>&1 | grep "loaded in"
+   ```
+
+### Common Development Tasks
+
+**Adding a new framework module**:
+1. Create `lib/new-module.zsh`
+2. Add to module list in `pulse.zsh`
+3. Write tests in `tests/integration/`
+4. Update documentation in `docs/`
+
+**Modifying plugin engine**:
+1. Edit `lib/plugin-engine.zsh`
+2. Test with multiple plugin types
+3. Verify 5-stage pipeline order
+4. Check performance impact
+
+**Adding CLI command**:
+1. Edit `bin/pulse` or add to `lib/cli/`
+2. Write tests in `tests/integration/cli_commands.bats`
+3. Update `docs/CLI_REFERENCE.md`
+
+**Fixing bugs**:
+1. Write failing test that reproduces bug
+2. Fix the issue
+3. Verify test passes
+4. Check for regressions
+
+### File Locations
+
+**Where to find things**:
+- Main entry point: `pulse.zsh`
+- Framework modules: `lib/environment.zsh`, `lib/compinit.zsh`, etc.
+- Plugin loading: `lib/plugin-engine.zsh`
+- CLI tool: `bin/pulse`
+- Lock file logic: `lib/cli/lib/lock-file.zsh`
+- Installation: `scripts/pulse-install.sh`
+- Documentation: `docs/`, `README.md`
+- Tests: `tests/integration/`, `tests/install/`
+
+**Where to add things**:
+- New completion logic → `lib/completions.zsh`
+- New keybindings → `lib/keybinds.zsh`
+- Directory navigation → `lib/directory.zsh`
+- Helper functions → `lib/utilities.zsh`
+- Plugin detection → `lib/plugin-engine.zsh`
+
+## Debugging and Troubleshooting
+
+### Using PULSE_DEBUG
+```bash
+export PULSE_DEBUG=1
+exec zsh
+```
+
+Shows:
+- Module load times
+- Plugin detection results
+- Stage assignments
+- File paths being sourced
+
+### Common Issues
+
+**Tests failing**: Check if bats-core submodule is initialized
+**Module not loading**: Verify module order in `pulse.zsh`
+**Plugin not detected**: Check pattern matching in `pulse_detect_plugin_type()`
+**Performance regression**: Use PULSE_DEBUG to identify slow modules
+
+### Performance Validation
+```bash
+# Measure total framework load time
+time zsh -c 'source pulse.zsh; exit'
+
+# Should be <50ms for framework only
+```
+
+## CI/CD
+
+The repository uses GitHub Actions for CI:
+- `.github/workflows/install.yml` - Runs installer tests
+
+Tests run automatically on:
+- Pushes to `main` or `**-implement-an-install` branches that modify:
+  - `scripts/pulse-install.sh`
+  - `tests/install/**`
+  - `.github/workflows/install.yml`
+- Pull requests that modify the same paths listed above
+
+## Additional Resources
+
+- [CLI Reference](docs/CLI_REFERENCE.md) - Complete CLI documentation
+- [Performance Guide](docs/PERFORMANCE.md) - Performance benchmarks
+- [Platform Compatibility](docs/PLATFORM_COMPATIBILITY.md) - Cross-platform guide
+- [Troubleshooting](TROUBLESHOOTING.md) - Advanced debugging guide
+- [Constitution](.specify/memory/constitution.md) - Development principles
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->
