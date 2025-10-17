@@ -900,9 +900,15 @@ _pulse_discover_plugins() {
       done
 
       if [[ $lock_acquired -eq 1 ]]; then
-        # Check again if directory exists (another shell may have created it)
+        local reinstall_needed=0
         if [[ ! -d "$check_path" ]]; then
-          # Install the plugin (feedback is shown by _pulse_clone_plugin)
+          reinstall_needed=1
+        elif [[ $sparse_refresh_needed -eq 1 ]]; then
+          reinstall_needed=1
+        fi
+
+        if (( reinstall_needed )); then
+          # Install or refresh the plugin (feedback is shown by _pulse_clone_plugin)
           if _pulse_clone_plugin "$plugin_url" "$lock_name" "$plugin_ref" "$plugin_spec" "$plugin_subpath" "${sparse_paths[@]}"; then
             [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully installed $lock_name" >&2
           else
