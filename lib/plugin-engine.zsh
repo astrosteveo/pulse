@@ -537,12 +537,19 @@ _pulse_clone_plugin() {
   # Create plugins directory if it doesn't exist
   mkdir -p "${PULSE_DIR}/plugins"
 
+  # Check if this is a new installation or just an update
+  local is_new_install=0
+  if [[ ! -d "$plugin_dir/.git" ]]; then
+    is_new_install=1
+  fi
+
   # Show user feedback with spinner (if available and not skipped)
   local show_feedback=0
   local display_name="${plugin_name}"
   [[ -n "$plugin_ref" ]] && display_name="${plugin_name}@${plugin_ref}"
   
-  if [[ $skip_feedback -eq 0 ]]; then
+  # Only show installing message for new installations
+  if [[ $is_new_install -eq 1 ]] && [[ $skip_feedback -eq 0 ]]; then
     if _pulse_has_feedback; then
       pulse_start_spinner "Installing ${display_name}..."
       show_feedback=1
@@ -665,11 +672,14 @@ _pulse_clone_plugin() {
     [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Sparse paths for $plugin_name: ${sparse_paths[*]}" >&2
   fi
 
-  if [[ $show_feedback -eq 1 ]]; then
-    pulse_stop_spinner success "Installed ${display_name}"
-  elif [[ $skip_feedback -eq 0 ]]; then
-    # Only show simple message if we weren't skipping feedback entirely
-    echo "✓ Installed ${display_name}"
+  # Only show success message for new installations
+  if [[ $is_new_install -eq 1 ]]; then
+    if [[ $show_feedback -eq 1 ]]; then
+      pulse_stop_spinner success "Installed ${display_name}"
+    elif [[ $skip_feedback -eq 0 ]]; then
+      # Only show simple message if we weren't skipping feedback entirely
+      echo "✓ Installed ${display_name}"
+    fi
   fi
   [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully prepared $plugin_name" >&2
   return 0
