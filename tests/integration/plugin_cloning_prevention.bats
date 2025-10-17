@@ -38,7 +38,7 @@ teardown() {
     export PULSE_DEBUG=1
     
     plugins=('file://${fake_repo}')
-    source '${PULSE_ROOT}/pulse.zsh' 2>&1 | grep -c 'Installing'
+    source '${PULSE_ROOT}/pulse.zsh' 2>&1 | grep -c 'Installing' || true
   "
   
   first_install_count="$output"
@@ -51,7 +51,7 @@ teardown() {
     export PULSE_DEBUG=1
     
     plugins=('file://${fake_repo}')
-    source '${PULSE_ROOT}/pulse.zsh' 2>&1 | grep -c 'Installing' || echo '0'
+    source '${PULSE_ROOT}/pulse.zsh' 2>&1 | grep -c 'Installing' || true
   "
   
   second_install_count="$output"
@@ -143,7 +143,7 @@ teardown() {
     export PULSE_DEBUG=1
     
     plugins=('file://${fake_repo}' 'file://${fake_repo}' 'file://${fake_repo}')
-    source '${PULSE_ROOT}/pulse.zsh' 2>&1 | grep -c 'Installing' || echo '0'
+    source '${PULSE_ROOT}/pulse.zsh' 2>&1 | grep -c 'Installing' || true
   "
   
   install_count="$output"
