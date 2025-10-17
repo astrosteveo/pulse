@@ -422,9 +422,7 @@ _pulse_collect_omz_dependencies() {
     _pulse_extract_framework_sources "$plugin_file" "omz"
     dependencies=("${reply[@]}")
   fi
-
   _pulse_unique_paths "${dependencies[@]}"
-}
 
 _pulse_collect_prezto_dependencies() {
   local repo_path="$1"
