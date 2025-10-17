@@ -14,6 +14,17 @@ pulse_has_command() {
 }
 
 # =============================================================================
+# Function Detection
+# =============================================================================
+
+# Check if a function is defined
+# Usage: pulse_has_function <function_name>
+# Returns: 0 if function exists, 1 otherwise
+pulse_has_function() {
+  [[ -n "$1" ]] && typeset -f "$1" >/dev/null 2>&1
+}
+
+# =============================================================================
 # Conditional File Sourcing
 # =============================================================================
 

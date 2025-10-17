@@ -45,6 +45,78 @@ load ../test_helper
 }
 
 # ==============================================================================
+# Function Existence Check - Integration Scenarios
+# ==============================================================================
+
+@test "pulse_has_function detects defined functions" {
+  run zsh -c "
+    export PULSE_DIR='${PULSE_DIR}'
+    export PULSE_CACHE_DIR='${PULSE_CACHE_DIR}'
+    source ${PULSE_ROOT}/pulse.zsh
+    
+    # Define a test function
+    test_function() {
+      echo 'test function'
+    }
+    
+    # Check if function exists
+    if pulse_has_function test_function; then
+      echo 'Function detected: test_function'
+    fi
+    
+    # Check non-existent function
+    if ! pulse_has_function nonexistent_function; then
+      echo 'Correctly reports missing function'
+    fi
+  "
+  
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Function detected: test_function"* ]]
+  [[ "$output" == *"Correctly reports missing function"* ]]
+}
+
+@test "pulse_has_function works with framework functions" {
+  run zsh -c "
+    export PULSE_DIR='${PULSE_DIR}'
+    export PULSE_CACHE_DIR='${PULSE_CACHE_DIR}'
+    source ${PULSE_ROOT}/pulse.zsh
+    
+    # Check for framework functions
+    pulse_has_function pulse_has_command && echo 'pulse_has_command exists'
+    pulse_has_function pulse_os_type && echo 'pulse_os_type exists'
+    pulse_has_function pulse_extract && echo 'pulse_extract exists'
+  "
+  
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"pulse_has_command exists"* ]]
+  [[ "$output" == *"pulse_os_type exists"* ]]
+  [[ "$output" == *"pulse_extract exists"* ]]
+}
+
+@test "pulse_has_function handles edge cases" {
+  run zsh -c "
+    export PULSE_DIR='${PULSE_DIR}'
+    export PULSE_CACHE_DIR='${PULSE_CACHE_DIR}'
+    source ${PULSE_ROOT}/pulse.zsh
+    
+    # Empty string
+    if ! pulse_has_function ''; then
+      echo 'Empty string: Handled'
+    fi
+    
+    # Check that it doesn't match aliases
+    alias test_alias='echo test'
+    if ! pulse_has_function test_alias; then
+      echo 'Alias check: Correctly not detected as function'
+    fi
+  "
+  
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Empty string: Handled"* ]]
+  [[ "$output" == *"Alias check: Correctly not detected as function"* ]]
+}
+
+# ==============================================================================
 # AC2: Archive Extraction - Integration Scenarios
 # ==============================================================================
 
