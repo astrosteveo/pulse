@@ -555,12 +555,13 @@ validate_config_order() {
   local pulse_block
   pulse_block=$(sed -n '/# BEGIN Pulse Configuration/,/# END Pulse Configuration/p' "$zshrc_path")
 
+  # If no managed block found, check the whole file (template-based installation)
   if [ -z "$pulse_block" ]; then
-    # No Pulse block found
-    return "$EXIT_CONFIG_FAILED"
+    print_verbose "No managed block found, checking template-based configuration"
+    pulse_block=$(cat "$zshrc_path")
   fi
 
-  # Find line numbers within the extracted block
+  # Find line numbers within the extracted content
   local plugins_line
   plugins_line=$(echo "$pulse_block" | grep -n "plugins=" | head -1 | cut -d: -f1)
 
