@@ -347,6 +347,13 @@ _pulse_resolve_plugin_source() {
 # Plugin Installation
 #
 
+# Check if UI feedback functions are available
+# Usage: _pulse_has_feedback
+# Returns: 0 if feedback available, 1 otherwise
+_pulse_has_feedback() {
+  command -v pulse_start_spinner >/dev/null 2>&1
+}
+
 # Clone a plugin from a Git URL
 # Usage: _pulse_clone_plugin <plugin_url> <plugin_name> [plugin_ref]
 # Returns: 0 on success, 1 on failure
@@ -358,7 +365,7 @@ _pulse_clone_plugin() {
 
   # Check if git is available
   if ! command -v git >/dev/null 2>&1; then
-    if command -v pulse_error >/dev/null 2>&1; then
+    if _pulse_has_feedback; then
       pulse_error "Git not found - cannot install plugins"
     else
       echo "[Pulse] Error: git not found, cannot clone plugins" >&2
@@ -374,7 +381,7 @@ _pulse_clone_plugin() {
   local display_name="${plugin_name}"
   [[ -n "$plugin_ref" ]] && display_name="${plugin_name}@${plugin_ref}"
   
-  if command -v pulse_start_spinner >/dev/null 2>&1; then
+  if _pulse_has_feedback; then
     pulse_start_spinner "Installing ${display_name}..."
     show_feedback=1
   else
