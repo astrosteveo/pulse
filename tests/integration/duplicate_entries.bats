@@ -22,137 +22,71 @@ teardown() {
   rm -rf "${TEST_TMPDIR}"
 }
 
+# Helper function to count lock file entries for a plugin
+count_lock_entries() {
+  grep -c "^\[$1\]\$" "${PULSE_LOCK_FILE}" || echo 0
+}
+
+# Helper function to simulate a shell session with plugin discovery
+simulate_shell_session() {
+  local plugins_to_load="$@"
+  
+  run zsh -c "
+    export PULSE_DIR='${PULSE_DIR}'
+    export PULSE_LOCK_FILE='${PULSE_LOCK_FILE}'
+    
+    source ${PULSE_ROOT}/lib/cli/lib/lock-file.zsh
+    source ${PULSE_ROOT}/lib/plugin-engine.zsh
+    
+    _pulse_init_engine
+    
+    plugins=(
+      ${plugins_to_load}
+    )
+    
+    _pulse_discover_plugins
+  "
+  [ "$status" -eq 0 ]
+}
+
 # Test: Lock file should not create duplicate entries when framework is sourced multiple times
 @test "no duplicate entries after multiple shell sessions" {
   # First session: Install plugins
-  run zsh -c "
-    export PULSE_DIR='${PULSE_DIR}'
-    export PULSE_LOCK_FILE='${PULSE_LOCK_FILE}'
-    
-    source ${PULSE_ROOT}/lib/cli/lib/lock-file.zsh
-    source ${PULSE_ROOT}/lib/plugin-engine.zsh
-    
-    _pulse_init_engine
-    
-    plugins=(
-      '${MOCK_PLUGINS_DIR}/plugin-a'
-      '${MOCK_PLUGINS_DIR}/plugin-b'
-    )
-    
-    _pulse_discover_plugins
-  "
-  [ "$status" -eq 0 ]
+  simulate_shell_session "'${MOCK_PLUGINS_DIR}/plugin-a' '${MOCK_PLUGINS_DIR}/plugin-b'"
 
   # Count entries for plugin-a after first session
-  local count_first=$(grep -c '^\[plugin-a\]$' "${PULSE_LOCK_FILE}" || echo 0)
+  local count_first=$(count_lock_entries "plugin-a")
   [ "$count_first" -eq 1 ]
 
   # Second session: Source framework again with same plugins
-  run zsh -c "
-    export PULSE_DIR='${PULSE_DIR}'
-    export PULSE_LOCK_FILE='${PULSE_LOCK_FILE}'
-    
-    source ${PULSE_ROOT}/lib/cli/lib/lock-file.zsh
-    source ${PULSE_ROOT}/lib/plugin-engine.zsh
-    
-    _pulse_init_engine
-    
-    plugins=(
-      '${MOCK_PLUGINS_DIR}/plugin-a'
-      '${MOCK_PLUGINS_DIR}/plugin-b'
-    )
-    
-    _pulse_discover_plugins
-  "
-  [ "$status" -eq 0 ]
+  simulate_shell_session "'${MOCK_PLUGINS_DIR}/plugin-a' '${MOCK_PLUGINS_DIR}/plugin-b'"
 
   # Count entries for plugin-a after second session - should still be 1
-  local count_second=$(grep -c '^\[plugin-a\]$' "${PULSE_LOCK_FILE}" || echo 0)
+  local count_second=$(count_lock_entries "plugin-a")
   [ "$count_second" -eq 1 ]
 
   # Third session: Source framework again
-  run zsh -c "
-    export PULSE_DIR='${PULSE_DIR}'
-    export PULSE_LOCK_FILE='${PULSE_LOCK_FILE}'
-    
-    source ${PULSE_ROOT}/lib/cli/lib/lock-file.zsh
-    source ${PULSE_ROOT}/lib/plugin-engine.zsh
-    
-    _pulse_init_engine
-    
-    plugins=(
-      '${MOCK_PLUGINS_DIR}/plugin-a'
-      '${MOCK_PLUGINS_DIR}/plugin-b'
-    )
-    
-    _pulse_discover_plugins
-  "
-  [ "$status" -eq 0 ]
+  simulate_shell_session "'${MOCK_PLUGINS_DIR}/plugin-a' '${MOCK_PLUGINS_DIR}/plugin-b'"
 
   # Count entries for plugin-a after third session - should still be 1
-  local count_third=$(grep -c '^\[plugin-a\]$' "${PULSE_LOCK_FILE}" || echo 0)
+  local count_third=$(count_lock_entries "plugin-a")
   [ "$count_third" -eq 1 ]
 
   # Count entries for plugin-b after third session - should be 1
-  local count_b=$(grep -c '^\[plugin-b\]$' "${PULSE_LOCK_FILE}" || echo 0)
+  local count_b=$(count_lock_entries "plugin-b")
   [ "$count_b" -eq 1 ]
 }
 
 # Test: pulse list should show each plugin only once after multiple sessions
 @test "pulse list shows each plugin once after multiple sessions" {
-  # Create lock file with plugins (simulate first session)
-  run zsh -c "
-    export PULSE_DIR='${PULSE_DIR}'
-    export PULSE_LOCK_FILE='${PULSE_LOCK_FILE}'
-    
-    source ${PULSE_ROOT}/lib/cli/lib/lock-file.zsh
-    source ${PULSE_ROOT}/lib/plugin-engine.zsh
-    
-    _pulse_init_engine
-    
-    plugins=(
-      '${MOCK_PLUGINS_DIR}/plugin-a'
-    )
-    
-    _pulse_discover_plugins
-  "
-  [ "$status" -eq 0 ]
+  # Simulate first session
+  simulate_shell_session "'${MOCK_PLUGINS_DIR}/plugin-a'"
 
   # Simulate second session
-  run zsh -c "
-    export PULSE_DIR='${PULSE_DIR}'
-    export PULSE_LOCK_FILE='${PULSE_LOCK_FILE}'
-    
-    source ${PULSE_ROOT}/lib/cli/lib/lock-file.zsh
-    source ${PULSE_ROOT}/lib/plugin-engine.zsh
-    
-    _pulse_init_engine
-    
-    plugins=(
-      '${MOCK_PLUGINS_DIR}/plugin-a'
-    )
-    
-    _pulse_discover_plugins
-  "
-  [ "$status" -eq 0 ]
+  simulate_shell_session "'${MOCK_PLUGINS_DIR}/plugin-a'"
 
   # Simulate third session
-  run zsh -c "
-    export PULSE_DIR='${PULSE_DIR}'
-    export PULSE_LOCK_FILE='${PULSE_LOCK_FILE}'
-    
-    source ${PULSE_ROOT}/lib/cli/lib/lock-file.zsh
-    source ${PULSE_ROOT}/lib/plugin-engine.zsh
-    
-    _pulse_init_engine
-    
-    plugins=(
-      '${MOCK_PLUGINS_DIR}/plugin-a'
-    )
-    
-    _pulse_discover_plugins
-  "
-  [ "$status" -eq 0 ]
+  simulate_shell_session "'${MOCK_PLUGINS_DIR}/plugin-a'"
 
   # Run pulse list and count how many times plugin-a appears
   run env PULSE_DIR="${PULSE_DIR}" PULSE_LOCK_FILE="${PULSE_LOCK_FILE}" ${PULSE_ROOT}/bin/pulse list
@@ -181,7 +115,7 @@ teardown() {
   [ "$status" -eq 0 ]
 
   # Verify one entry exists
-  local count_first=$(grep -c '^\[test-plugin\]$' "${PULSE_LOCK_FILE}" || echo 0)
+  local count_first=$(count_lock_entries "test-plugin")
   [ "$count_first" -eq 1 ]
 
   # Write same plugin again with different commit
@@ -197,7 +131,7 @@ teardown() {
   [ "$status" -eq 0 ]
 
   # Verify still only one entry exists
-  local count_second=$(grep -c '^\[test-plugin\]$' "${PULSE_LOCK_FILE}" || echo 0)
+  local count_second=$(count_lock_entries "test-plugin")
   [ "$count_second" -eq 1 ]
 
   # Verify the commit was updated to the new value

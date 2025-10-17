@@ -330,6 +330,37 @@ Tests run automatically on:
   - `.github/workflows/install.yml`
 - Pull requests that modify the same paths listed above
 
+## Code Review Guidelines
+
+When performing code reviews, follow these guidelines:
+
+### Providing Feedback
+- **Always include code suggestions**: When suggesting changes, provide a concrete code suggestion block that can be directly applied
+- **Use diff format**: Structure suggestions as diffs showing before/after
+- **Be specific**: Point to exact line numbers and provide actionable feedback
+- **Offer alternatives**: When possible, suggest multiple approaches with pros/cons
+
+### Code Suggestion Format
+For changes that can be automated, use GitHub's suggestion format:
+````markdown
+```suggestion
+// Your suggested code here
+```
+````
+
+This allows reviewers to apply suggestions with a single click.
+
+### Review Checklist
+When reviewing code changes:
+- [ ] Code follows project style guide and conventions
+- [ ] Functions are prefixed with `pulse_` where appropriate
+- [ ] Changes include appropriate tests (TDD principle)
+- [ ] No code duplication (extract helper functions)
+- [ ] Performance considerations addressed
+- [ ] Documentation updated if needed
+- [ ] Error handling is present
+- [ ] Zsh compatibility maintained (≥5.0)
+
 ## Additional Resources
 
 - [CLI Reference](docs/CLI_REFERENCE.md) - Complete CLI documentation
