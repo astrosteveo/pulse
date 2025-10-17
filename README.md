@@ -4,7 +4,7 @@
 
 **The intelligent Zsh framework that just works**
 
-[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/astrosteveo/pulse/releases)
+[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](https://github.com/astrosteveo/pulse/releases)
 [![License](https://img.shields.io/badge/license-Unlicense-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-100%25-brightgreen.svg)](TEST_RESULTS.md)
 [![Zsh](https://img.shields.io/badge/zsh-%3E%3D5.0-orange.svg)](https://www.zsh.org/)
@@ -587,7 +587,7 @@ Every feature must justify its existence. **Deletion is considered before additi
 
 ## 🔮 Roadmap
 
-**v0.2.0 (Current)**
+**v0.3.0 (Current)**
 
 - ✅ Core framework (7 modules)
 - ✅ 5-stage plugin pipeline

@@ -54,7 +54,7 @@ which pulse
 # Should output: /home/user/.local/share/pulse/bin/pulse (or similar)
 
 pulse --version
-# Should output: pulse version 0.2.0
+# Should output: pulse version 0.3.0
 ```
 
 ---
