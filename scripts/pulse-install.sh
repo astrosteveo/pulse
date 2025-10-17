@@ -405,11 +405,10 @@ source $install_dir/pulse.zsh
 # This uses modern Zsh features for clean, deduplicated PATH management
 typeset -TUx PATH path
 
-# Add user binaries to PATH (uncomment to enable)
-# This is where Pulse CLI and other user tools are typically installed
+# Add user binaries to PATH
 path=(
-  \$HOME/.local/bin  # User-local binaries (Pulse CLI installed here)
-  \$path[@]          # Preserve existing PATH entries
+  \$HOME/.local/bin
+  \$path[@]
 )
 
 $config_block
