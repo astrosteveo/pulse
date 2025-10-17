@@ -52,13 +52,13 @@ _pulse_cmd_list() {
 
   # Sort plugins alphabetically and print each one
   local has_security_warnings=0
+  local url ref commit timestamp stage lock_data
   for plugin_name in ${(o)plugins_list}; do
     # Read lock entry for this plugin
-    local lock_data=$(pulse_read_lock_entry "$plugin_name")
+    lock_data=$(pulse_read_lock_entry "$plugin_name")
 
     if [[ -n "$lock_data" ]]; then
       # Parse lock data: url|ref|commit|timestamp|stage (pipe-separated)
-      local url ref commit timestamp stage
       {
         IFS='|' read -r url ref commit timestamp stage
       } <<< "$lock_data"
