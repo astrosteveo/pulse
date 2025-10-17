@@ -623,8 +623,22 @@ _pulse_clone_plugin() {
     _pulse_compute_sparse_paths "$plugin_spec" "$plugin_subpath" "$plugin_dir"
     local -a refreshed_paths=("${reply[@]}")
     if (( ${#refreshed_paths[@]} > 0 )); then
-      git -C "$plugin_dir" sparse-checkout set "${refreshed_paths[@]}" >/dev/null 2>&1
-      sparse_paths=("${refreshed_paths[@]}")
+      # Get current sparse paths and merge with new ones to avoid overwriting
+      local -a current_sparse=()
+      current_sparse=("${(@f)$(git -C "$plugin_dir" sparse-checkout list 2>/dev/null)}")
+      
+      # Merge current and new paths, keeping unique entries
+      local -a merged_paths=()
+      local -A seen_paths
+      for path in "${current_sparse[@]}" "${refreshed_paths[@]}"; do
+        if [[ -z "${seen_paths[$path]}" ]]; then
+          seen_paths[$path]=1
+          merged_paths+=("$path")
+        fi
+      done
+      
+      git -C "$plugin_dir" sparse-checkout set "${merged_paths[@]}" >/dev/null 2>&1
+      sparse_paths=("${merged_paths[@]}")
     fi
   fi
 
