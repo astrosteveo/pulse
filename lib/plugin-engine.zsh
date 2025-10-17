@@ -535,7 +535,9 @@ _pulse_clone_plugin() {
   fi
 
   local use_sparse=0
-  (( ${#sparse_paths[@]} > 0 && -n "$plugin_subpath" )) && use_sparse=1
+  if (( ${#sparse_paths[@]} > 0 )) && [[ -n "$plugin_subpath" ]]; then
+    use_sparse=1
+  fi
 
   local clone_or_update_failed=0
 
