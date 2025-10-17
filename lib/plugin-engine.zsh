@@ -132,7 +132,7 @@ _pulse_parse_plugin_spec() {
   if [[ "$source_spec" == omz:* ]]; then
     # Oh-My-Zsh shorthand: omz:plugins/kubectl or omz:lib/git
     local omz_path="${source_spec#omz:}"
-    plugin_url="https://github.com/ohmyzsh/ohmyzsh.git"
+    plugin_url="${PULSE_OMZ_REPO:-https://github.com/ohmyzsh/ohmyzsh.git}"
     plugin_name="ohmyzsh"
     plugin_subpath="$omz_path"
     # Derive kind from path if not specified
@@ -151,7 +151,7 @@ _pulse_parse_plugin_spec() {
   if [[ "$source_spec" == prezto:* ]]; then
     # Prezto shorthand: prezto:modules/git
     local prezto_path="${source_spec#prezto:}"
-    plugin_url="https://github.com/sorin-ionescu/prezto.git"
+    plugin_url="${PULSE_PREZTO_REPO:-https://github.com/sorin-ionescu/prezto.git}"
     plugin_name="prezto"
     plugin_subpath="$prezto_path"
     plugin_kind="${plugin_kind:-path}"
@@ -354,13 +354,162 @@ _pulse_has_feedback() {
   command -v pulse_start_spinner >/dev/null 2>&1
 }
 
+_pulse_unique_paths() {
+  typeset -A _pulse_seen_paths
+  local -a _pulse_unique
+
+  for _pulse_path in "$@"; do
+    [[ -z "$_pulse_path" ]] && continue
+    if [[ -z "${_pulse_seen_paths[$_pulse_path]}" ]]; then
+      _pulse_seen_paths[$_pulse_path]=1
+      _pulse_unique+=("$_pulse_path")
+    fi
+  done
+
+  reply=("${_pulse_unique[@]}")
+}
+
+_pulse_extract_framework_sources() {
+  local source_file="$1"
+  local mode="$2"
+
+  reply=()
+  [[ ! -f "$source_file" ]] && return 0
+
+  local python_cmd
+  if command -v python3 >/dev/null 2>&1; then
+    python_cmd=python3
+  else
+    python_cmd=python
+  fi
+
+  if ! command -v "$python_cmd" >/dev/null 2>&1; then
+    return 0
+  fi
+
+  local script
+  if [[ "$mode" == "omz" ]]; then
+    script=$'import re,sys\npath=sys.argv[1]\npattern=re.compile(r"\\$ZSH/(lib/[\\w./-]+|plugins/[\\w./-]+)")\npaths=set()\nwith open(path, "r", encoding="utf-8") as handle:\n    for line in handle:\n        line=line.split("#",1)[0]\n        for match in pattern.findall(line):\n            paths.add(match)\nfor item in sorted(paths):\n    print(item)'
+  else
+    script=$'import re,sys\npath=sys.argv[1]\npattern=re.compile(r"\\$ZPREZTODIR/modules/([\\w./-]+)")\npaths=set()\nwith open(path, "r", encoding="utf-8") as handle:\n    for line in handle:\n        line=line.split("#",1)[0]\n        for match in pattern.findall(line):\n            paths.add(f"modules/{match}")\nfor item in sorted(paths):\n    print(item)'
+  fi
+
+  local -a extracted
+  extracted=("${(@f)$( "$python_cmd" -c "$script" "$source_file" 2>/dev/null )}")
+
+  reply=("${extracted[@]}")
+}
+
+_pulse_collect_omz_dependencies() {
+  local repo_path="$1"
+  local plugin_subpath="$2"
+
+  reply=()
+
+  [[ -z "$repo_path" ]] && return 0
+
+  local -a dependencies=()
+  if [[ "$plugin_subpath" == lib/* ]]; then
+    local lib_file="${repo_path}/${plugin_subpath}.zsh"
+    _pulse_extract_framework_sources "$lib_file" "omz"
+    dependencies=("${reply[@]}")
+  else
+    local plugin_name="${plugin_subpath#plugins/}"
+    local plugin_file="${repo_path}/${plugin_subpath}/${plugin_name}.plugin.zsh"
+    if [[ ! -f "$plugin_file" ]]; then
+      plugin_file="${repo_path}/${plugin_subpath}/${plugin_name}.zsh"
+    fi
+    _pulse_extract_framework_sources "$plugin_file" "omz"
+    dependencies=("${reply[@]}")
+  fi
+  _pulse_unique_paths "${dependencies[@]}"
+
+_pulse_collect_prezto_dependencies() {
+  local repo_path="$1"
+  local plugin_subpath="$2"
+
+  reply=()
+
+  [[ -z "$repo_path" ]] && return 0
+
+  local module_file="${repo_path}/${plugin_subpath}/init.zsh"
+  if [[ ! -f "$module_file" ]]; then
+    module_file="${repo_path}/${plugin_subpath}/${plugin_subpath:t}.zsh"
+  fi
+
+  _pulse_extract_framework_sources "$module_file" "prezto"
+  local -a dependencies=("${reply[@]}")
+
+  _pulse_unique_paths "${dependencies[@]}"
+}
+
+_pulse_compute_sparse_paths() {
+  local plugin_spec="$1"
+  local plugin_subpath="$2"
+  local repo_path="$3"
+
+  reply=()
+  [[ -z "$plugin_subpath" ]] && return 0
+
+  local -a sparse_paths
+  sparse_paths+=("$plugin_subpath")
+
+  if [[ "$plugin_spec" == omz:* ]]; then
+    _pulse_collect_omz_dependencies "$repo_path" "$plugin_subpath"
+    sparse_paths+=("${reply[@]}")
+  elif [[ "$plugin_spec" == prezto:* ]]; then
+    _pulse_collect_prezto_dependencies "$repo_path" "$plugin_subpath"
+    sparse_paths+=("${reply[@]}")
+  fi
+
+  _pulse_unique_paths "${sparse_paths[@]}"
+}
+
+_pulse_git_default_branch() {
+  local repo_path="$1"
+  local default_branch=""
+
+  default_branch=$(git -C "$repo_path" symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null)
+  default_branch="${default_branch#origin/}"
+
+  if [[ -z "$default_branch" ]]; then
+    default_branch=$(git -C "$repo_path" remote show origin 2>/dev/null | awk '/HEAD branch/ {print $NF}')
+  fi
+
+  if [[ -z "$default_branch" ]]; then
+    if git -C "$repo_path" show-ref --verify --quiet refs/remotes/origin/master 2>/dev/null; then
+      default_branch="master"
+    else
+      default_branch="main"
+    fi
+  fi
+
+  echo "$default_branch"
+}
+
 # Clone a plugin from a Git URL
-# Usage: _pulse_clone_plugin <plugin_url> <plugin_name> [plugin_ref]
+# Usage: _pulse_clone_plugin <plugin_url> <plugin_name> [plugin_ref] [plugin_spec] [plugin_subpath] [sparse_paths...]
 # Returns: 0 on success, 1 on failure
 _pulse_clone_plugin() {
   local plugin_url="$1"
   local plugin_name="$2"
   local plugin_ref="${3:-}"
+  shift 3
+
+  local plugin_spec=""
+  local plugin_subpath=""
+
+  if [[ $# -gt 0 ]]; then
+    plugin_spec="$1"
+    shift
+  fi
+
+  if [[ $# -gt 0 ]]; then
+    plugin_subpath="$1"
+    shift
+  fi
+
+  local -a sparse_paths=("$@")
   local plugin_dir="${PULSE_DIR}/plugins/${plugin_name}"
 
   # Check if git is available
@@ -389,91 +538,96 @@ _pulse_clone_plugin() {
     echo "Installing ${display_name}..."
   fi
 
-  if [[ -n "$plugin_ref" ]]; then
-    # Clone specific branch/tag
-    if git clone --quiet --depth 1 --branch "$plugin_ref" "$plugin_url" "$plugin_dir" 2>/dev/null; then
-      if [[ $show_feedback -eq 1 ]]; then
-        pulse_stop_spinner success "Installed ${display_name}"
-      else
-        echo "✓ Installed ${display_name}"
-      fi
-      [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully cloned $plugin_name@$plugin_ref" >&2
-      return 0
-    else
-      # Fallback: clone without branch and checkout ref
-      if git clone --quiet --depth 1 "$plugin_url" "$plugin_dir" 2>/dev/null; then
-        # Use command grouping instead of subshell to preserve return code
-        local checkout_failed=0
-        if ! cd "$plugin_dir" 2>/dev/null; then
-          [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Failed to cd to $plugin_dir" >&2
-          checkout_failed=1
-        elif ! git fetch --quiet --depth 1 origin "$plugin_ref" 2>/dev/null; then
-          [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Failed to fetch $plugin_ref" >&2
-          checkout_failed=1
-        elif ! git checkout --quiet "$plugin_ref" 2>/dev/null; then
-          [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Failed to checkout $plugin_ref" >&2
-          checkout_failed=1
-        fi
-        cd - >/dev/null
+  local use_sparse=0
+  if (( ${#sparse_paths[@]} > 0 )) && [[ -n "$plugin_subpath" ]]; then
+    use_sparse=1
+  fi
 
-        if [[ $checkout_failed -eq 0 ]]; then
-          if [[ $show_feedback -eq 1 ]]; then
-            pulse_stop_spinner success "Installed ${display_name}"
-          else
-            echo "✓ Installed ${display_name}"
-          fi
-          [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully cloned $plugin_name and checked out $plugin_ref" >&2
-          return 0
-        else
-          if [[ $show_feedback -eq 1 ]]; then
-            pulse_stop_spinner error "Failed to install ${display_name} (checkout failed)"
-          else
-            echo "✗ Failed to install ${display_name} (checkout failed)" >&2
-          fi
-          [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Checkout failed for $plugin_name@$plugin_ref" >&2
-          return 1
-        fi
+  local clone_or_update_failed=0
+
+  if [[ ! -d "$plugin_dir/.git" ]]; then
+    local -a clone_args=("--filter=blob:none" "--no-checkout" "--depth" "1")
+    if [[ -n "$plugin_ref" ]]; then
+      clone_args+=("--origin" "origin")
+    fi
+
+    if ! git clone --quiet "${clone_args[@]}" "$plugin_url" "$plugin_dir" 2>/dev/null; then
+      clone_or_update_failed=1
+    else
+      if (( use_sparse )); then
+        git -C "$plugin_dir" sparse-checkout init --no-cone >/dev/null 2>&1
+        git -C "$plugin_dir" sparse-checkout set "${sparse_paths[@]}" >/dev/null 2>&1 || clone_or_update_failed=1
       fi
     fi
+  else
+    git -C "$plugin_dir" remote set-url origin "$plugin_url" >/dev/null 2>&1
+
+    if (( use_sparse )); then
+      git -C "$plugin_dir" sparse-checkout init --no-cone >/dev/null 2>&1
+      git -C "$plugin_dir" sparse-checkout set "${sparse_paths[@]}" >/dev/null 2>&1 || clone_or_update_failed=1
+    else
+      git -C "$plugin_dir" sparse-checkout disable >/dev/null 2>&1
+    fi
+  fi
+
+  if [[ $clone_or_update_failed -eq 1 ]]; then
     if [[ $show_feedback -eq 1 ]]; then
       pulse_stop_spinner error "Failed to install ${display_name}"
     else
       echo "✗ Failed to install ${display_name}" >&2
     fi
-    [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Failed to clone $plugin_name@$plugin_ref" >&2
+    [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Failed to prepare repository for $plugin_name" >&2
     return 1
+  fi
+
+  local checkout_failed=0
+  if [[ -n "$plugin_ref" ]]; then
+    if ! git -C "$plugin_dir" fetch --quiet --depth 1 origin "$plugin_ref" 2>/dev/null; then
+      checkout_failed=1
+    elif ! git -C "$plugin_dir" checkout --quiet FETCH_HEAD 2>/dev/null; then
+      checkout_failed=1
+    fi
   else
-    # Clone default branch
-    if git clone --quiet --depth 1 "$plugin_url" "$plugin_dir" 2>/dev/null; then
-      # Verify clone succeeded by checking .git directory
-      if [[ -d "$plugin_dir/.git" ]]; then
-        if [[ $show_feedback -eq 1 ]]; then
-          pulse_stop_spinner success "Installed ${display_name}"
-        else
-          echo "✓ Installed ${display_name}"
-        fi
-        [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully cloned $plugin_name" >&2
-        return 0
-      else
-        if [[ $show_feedback -eq 1 ]]; then
-          pulse_stop_spinner error "Failed to install ${display_name} (incomplete)"
-        else
-          echo "✗ Failed to install ${display_name} (incomplete)" >&2
-        fi
-        [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Clone incomplete for $plugin_name (no .git directory)" >&2
-        rm -rf "$plugin_dir" 2>/dev/null
-        return 1
-      fi
-    else
-      if [[ $show_feedback -eq 1 ]]; then
-        pulse_stop_spinner error "Failed to install ${display_name}"
-      else
-        echo "✗ Failed to install ${display_name}" >&2
-      fi
-      [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Failed to clone $plugin_name" >&2
-      return 1
+    local default_branch=$(_pulse_git_default_branch "$plugin_dir")
+    if ! git -C "$plugin_dir" fetch --quiet --depth 1 origin "$default_branch" 2>/dev/null; then
+      checkout_failed=1
+    elif ! git -C "$plugin_dir" checkout --quiet "$default_branch" 2>/dev/null; then
+      checkout_failed=1
+    elif ! git -C "$plugin_dir" reset --quiet --hard "origin/${default_branch}" 2>/dev/null; then
+      checkout_failed=1
     fi
   fi
+
+  if [[ $checkout_failed -eq 1 ]]; then
+    if [[ $show_feedback -eq 1 ]]; then
+      pulse_stop_spinner error "Failed to install ${display_name} (checkout failed)"
+    else
+      echo "✗ Failed to install ${display_name} (checkout failed)" >&2
+    fi
+    [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Checkout failed for $plugin_name" >&2
+    return 1
+  fi
+
+  if (( use_sparse )) && [[ -n "$plugin_subpath" ]]; then
+    _pulse_compute_sparse_paths "$plugin_spec" "$plugin_subpath" "$plugin_dir"
+    local -a refreshed_paths=("${reply[@]}")
+    if (( ${#refreshed_paths[@]} > 0 )); then
+      git -C "$plugin_dir" sparse-checkout set "${refreshed_paths[@]}" >/dev/null 2>&1
+      sparse_paths=("${refreshed_paths[@]}")
+    fi
+  fi
+
+  if (( use_sparse )); then
+    [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Sparse paths for $plugin_name: ${sparse_paths[*]}" >&2
+  fi
+
+  if [[ $show_feedback -eq 1 ]]; then
+    pulse_stop_spinner success "Installed ${display_name}"
+  else
+    echo "✓ Installed ${display_name}"
+  fi
+  [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully prepared $plugin_name" >&2
+  return 0
 }
 
 #
@@ -684,6 +838,7 @@ _pulse_discover_plugins() {
 
     # For framework plugins with subpaths, clone the parent repo but use the subpath
     local clone_path=""
+    local -a sparse_paths=()
     if [[ -n "$plugin_subpath" ]]; then
       # Extract parent repo path for cloning
       if [[ "$plugin_spec" == omz:* ]]; then
@@ -696,11 +851,30 @@ _pulse_discover_plugins() {
         repo_name="${repo_name%.git}"
         clone_path="${PULSE_DIR}/plugins/${repo_name}"
       fi
+
+      local repo_root="${clone_path:-${PULSE_DIR}/plugins/${plugin_name}}"
+      _pulse_compute_sparse_paths "$plugin_spec" "$plugin_subpath" "$repo_root"
+      sparse_paths=("${reply[@]}")
+      if (( ${#sparse_paths[@]} == 0 )); then
+        sparse_paths=("$plugin_subpath")
+      fi
     fi
 
     # Auto-install if missing and we have a URL
     local check_path="${clone_path:-$plugin_path}"
-    if [[ ! -d "$check_path" ]] && [[ -n "$plugin_url" ]]; then
+    local sparse_refresh_needed=0
+    if (( ${#sparse_paths[@]} > 0 )) && [[ -n "$clone_path" ]] && [[ -d "$clone_path/.git" ]]; then
+      local -a current_sparse=()
+      current_sparse=("${(@f)$(git -C "$clone_path" sparse-checkout list 2>/dev/null)}")
+      for sparse_path in "${sparse_paths[@]}"; do
+        if [[ -z "${current_sparse[(r)$sparse_path]}" ]]; then
+          sparse_refresh_needed=1
+          break
+        fi
+      done
+    fi
+
+    if { [[ ! -d "$check_path" ]] || [[ $sparse_refresh_needed -eq 1 ]] ; } && [[ -n "$plugin_url" ]]; then
       # Ensure plugins directory exists before creating lock
       mkdir -p "${PULSE_DIR}/plugins"
 
@@ -729,7 +903,7 @@ _pulse_discover_plugins() {
         # Check again if directory exists (another shell may have created it)
         if [[ ! -d "$check_path" ]]; then
           # Install the plugin (feedback is shown by _pulse_clone_plugin)
-          if _pulse_clone_plugin "$plugin_url" "$lock_name" "$plugin_ref"; then
+          if _pulse_clone_plugin "$plugin_url" "$lock_name" "$plugin_ref" "$plugin_spec" "$plugin_subpath" "${sparse_paths[@]}"; then
             [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully installed $lock_name" >&2
           else
             [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Warning: Failed to install $lock_name" >&2
