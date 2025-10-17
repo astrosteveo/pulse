@@ -133,7 +133,9 @@ _pulse_parse_plugin_spec() {
     # Oh-My-Zsh shorthand: omz:plugins/kubectl or omz:lib/git
     local omz_path="${source_spec#omz:}"
     plugin_url="${PULSE_OMZ_REPO:-https://github.com/ohmyzsh/ohmyzsh.git}"
-    plugin_name="ohmyzsh"
+    # Use the plugin name from the path (e.g., "git" from "plugins/git")
+    # This makes each omz plugin unique while sharing the repo
+    plugin_name="${omz_path##*/}"
     plugin_subpath="$omz_path"
     # Derive kind from path if not specified
     if [[ -z "$plugin_kind" ]] && [[ "$omz_path" == plugins/* ]]; then
@@ -489,7 +491,7 @@ _pulse_git_default_branch() {
 }
 
 # Clone a plugin from a Git URL
-# Usage: _pulse_clone_plugin <plugin_url> <plugin_name> [plugin_ref] [plugin_spec] [plugin_subpath] [sparse_paths...]
+# Usage: _pulse_clone_plugin <plugin_url> <plugin_name> [plugin_ref] [plugin_spec] [plugin_subpath] [skip_feedback] [sparse_paths...]
 # Returns: 0 on success, 1 on failure
 _pulse_clone_plugin() {
   local plugin_url="$1"
@@ -499,6 +501,7 @@ _pulse_clone_plugin() {
 
   local plugin_spec=""
   local plugin_subpath=""
+  local skip_feedback=0
 
   if [[ $# -gt 0 ]]; then
     plugin_spec="$1"
@@ -507,6 +510,11 @@ _pulse_clone_plugin() {
 
   if [[ $# -gt 0 ]]; then
     plugin_subpath="$1"
+    shift
+  fi
+  
+  if [[ $# -gt 0 ]]; then
+    skip_feedback="$1"
     shift
   fi
 
@@ -526,17 +534,19 @@ _pulse_clone_plugin() {
   # Create plugins directory if it doesn't exist
   mkdir -p "${PULSE_DIR}/plugins"
 
-  # Show user feedback with spinner (if available)
+  # Show user feedback with spinner (if available and not skipped)
   local show_feedback=0
   local display_name="${plugin_name}"
   [[ -n "$plugin_ref" ]] && display_name="${plugin_name}@${plugin_ref}"
   
-  if _pulse_has_feedback; then
-    pulse_start_spinner "Installing ${display_name}..."
-    show_feedback=1
-  else
-    # Fallback to simple message
-    echo "Installing ${display_name}..."
+  if [[ $skip_feedback -eq 0 ]]; then
+    if _pulse_has_feedback; then
+      pulse_start_spinner "Installing ${display_name}..."
+      show_feedback=1
+    else
+      # Fallback to simple message
+      echo "Installing ${display_name}..."
+    fi
   fi
 
   local use_sparse=0
@@ -564,8 +574,24 @@ _pulse_clone_plugin() {
     git -C "$plugin_dir" remote set-url origin "$plugin_url" >/dev/null 2>&1
 
     if (( use_sparse )); then
+      # Read existing sparse paths BEFORE modifying them
+      local -a existing_sparse=()
+      existing_sparse=("${(@f)$(git -C "$plugin_dir" sparse-checkout list 2>/dev/null)}")
+      
+      # Merge existing paths with new paths to preserve previously checked out plugins
+      local -A seen_paths
+      local -a combined_paths=()
+      for path in "${existing_sparse[@]}" "${sparse_paths[@]}"; do
+        if [[ -n "$path" ]] && [[ -z "${seen_paths[$path]}" ]]; then
+          seen_paths[$path]=1
+          combined_paths+=("$path")
+        fi
+      done
+      
       git -C "$plugin_dir" sparse-checkout init --no-cone >/dev/null 2>&1
-      git -C "$plugin_dir" sparse-checkout set "${sparse_paths[@]}" >/dev/null 2>&1 || clone_or_update_failed=1
+      git -C "$plugin_dir" sparse-checkout set "${combined_paths[@]}" >/dev/null 2>&1 || clone_or_update_failed=1
+      # Update sparse_paths to reflect what was actually set
+      sparse_paths=("${combined_paths[@]}")
     else
       git -C "$plugin_dir" sparse-checkout disable >/dev/null 2>&1
     fi
@@ -574,7 +600,7 @@ _pulse_clone_plugin() {
   if [[ $clone_or_update_failed -eq 1 ]]; then
     if [[ $show_feedback -eq 1 ]]; then
       pulse_stop_spinner error "Failed to install ${display_name}"
-    else
+    elif [[ $skip_feedback -eq 0 ]]; then
       echo "✗ Failed to install ${display_name}" >&2
     fi
     [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Failed to prepare repository for $plugin_name" >&2
@@ -602,7 +628,7 @@ _pulse_clone_plugin() {
   if [[ $checkout_failed -eq 1 ]]; then
     if [[ $show_feedback -eq 1 ]]; then
       pulse_stop_spinner error "Failed to install ${display_name} (checkout failed)"
-    else
+    elif [[ $skip_feedback -eq 0 ]]; then
       echo "✗ Failed to install ${display_name} (checkout failed)" >&2
     fi
     [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Error: Checkout failed for $plugin_name" >&2
@@ -613,8 +639,22 @@ _pulse_clone_plugin() {
     _pulse_compute_sparse_paths "$plugin_spec" "$plugin_subpath" "$plugin_dir"
     local -a refreshed_paths=("${reply[@]}")
     if (( ${#refreshed_paths[@]} > 0 )); then
-      git -C "$plugin_dir" sparse-checkout set "${refreshed_paths[@]}" >/dev/null 2>&1
-      sparse_paths=("${refreshed_paths[@]}")
+      # Get current sparse paths and merge with new ones to avoid overwriting
+      local -a current_sparse=()
+      current_sparse=("${(@f)$(git -C "$plugin_dir" sparse-checkout list 2>/dev/null)}")
+      
+      # Merge current and new paths, keeping unique entries
+      local -a merged_paths=()
+      local -A seen_paths
+      for path in "${current_sparse[@]}" "${refreshed_paths[@]}"; do
+        if [[ -z "${seen_paths[$path]}" ]]; then
+          seen_paths[$path]=1
+          merged_paths+=("$path")
+        fi
+      done
+      
+      git -C "$plugin_dir" sparse-checkout set "${merged_paths[@]}" >/dev/null 2>&1
+      sparse_paths=("${merged_paths[@]}")
     fi
   fi
 
@@ -624,7 +664,8 @@ _pulse_clone_plugin() {
 
   if [[ $show_feedback -eq 1 ]]; then
     pulse_stop_spinner success "Installed ${display_name}"
-  else
+  elif [[ $skip_feedback -eq 0 ]]; then
+    # Only show simple message if we weren't skipping feedback entirely
     echo "✓ Installed ${display_name}"
   fi
   [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully prepared $plugin_name" >&2
@@ -888,6 +929,12 @@ _pulse_discover_plugins() {
       # Create lock file to prevent race conditions
       local lock_file="${PULSE_DIR}/plugins/.${lock_name}.lock"
       local lock_acquired=0
+      
+      # Check if repo already exists (for omz/prezto multi-plugin scenarios)
+      local repo_exists=0
+      if [[ -d "${PULSE_DIR}/plugins/${lock_name}/.git" ]]; then
+        repo_exists=1
+      fi
 
       # Try to acquire lock with timeout
       for i in {1..30}; do
@@ -910,7 +957,13 @@ _pulse_discover_plugins() {
 
         if (( reinstall_needed )); then
           # Install or refresh the plugin (feedback is shown by _pulse_clone_plugin)
-          if _pulse_clone_plugin "$plugin_url" "$lock_name" "$plugin_ref" "$plugin_spec" "$plugin_subpath" "${sparse_paths[@]}"; then
+          # Skip showing feedback if this is just a sparse checkout update for an existing repo
+          local skip_feedback=0
+          if [[ $repo_exists -eq 1 ]] && [[ $sparse_refresh_needed -eq 1 ]]; then
+            skip_feedback=1
+          fi
+          
+          if _pulse_clone_plugin "$plugin_url" "$lock_name" "$plugin_ref" "$plugin_spec" "$plugin_subpath" "$skip_feedback" "${sparse_paths[@]}"; then
             [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Successfully installed $lock_name" >&2
           else
             [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Warning: Failed to install $lock_name" >&2
@@ -975,6 +1028,8 @@ _pulse_discover_plugins() {
 
     [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Registered: $plugin_name (type=$plugin_type, stage=$plugin_stage)" >&2
   done
+  
+  return 0
 }
 
 # Initialize the plugin engine
@@ -986,6 +1041,42 @@ _pulse_init_engine() {
   # Create directories if they don't exist
   [[ ! -d "$PULSE_DIR" ]] && mkdir -p "$PULSE_DIR/plugins"
   [[ ! -d "$PULSE_CACHE_DIR" ]] && mkdir -p "$PULSE_CACHE_DIR"
+
+  # Set up environment variables for Oh-My-Zsh compatibility
+  # These are required by many omz plugins
+  if [[ -z "$ZSH" ]]; then
+    # Validate that PULSE_DIR doesn't contain path traversal
+    if [[ "$PULSE_DIR" == *..* ]]; then
+      echo "[Pulse] Error: PULSE_DIR contains invalid path traversal" >&2
+      return 1
+    fi
+    export ZSH="${PULSE_DIR}/plugins/ohmyzsh"
+  fi
+  if [[ -z "$ZSH_CACHE_DIR" ]]; then
+    # Validate that PULSE_CACHE_DIR doesn't contain path traversal
+    if [[ "$PULSE_CACHE_DIR" == *..* ]]; then
+      echo "[Pulse] Error: PULSE_CACHE_DIR contains invalid path traversal" >&2
+      return 1
+    fi
+    export ZSH_CACHE_DIR="${PULSE_CACHE_DIR}/ohmyzsh"
+  fi
+  # Always ensure completions directory exists (even if ZSH_CACHE_DIR was custom)
+  # Validate the path before creating directory
+  if [[ "$ZSH_CACHE_DIR" == *..* ]]; then
+    echo "[Pulse] Error: ZSH_CACHE_DIR contains invalid path traversal" >&2
+    return 1
+  fi
+  mkdir -p "$ZSH_CACHE_DIR/completions"
+  
+  # Set up environment variables for Prezto compatibility
+  if [[ -z "$ZPREZTODIR" ]]; then
+    # Validate that PULSE_DIR doesn't contain path traversal
+    if [[ "$PULSE_DIR" == *..* ]]; then
+      echo "[Pulse] Error: PULSE_DIR contains invalid path traversal" >&2
+      return 1
+    fi
+    export ZPREZTODIR="${PULSE_DIR}/plugins/prezto"
+  fi
 
   # Initialize disabled plugins array if not set
   typeset -ga pulse_disabled_plugins 2>/dev/null
@@ -1046,4 +1137,5 @@ _pulse_init_engine() {
   fi
 
   [[ -n "$PULSE_DEBUG" ]] && echo "[Pulse] Engine initialized (PULSE_DIR=$PULSE_DIR)" >&2
+  return 0
 }

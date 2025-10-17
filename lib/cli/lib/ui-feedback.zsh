@@ -49,6 +49,9 @@ pulse_start_spinner() {
   # Save cursor position and hide cursor
   printf '\e[?25l'
   
+  # Disable job control messages for background job
+  setopt local_options no_notify no_monitor
+  
   # Start spinner in background
   {
     while true; do
@@ -59,6 +62,9 @@ pulse_start_spinner() {
     done
   } &
   PULSE_SPINNER_PID=$!
+  
+  # Disown the background job to prevent job control messages
+  disown "$PULSE_SPINNER_PID" 2>/dev/null
 }
 
 # Stop the spinner and show a result
