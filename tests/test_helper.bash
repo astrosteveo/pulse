@@ -14,6 +14,12 @@ export PULSE_CACHE_DIR="${PULSE_ROOT}/tests/fixtures/pulse_cache"
 mkdir -p "${PULSE_DIR}/plugins"
 mkdir -p "${PULSE_CACHE_DIR}"
 
+# Ensure mock plugin fixtures are initialized (idempotent)
+MOCK_PLUGIN_SETUP="${PULSE_ROOT}/tests/fixtures/mock-plugins/setup.sh"
+if [[ -x "${MOCK_PLUGIN_SETUP}" ]]; then
+  "${MOCK_PLUGIN_SETUP}" >/dev/null
+fi
+
 # Clean up function to be called after each test
 teardown_test_environment() {
   # Remove test directories
