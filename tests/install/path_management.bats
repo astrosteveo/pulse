@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # PATH management tests for installer
 
-load ../test_helper
+load test_helper
 
 setup() {
   setup_clean_environment
