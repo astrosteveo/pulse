@@ -408,17 +408,21 @@ _pulse_collect_omz_dependencies() {
 
   [[ -z "$repo_path" ]] && return 0
 
-  local plugin_name="${plugin_subpath#plugins/}"
-  local plugin_file="${repo_path}/${plugin_subpath}/${plugin_name}.plugin.zsh"
-  if [[ ! -f "$plugin_file" ]]; then
-    plugin_file="${repo_path}/${plugin_subpath}/${plugin_name}.zsh"
+  local -a dependencies=()
+  if [[ "$plugin_subpath" == lib/* ]]; then
+    local lib_file="${repo_path}/${plugin_subpath}.zsh"
+    _pulse_extract_framework_sources "$lib_file" "omz"
+    dependencies=("${reply[@]}")
+  else
+    local plugin_name="${plugin_subpath#plugins/}"
+    local plugin_file="${repo_path}/${plugin_subpath}/${plugin_name}.plugin.zsh"
+    if [[ ! -f "$plugin_file" ]]; then
+      plugin_file="${repo_path}/${plugin_subpath}/${plugin_name}.zsh"
+    fi
+    _pulse_extract_framework_sources "$plugin_file" "omz"
+    dependencies=("${reply[@]}")
   fi
-
-  _pulse_extract_framework_sources "$plugin_file" "omz"
-  local -a dependencies=("${reply[@]}")
-
   _pulse_unique_paths "${dependencies[@]}"
-}
 
 _pulse_collect_prezto_dependencies() {
   local repo_path="$1"
