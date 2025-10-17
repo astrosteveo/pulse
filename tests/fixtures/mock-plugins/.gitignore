@@ -1,0 +1,4 @@
+# Ignore generated mock plugin repositories
+/plugin-a/
+/plugin-b/
+/plugin-c/

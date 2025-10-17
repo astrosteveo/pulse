@@ -132,6 +132,64 @@ EOF
   # 5. Verifying plugin directory unchanged but update reported
 }
 
+@test "pulse update reports git pull failures" {
+  local remote_dir="${TEST_TMPDIR}/remotes/plugin-fail.git"
+  local source_dir="${TEST_TMPDIR}/sources/plugin-fail"
+  local plugin_dir="${PULSE_DIR}/plugins/plugin-fail"
+
+  mkdir -p "$(dirname "$remote_dir")" "$(dirname "$source_dir")" "$(dirname "$plugin_dir")"
+
+  git init --bare -q "$remote_dir"
+  git init -q "$source_dir"
+  git -C "$source_dir" config user.email "test@example.com"
+  git -C "$source_dir" config user.name "Test User"
+
+  echo "Initial" > "${source_dir}/README.md"
+  git -C "$source_dir" add README.md
+  git -C "$source_dir" commit -q -m "Initial commit"
+  git -C "$source_dir" branch -M main
+  git -C "$source_dir" remote add origin "$remote_dir"
+  git -C "$source_dir" push -q origin main
+
+  git clone -q -b main "$remote_dir" "$plugin_dir"
+  local local_commit
+  local_commit=$(git -C "$plugin_dir" rev-parse HEAD)
+
+  echo "Update" >> "${source_dir}/README.md"
+  git -C "$source_dir" add README.md
+  git -C "$source_dir" commit -q -m "Remote update"
+  git -C "$source_dir" push -q origin main
+
+  cat > "${PULSE_LOCK_FILE}" <<EOF
+[plugin-fail]
+url = $remote_dir
+ref = main
+commit = ${local_commit}
+timestamp = 2024-01-01T00:00:00Z
+stage = normal
+EOF
+
+  local mock_bin="${TEST_TMPDIR}/mock-bin"
+  mkdir -p "$mock_bin"
+  cat > "${mock_bin}/git" <<'EOF'
+#!/usr/bin/env bash
+for arg in "$@"; do
+  if [[ "$arg" == "pull" ]]; then
+    echo "mock git pull failure" >&2
+    exit 1
+  fi
+done
+exec /usr/bin/git "$@"
+EOF
+  chmod +x "${mock_bin}/git"
+
+  run env PATH="${mock_bin}:$PATH" ${PULSE_ROOT}/bin/pulse update plugin-fail
+
+  [ "$status" -eq 1 ]
+  [[ "$output" =~ "Failed to update plugin-fail" ]]
+  [[ "$output" =~ "Errors: 1" ]]
+}
+
 #
 # pulse doctor tests
 #
