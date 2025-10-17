@@ -384,10 +384,38 @@ source $install_dir/pulse.zsh
 
   # Check if .zshrc exists
   if [ ! -f "$zshrc_path" ]; then
-    print_verbose "Creating new .zshrc file"
-    # Create new .zshrc with Pulse configuration
-    echo "$config_block" > "$zshrc_path"
-    print_step "Created $zshrc_path with Pulse configuration"
+    print_verbose "Creating new .zshrc file from template"
+    
+    # Try to use template if available
+    local template_file="${install_dir}/pulse.zshrc.template"
+    if [ -f "$template_file" ]; then
+      print_verbose "Using template: $template_file"
+      # Copy template and update the source path
+      sed "s|source \"\${HOME}/.local/share/pulse/pulse.zsh\"|source $install_dir/pulse.zsh|g" "$template_file" > "$zshrc_path"
+      print_step "Created $zshrc_path from template with PATH management"
+    else
+      print_verbose "Template not found, using basic configuration"
+      # Fallback: Create with PATH management and Pulse config
+      cat > "$zshrc_path" << EOF
+# ============================================================================
+# PATH CONFIGURATION (Modern Zsh Best Practice)
+# ============================================================================
+
+# Sync PATH and path array, ensure uniqueness, and export
+# This uses modern Zsh features for clean, deduplicated PATH management
+typeset -TUx PATH path
+
+# Add user binaries to PATH (uncomment to enable)
+# This is where Pulse CLI and other user tools are typically installed
+path=(
+  \$HOME/.local/bin  # User-local binaries (Pulse CLI installed here)
+  \$path[@]          # Preserve existing PATH entries
+)
+
+$config_block
+EOF
+      print_step "Created $zshrc_path with Pulse configuration and PATH management"
+    fi
     return "$EXIT_SUCCESS"
   fi
 
